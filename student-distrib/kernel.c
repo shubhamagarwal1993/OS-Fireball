@@ -12,6 +12,7 @@
 #include "rtc.h"
 #include "int_handler.h"
 #include "paging.h"
+#include "filesys.h"
  
 #define PIC1			0x20		/*IO base address for master PIC*/
 #define PIC2			0xA0		/*IO base address for slave PIC */
@@ -32,6 +33,7 @@ void
 entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
+	uint32_t* filesystem_addr;
 
 	/* Clear the screen. */
 	clear();
@@ -67,6 +69,7 @@ entry (unsigned long magic, unsigned long addr)
 		int i;
 		module_t* mod = (module_t*)mbi->mods_addr;
 		while(mod_count < mbi->mods_count) {
+			filesystem_addr = (uint32_t*)mod->mod_start;
 			printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
 			printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
 			printf("First few bytes of module:\n");
@@ -161,6 +164,8 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the PIC */
 	i8259_init();
 
+	printf("PIC initialized\n");	
+
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
@@ -168,10 +173,24 @@ entry (unsigned long magic, unsigned long addr)
 	set_idt();
 
 	init_paging();
-	// test_paging();
+	//test_paging();
 
 	// init_rtc();				
-	init_keyboard();		
+	//init_keyboard();
+
+	// multiboot_info_t *mbi2;
+	// mbi2 = (multiboot_info_t *) addr;
+
+	// printf("Mbi2 address: 0x%x\n", mbi2[0]);
+	//printf("Mods address: 0x%x\n", filesystem_addr);
+
+	//module_t* mod2 = (module_t*)mbi2->mods_addr;
+	// printf("0x%x ", *((char*)(mod2->mod_start)));
+	// init_filesys((char*)mod2->mod_start);
+
+
+	init_filesys(filesystem_addr);	
+
 
 	printf("initialization is completed\n");
 

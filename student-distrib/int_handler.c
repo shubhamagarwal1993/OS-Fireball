@@ -165,7 +165,7 @@ void general_protection()
 
 void page_fault()
 {
-	clear_blue();
+	//clear_blue();
 	printf("Page Fault!");
 	while(1){}
 }

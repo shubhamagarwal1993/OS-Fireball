@@ -141,12 +141,12 @@ uint32_t get_Page_offset(uint32_t addr)
 void test_paging()
 {
 	// Access invalid momory
-	uint8_t* a = (uint8_t*) 0x00000000;
-	printf("\n%x\n", *a);
+	// uint8_t* a = (uint8_t*) 0x00000000;
+	// printf("\n%x\n", *a);
 
 	// Access Kernel memory
-	// uint8_t* b = (uint8_t*) 0x00400000;
-	// printf("\n%x\n", *b);
+	uint8_t* b = (uint8_t*) 0x0040E000;
+	printf("\n%x\n", *b);
 
 	// Access Video memory
 	// uint8_t* c = (uint8_t*) 0x000B8000;
