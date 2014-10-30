@@ -2,52 +2,52 @@
 #include "lib.h"
 
 
+
 static bootblock_t* boot_block;
 static inode * index_nodes;
 static dentry_t temp_dentry;
 static data_block data_blocks;
-// uint32_t num_dir_entries;
-// uint32_t num_inodes;
-// uint32_t num_data_blocks;
-// uint32_t* bootblock;
 
 void init_filesys(const uint32_t *bootblockptr)
 {
 	clear();
 	printf("init file system\n");
 
-	// printf("bootblockptr: 0x%x\n", bootblockptr);
-	// printf("Bootblockptr[0]: 0x%x\n", *(bootblockptr));
-	// printf("Bootblock: 0x%x\n", bootblock);
-
-	// boot_block.num_dir_entries = *(bootblockptr);
-	// boot_block.num_inodes = *(bootblockptr + 1);
-	// boot_block.num_data_blocks = *(bootblockptr + 2);
 	boot_block = (bootblock_t*)bootblockptr;
 	index_nodes = (inode*)(bootblockptr + 1); 
 
-
 	printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
 
-	//uint8_t name[32] = "hello";
-	dentry_t* blank;
-	// int32_t ret_val;
-	// ret_val = read_dentry_by_name(name, blank);
+	uint8_t name[32] = "hello";
+	dentry_t blank;
+	int32_t ret_val;
 
-	// printf("Return value = %d\n", ret_val);
 
-	// int i;
-	// printf("Name: ");
-	// for(i = 0; i < strlen(name); i++)
-	// 	printf("%c", name[i]);
-	// printf("\n");
+	// Test read_dentry_by_index
 
-	// printf("Blank: ");
-	// for(i = 0; i < strlen(name); i++)
-	// 	printf("%c", blank->file_name[i]);
-	// printf("\n");
-	int retval = read_dentry_by_index(27 ,blank);
-	printf("return value by index: %d\n", retval);
+	//ret_val = read_dentry_by_index(27, &blank);
+
+
+	// Test read_dentry_by_name
+	/*
+	ret_val = read_dentry_by_name(name, &blank);
+
+	int i;
+	printf("Name: ");
+	for(i = 0; i < strlen((int8_t*)name); i++)
+	printf("%c", name[i]);
+	printf("\n");
+
+	printf("Blank: ");
+	for(i = 0; i < strlen((int8_t*)name); i++)
+	printf("%c", blank.file_name[i]);
+	printf("\n");
+	*/
+
+
+
+	printf("Return value = %d\n", ret_val);
+
 }
 
 void fopen()
@@ -61,37 +61,45 @@ void fclose()
 	return;
 }
 
+
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 {
-	// int i;
-	// int len = strlen((int8_t*)fname);
-	// uint8_t dir_en_name_buf[33] = { 0 };
+	int i;
+	uint32_t typed_len = strlen((int8_t*)fname);
 
-	// for(i = 1; i <= boot_block.num_dir_entries; i++)
-	// {
-	// 	dentry_t* cur_entry = (dentry_t*)(bootblock + i * 16);
-	// 	uint8_t* dir_en_name = (uint8_t*)cur_entry;
-	// 	strncpy((int8_t*)dir_en_name_buf, (int8_t*)dir_en_name, 32);
-	// 	//int dir_en_name_len = strlen(dir_en_name_buf);
-	// 	if(len != strlen((int8_t*)dir_en_name_buf))
-	// 		continue;
-	// 	if(strncmp((int8_t*)fname, (int8_t*)dir_en_name_buf, len) != 0)
-	// 		continue;
+	for(i = 0; i < boot_block->num_dir_entries; i++)
+	{
+		dentry_t* cur_entry;
+		cur_entry = &(boot_block->dir_entries[i]);
 
-	// 	// Copy directory entry
-	// 	strncpy((int8_t*)dentry->file_name, (int8_t*)dir_en_name_buf, 32);
-	// 	dentry->file_type = cur_entry->file_type;
-	// 	dentry->inode_num = cur_entry->inode_num;
+		uint32_t entry_name_len = strlen((int8_t*)(cur_entry->file_name));
 
-	// 	// Copy reserved bytes
-	// 	int j;
-	// 	for(j = 0; j < 24; j++)
-	// 		dentry->reserved[j] = cur_entry->reserved[j];
-	// 	return 0;
-	// }
+		if(entry_name_len > 32)
+			entry_name_len = 32;
 
-	// return -1;		
+		if(typed_len > 32)
+			typed_len = 32;
 return 0; 
+		if(entry_name_len != typed_len)
+			continue;
+
+		if(0 != strncmp((int8_t*)fname, (int8_t*)(cur_entry->file_name), typed_len))
+			continue;
+
+		// Copy directory entry
+		strncpy((int8_t*)dentry->file_name, (int8_t*)cur_entry->file_name, 32);
+		dentry->file_type = cur_entry->file_type;
+		dentry->inode_num = cur_entry->inode_num;
+
+		// Copy reserved bytes
+		int j;
+		for(j = 0; j < 24; j++)
+			dentry->reserved[j] = cur_entry->reserved[j];
+		return 0;
+	}
+
+	return -1;		
+
 }
 
 
