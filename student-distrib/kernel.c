@@ -173,6 +173,9 @@ entry (unsigned long magic, unsigned long addr)
 	set_idt();
 
 	init_paging();
+	init_keyboard();		//
+
+	init_paging();
 	//test_paging();
 
 	// init_rtc();				
@@ -192,7 +195,10 @@ entry (unsigned long magic, unsigned long addr)
 	init_filesys(filesystem_addr);	
 
 
+	//init_rtc();				//
 	printf("initialization is completed\n");
+
+//	enable_ints();		// (perform an STI) and reenable NMI if you wish
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

@@ -89,9 +89,9 @@ void kbd_int_handler()
 						// int a = ptr1 / 0;
 						// printf("%d",a);
  						
-						// int * ptr = 0;
-						// //int val = *ptr;
-						// printf("%d", ptr);	
+						 int * ptr = 0;
+						 int val = *ptr;
+						 printf("%d", ptr);	
  						
 						//int a, b, c; // some integers
 						//int *pi;     // a pointer to an integer
