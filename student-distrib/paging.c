@@ -25,6 +25,8 @@ void init_paging()
 	// Set PGE bit in CR4
 	set_PGE();
 
+	//test_paging();
+
 }
 
 /*

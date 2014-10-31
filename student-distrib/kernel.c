@@ -173,29 +173,12 @@ entry (unsigned long magic, unsigned long addr)
 	set_idt();
 
 	init_paging();
-	init_keyboard();		//
-
-	init_paging();
-	//test_paging();
 
 	// init_rtc();				
-	//init_keyboard();
-
-	// multiboot_info_t *mbi2;
-	// mbi2 = (multiboot_info_t *) addr;
-
-	// printf("Mbi2 address: 0x%x\n", mbi2[0]);
-	//printf("Mods address: 0x%x\n", filesystem_addr);
-
-	//module_t* mod2 = (module_t*)mbi2->mods_addr;
-	// printf("0x%x ", *((char*)(mod2->mod_start)));
-	// init_filesys((char*)mod2->mod_start);
-
+	init_keyboard();
 
 	init_filesys(filesystem_addr);	
 
-
-	//init_rtc();				//
 	printf("initialization is completed\n");
 
 //	enable_ints();		// (perform an STI) and reenable NMI if you wish

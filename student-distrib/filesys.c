@@ -21,7 +21,7 @@ void init_filesys(const uint8_t *bootblockptr)
 
 	// uint8_t name[32] = "hello";
 	// dentry_t blank;
-	int32_t ret_val;
+	int32_t ret_val = -1;
 
 	// Test read_dentry_by_name
 	/*
@@ -46,7 +46,6 @@ void init_filesys(const uint8_t *bootblockptr)
 
 	// Test read_data
 	/*
-	*/
 	uint8_t buf[400] = { 0 };
 	ret_val = read_data(15, 0, buf, 400);
 	int i;
@@ -54,9 +53,10 @@ void init_filesys(const uint8_t *bootblockptr)
 	for(i = 0; i < 400; i++)
 		printf("%c", buf[i]);
 	printf("\n");
+	*/
 
-
-	printf("Return value = %d\n", ret_val);
+	// Print return value
+	// printf("Return value = %d\n", ret_val);
 
 }
 
