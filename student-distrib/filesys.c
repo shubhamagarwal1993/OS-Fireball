@@ -1,32 +1,27 @@
 #include "filesys.h"
 #include "lib.h"
 
-
-
 static bootblock_t* boot_block;
-static inode * index_nodes;
-static dentry_t temp_dentry;
-static data_block data_blocks;
+static inode_t* index_nodes;
+static data_block_t* data_blocks;
 
-void init_filesys(const uint32_t *bootblockptr)
+//static dentry_t temp_dentry;
+
+void init_filesys(const uint8_t *bootblockptr)
 {
 	clear();
 	printf("init file system\n");
 
 	boot_block = (bootblock_t*)bootblockptr;
-	index_nodes = (inode*)(bootblockptr + 1); 
+	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);
+	data_blocks = (data_block_t*)(bootblockptr + (BLOCKSIZE * (boot_block->num_inodes + 1))); 
 
-	printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
+	// printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
+	// printf("boot block address: 0x%x\nindex nodes address: 0x%x\ndata blocks address: 0x%x\n", boot_block, index_nodes, data_blocks);
 
-	uint8_t name[32] = "hello";
-	dentry_t blank;
+	// uint8_t name[32] = "hello";
+	// dentry_t blank;
 	int32_t ret_val;
-
-
-	// Test read_dentry_by_index
-
-	//ret_val = read_dentry_by_index(27, &blank);
-
 
 	// Test read_dentry_by_name
 	/*
@@ -44,6 +39,21 @@ void init_filesys(const uint32_t *bootblockptr)
 	printf("\n");
 	*/
 
+	// Test read_dentry_by_index
+	/*
+	ret_val = read_dentry_by_index(27, &blank);
+	*/
+
+	// Test read_data
+	/*
+	*/
+	uint8_t buf[400] = { 0 };
+	ret_val = read_data(15, 0, buf, 400);
+	int i;
+	printf("\n");
+	for(i = 0; i < 400; i++)
+		printf("%c", buf[i]);
+	printf("\n");
 
 
 	printf("Return value = %d\n", ret_val);
@@ -74,12 +84,13 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 
 		uint32_t entry_name_len = strlen((int8_t*)(cur_entry->file_name));
 
+		// File name is allocated 32B, all characters after are ignored
 		if(entry_name_len > 32)
 			entry_name_len = 32;
 
 		if(typed_len > 32)
 			typed_len = 32;
-return 0; 
+
 		if(entry_name_len != typed_len)
 			continue;
 
@@ -144,11 +155,56 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length)
 {
-	//if inode is invalid then return -1
-	if((inode <0) && (inode >15))							//what would the max be
-		return -1;	
-	
-	
+	// If inode is invalid then return -1
+	if(inode >= boot_block->num_inodes)
+		return -1;
 
-	return 0;
+	inode_t* cur_inode = &(index_nodes[inode]);
+
+	// If offset is past the end of the file, return 0
+	if(offset >= cur_inode->length)
+		return 0;
+
+	// If length is invalid, reduce it to the highest valid length
+	if(offset + length > cur_inode->length)
+		length = cur_inode->length - offset;
+
+	// Copy from each of the inode's data blocks into the buffer's consecutive memory
+	uint32_t i;
+	uint32_t copied = 0;
+	uint32_t cur_data_block;
+	uint8_t* data_start;
+	uint32_t copy_len;
+	for(i = 0; copied < length; i++)
+	{
+		// Find the current data block and check that it is valid
+		cur_data_block = cur_inode->data_block_nums[i + (offset / BLOCKSIZE)];
+		if( (cur_data_block >= boot_block->num_data_blocks) || (cur_data_block < 0) )
+			return -1;
+
+		// Find a pointer to the current data and copy_len for this block
+		data_start = (uint8_t*)(data_blocks + cur_data_block);
+		if(i == 0)
+		{
+			data_start += (offset % BLOCKSIZE);
+			copy_len = ( (BLOCKSIZE - (offset % BLOCKSIZE)) < length )
+					   ? (BLOCKSIZE - (offset % BLOCKSIZE))
+					   : length;
+		}
+		else 
+		{
+			copy_len = ((length - copied) > BLOCKSIZE)
+					   ? BLOCKSIZE
+					   : (length - copied); 
+		}
+
+		// Copy the data in this block
+		memcpy(buf, data_start, copy_len);
+
+
+		copied += copy_len;
+		buf += copy_len;
+	}
+
+	return copied;
 }

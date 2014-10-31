@@ -33,7 +33,7 @@ void
 entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
-	uint32_t* filesystem_addr;
+	uint8_t* filesystem_addr;
 
 	/* Clear the screen. */
 	clear();
@@ -69,7 +69,7 @@ entry (unsigned long magic, unsigned long addr)
 		int i;
 		module_t* mod = (module_t*)mbi->mods_addr;
 		while(mod_count < mbi->mods_count) {
-			filesystem_addr = (uint32_t*)mod->mod_start;
+			filesystem_addr = (uint8_t*)mod->mod_start;
 			printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
 			printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
 			printf("First few bytes of module:\n");

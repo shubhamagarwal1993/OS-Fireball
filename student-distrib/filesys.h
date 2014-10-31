@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define BLOCKSIZE 4096
+
 typedef struct{
 	uint8_t file_name[32];
 	uint32_t file_type;
@@ -12,13 +14,12 @@ typedef struct{
 
 typedef struct{
 	uint32_t length;
-	uint32_t data_blocks[1023];
-}inode;
+	uint32_t data_block_nums[1023];
+}inode_t;
 
 typedef struct{
-		uint32_t length;
-		
-}data_block;
+	uint8_t data[4096];
+}data_block_t;
 
 typedef struct{
 	uint32_t num_dir_entries;
@@ -28,7 +29,7 @@ typedef struct{
 	dentry_t dir_entries[63];
 } bootblock_t;
 
-extern void init_filesys(const uint32_t *bootblockptr);
+extern void init_filesys(const uint8_t *bootblockptr);
 
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
