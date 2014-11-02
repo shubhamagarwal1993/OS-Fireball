@@ -32,6 +32,9 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 
 	uint32_t typed_len = strlen((int8_t*)fname);
 
+	if(typed_len > 31)
+		typed_len = 31;
+
 	for(i = 0; i < boot_block->num_dir_entries; i++)
 	{
 		dentry_t* cur_entry;
@@ -40,16 +43,13 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 		uint32_t entry_name_len = strlen((int8_t*)(cur_entry->file_name));
 
 		// File name is allocated 32B, all characters after are ignored
-		if(entry_name_len > 32)
-			entry_name_len = 32;
-
-		if(typed_len > 32)
-			typed_len = 32;
+		if(entry_name_len > 31)
+			entry_name_len = 31;
 
 		if(entry_name_len != typed_len)
 			continue;
 
-		if(0 != strncmp((int8_t*)fname, (int8_t*)(cur_entry->file_name), typed_len))
+		if(0 != strncmp((int8_t*)fname, (int8_t*)(cur_entry->file_name), entry_name_len))
 			continue;
 
 		// Copy directory entry
@@ -164,7 +164,7 @@ void test_filesys()
 	// Test read_dentry_by_name
 	/*
 	dentry_t dentry;
-	uint8_t name[33] = "hello";
+	uint8_t name[33] = "verylargetxtwithverylongname.txt";
 	printf("Return value = %d\n", read_dentry_by_name(name, &dentry));
 	*/
 
@@ -201,6 +201,57 @@ void test_filesys()
 }
 
 
+uint32_t file_open()
+{
+	return 0;
+}
+
+uint32_t file_read(const uint8_t* fname, uint32_t offset, uint8_t* buf, uint32_t length)
+{
+	dentry_t* dentry;
+	read_dentry_by_name(fname, dentry);
+	return read_data((dentry->inode_num), offset, buf, length);
+}
+
+uint32_t file_write()
+{
+	return -1;
+}
+
+uint32_t file_close()
+{
+	return 0;
+}
+
+
+uint32_t dir_open()
+{
+	return 0;
+}
+
+uint32_t dir_read(uint32_t index, uint8_t* buf, uint32_t length)
+{
+	dentry_t* dentry;
+	if(-1 == read_dentry_by_index(index, dentry))
+		return 0;
+
+	uint32_t name_len = (length > 32) ? 32 : length;
+
+	strncpy((int8_t*)buf, (int8_t*)dentry->file_name, name_len);
+
+	return length;
+}
+
+uint32_t dir_write()
+{
+	return -1;
+}
+
+
+uint32_t dir_close()
+{
+	return 0;
+}
 
 
 

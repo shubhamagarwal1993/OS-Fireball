@@ -38,5 +38,14 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 
 void test_filesys();
 
+uint32_t file_open();
+uint32_t file_read(const uint8_t* fname, uint32_t offset, uint8_t* buf, uint32_t length);
+uint32_t file_write();
+uint32_t file_close();
+
+uint32_t dir_open();
+uint32_t dir_read(uint32_t index, uint8_t* buf, uint32_t length);
+uint32_t dir_write();
+uint32_t dir_close();
 
 #endif

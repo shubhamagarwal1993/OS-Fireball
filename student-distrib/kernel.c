@@ -186,9 +186,9 @@ entry (unsigned long magic, unsigned long addr)
 	//printf("Enabling Interrupts\n");
 	sti();
 	
-	rtc_open();
-	rtc_read();
-	reset_scr();
+	// rtc_open();
+	// rtc_read();
+	// reset_scr();
 
 	//node* buf = pass_buff();
 	//test_read_write(buf);
