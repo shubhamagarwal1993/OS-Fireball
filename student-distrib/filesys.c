@@ -17,7 +17,15 @@ void init_filesys(const uint8_t *bootblockptr)
 
 }
 
-
+/* read_dentry_by_name */
+/********************************************************************
+*int32_t															*
+*read_dentry_by_name()												*
+*	Inputs:			filename, the dentry to copy to 				*
+*	Outputs:		writes dentry of filename to given dentry 		*
+*	Return Value:	return 0 if file found & copied properly		*
+*	Function: Should check for file existance and copy to dentry 	*
+********************************************************************/
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 {
@@ -71,7 +79,15 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 }
 
 
-
+/* read_dentry_by_index */
+/********************************************************************
+*int32_t															*
+*read_dentry_by_index()												*
+*	Inputs:			index of file, the dentry to copy to			*
+*	Outputs:		writes dentry of file with index to given dentry*
+*	Return Value:	return 0 if file found & copied properly		*
+*	Function: Should check for file existance and copy to dentry 	*
+********************************************************************/
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 {
 	// Check for invalid index
@@ -93,7 +109,15 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 }
 
 
-
+/* read_data */
+/************************************************************************************
+*int32_t																			*
+*read_data()																		*
+*	Inputs:			inode #, offset from , buffer to copy to, # of bytes from offset*
+*	Outputs:		writes dentry of filename to given dentry 						*
+*	Return Value:	return 0 indicates end of file is reached 						*
+*	Function: Should check for file existance and copy to buffer 					*
+************************************************************************************/
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length)
 {
 	// If inode is invalid then return -1
@@ -150,6 +174,11 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 	return copied;
 }
 
+
+/**************************************************
+ For the handin, you must have some test/wrapper code that given a filename, a buffer, and a
+buffer length, will read data from the given file into the buffer.
+*****************************************************/
 void test_filesys()
 {
 	//clear();
@@ -230,6 +259,11 @@ uint32_t dir_open()
 {
 	return 0;
 }
+/************************************************************************
+should be similar to the 'ls' source code
+
+write a test case to show that we can read different types of files 
+*************************************************************************/
 
 uint32_t dir_read(uint32_t index, uint8_t* buf, uint32_t length)
 {

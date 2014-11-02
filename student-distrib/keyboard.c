@@ -80,6 +80,11 @@ void kbd_logic(int to_print)
 			offset = 32;
 		else offset = 0;
 	}	
+
+	if(shift && (caps_count%2 == 1))
+		offset = 0;
+	else if(!shift && (caps_count%2 == 0))
+		offset = 0;
 	
 	if(to_print == 0x1D)
 	{
