@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "wrapper.h"
 #include "types.h"
+#include "rtc.h"
 #define NUM_COLS 80
 #define NUM_ROWS 25
 

@@ -81,10 +81,10 @@ void test_read_write(node* buf, int key)
 	else
 	{
 		disable_irq(1);
-		char* halwai = terminal_read(buf, 0);
+		char* halwai = terminal_read(buf, 64);
 		//reset_buf(buf);
 		int i = 0;
-		for(i = 0; i < 82; i++)
+		for(i = 0; i < 64; i++)
 		{
 			if (i == 0)
 				new_line(buf);

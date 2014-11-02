@@ -19,6 +19,7 @@ int32_t ece391_write(int32_t fd, const void* buf, int32_t nbytes);
 int32_t ece391_close(int32_t fd);
 
 extern void test_rtc();
+extern void disable_rtc_test();
 
 //#endif	/* ASM */
 

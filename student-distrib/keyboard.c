@@ -29,6 +29,7 @@ void kbd_int_handler()
 	{
 		reset_scr();
 		reset_buf(buffer);
+		disable_rtc_test();
 	}
 	reset_flag = 1;
 

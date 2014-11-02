@@ -5,6 +5,7 @@
 
 
 volatile int32_t interrupt_number = 0;
+int test_flag = 1;
 
 //int interrupt_number = 0;
 /* RTC Interrupt handler */
@@ -23,7 +24,7 @@ void rtc_int_handler()
 	//test_interrupts();									//calls function that writes video memory to screen.
 	interrupt_number++;
 	interrupt_number++;
-	//test_rtc();
+	test_rtc();
 	send_eoi(8);
 	outb(0x0C, 0x70);									// select register C
 	inb(0x71);											// just throw away contents
@@ -35,7 +36,13 @@ void test_rtc()
 {
 	if(interrupt_number > 20)
 		rtc_write(64);
-	printf("%d", interrupt_number);
+	if(test_flag!=0)
+		printf("%d", interrupt_number);
+}
+
+void disable_rtc_test()
+{
+	test_flag = 0;
 }
 
 int32_t rtc_open()
