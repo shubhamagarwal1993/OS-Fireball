@@ -12,6 +12,8 @@
 #include "rtc.h"
 #include "int_handler.h"
 #include "paging.h"
+#include "terminal.h"
+#include "rtc.h"
 #include "filesys.h"
  
 #define PIC1			0x20		/*IO base address for master PIC*/
@@ -33,7 +35,7 @@ void
 entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
-	uint8_t* filesystem_addr;
+	uint8_t* filesystem_address;
 
 	/* Clear the screen. */
 	clear();
@@ -69,7 +71,7 @@ entry (unsigned long magic, unsigned long addr)
 		int i;
 		module_t* mod = (module_t*)mbi->mods_addr;
 		while(mod_count < mbi->mods_count) {
-			filesystem_addr = (uint8_t*)mod->mod_start;
+			filesystem_address = (uint8_t*)mod->mod_start;
 			printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
 			printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
 			printf("First few bytes of module:\n");
@@ -164,8 +166,6 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the PIC */
 	i8259_init();
 
-	printf("PIC initialized\n");	
-
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
@@ -173,15 +173,14 @@ entry (unsigned long magic, unsigned long addr)
 	set_idt();
 
 	init_paging();
+	// test_paging();
 
 	// init_rtc();				
 	init_keyboard();
-
-	init_filesys(filesystem_addr);	
+	init_rtc();
+	init_filesys(filesystem_address);
 
 	printf("initialization is completed\n");
-
-//	enable_ints();		// (perform an STI) and reenable NMI if you wish
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -189,6 +188,13 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+	
+	rtc_open();
+	rtc_read();
+	reset_scr();
+
+	//node* buf = pass_buff();
+	//test_read_write(buf);
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */

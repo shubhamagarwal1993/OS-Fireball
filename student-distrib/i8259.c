@@ -172,7 +172,7 @@ void
 init_rtc(void)		
 {
 
-	int rate = 0x0F;								// rate must be above 2 and not over 15
+	int rate = 0x0E;								// rate must be above 2 and not over 15
 	outb(0x8A, 0x70);								// set index to register A, disable NMI
 	char prev = inb(0x71);							// get initial value of register A
 	outb(0x8A, 0x70);								// reset index to A

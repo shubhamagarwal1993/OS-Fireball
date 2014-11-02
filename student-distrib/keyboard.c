@@ -1,9 +1,46 @@
 #include "keyboard.h"
-#include "lib.h"
 #include "i8259.h"
+#include "buffer.h"
+#include "terminal.h"
+
+/*
+	LOLWUT EDGE CASE
+	When you are holding backspace and you go from 79 to 78 on the x position i.e - 79-78 on the buffer, when you start typing again, you type on the same line, and overwrite the
+	old values. Basically new_line does not get called when you start typing after holding down backspace and you delete beyond 78
+
+*/
+
+node buffer[NUM_COLS*NUM_ROWS];
+int reset_flag = 0;
 
 int caps_count = 0;
+int shift = 0;
+int ctrl = 0;
 int offset = 0;
+int line_flag = 1;
+
+int limit = 0;
+int line_count = 0;
+
+
+void kbd_int_handler()
+{
+	if(reset_flag == 0)
+		reset_buf(buffer);
+	reset_flag = 1;
+
+	int to_print;										//disable line so we can complete this before handling some other interrupt 	
+	to_print = inb(0x60);
+	kbd_logic(to_print);
+	//printb(buffer);
+	//init_terminal();
+	
+	terminal_open();
+	//test_read_write(buffer);
+	
+	send_eoi(1);
+}
+
 
 /* Keyboard Interrupt handler */
 /********************************************************
@@ -14,12 +51,23 @@ kbd_int_handler()										*
 *	Return Value:	void								*
 *	Function: Prints out character typed to screen		*
 ********************************************************/
-void kbd_int_handler()
+void kbd_logic(int to_print)
 {
-	disable_irq(1);										//IRQ line was 1 so we get the port numbers
-	int to_print;										//disable line so we can complete this before handling some other interrupt 	
-	to_print = inb(0x60);								//store received info into char to check with which key was pressed 
+	//disable_irq(1);										//IRQ line was 1 so we get the port numbers
+									//store received info into char to check with which key was pressed 
 	
+
+	if(to_print == 0x2A || to_print == 0x36)
+		shift = 1;
+	if(shift) offset = 32;
+
+	//shift disabled
+	if(to_print == 0xAA || to_print == 0xB6)
+	{
+		offset = 0;
+		shift = 0;
+	}
+
 	if(to_print == 0x3A)
 	{
 		caps_count++;
@@ -27,90 +75,236 @@ void kbd_int_handler()
 			offset = 32;
 		else offset = 0;
 	}	
-		
-	switch(to_print)									//check which button was pressed on the keyboard
-	{
-	/*	checking numbers	*/		
-		case 0x02:	{	printf("1");	break;	}
-		case 0x03:	{	printf("2");	break;	}
-		case 0x04:	{	printf("3");	break;	}			
-		case 0x05:	{	printf("4");	break;	}
-		case 0x06:	{	printf("5");	break;	}
-		case 0x07:	{	printf("6");	break;	}
-		case 0x08:	{	printf("7");	break;	}
-		case 0x09:	{	printf("8");	break;	}	
-		case 0x0A:	{	printf("9");	break;	}
-		case 0x0B:	{	printf("0");	break;	}
 	
-	/*	checking letters	*/	
-		case 0x1E:	{	printf("%c", 97 - offset);	break;	}						
-		case 0x30:	{	printf("%c", 98 - offset);	break;	}
-		case 0x2E:	{	printf("%c", 99 - offset);	break;	}
-		case 0x20:	{	printf("%c", 100 - offset);	break;	}
-		case 0x12:	{	printf("%c", 101 - offset);	break;	}
-		case 0x21:	{	printf("%c", 102 - offset);	break;	}
-		case 0x22:	{	printf("%c", 103 - offset);	break;	}
-		case 0x23:	{	printf("%c", 104 - offset);	break;	}
-		case 0x17:	{	printf("%c", 105 - offset);	break;	}				
-		case 0x24:	{	printf("%c", 106 - offset);	break;	}
-		case 0x25:	{	printf("%c", 107 - offset);	break;	}
-		case 0x26:	{	printf("%c", 108 - offset);	break;	}
-		case 0x32:	{	printf("%c", 109 - offset);	break;	}
-		case 0x31:	{	printf("%c", 110 - offset);	break;	}
-		case 0x18:	{	printf("%c", 111 - offset);	break;	}
-		case 0x19:	{	printf("%c", 112 - offset);	break;	}
-		case 0x10:	{	printf("%c", 113 - offset);	break;	}
-		case 0x13:	{	printf("%c", 114 - offset);	break;	}		
-		case 0x1F:	{	printf("%c", 115 - offset);	break;	}				
-		case 0x14:	{	printf("%c", 116 - offset);	break;	}
-		case 0x16:	{	printf("%c", 117 - offset);	break;	}
-		case 0x2F:	{	printf("%c", 118 - offset);	break;	}
-		case 0x11:	{	printf("%c", 119 - offset);	break;	}
-		case 0x2D:	{	printf("%c", 120 - offset);	break;	}
-		case 0x15:	{	printf("%c", 121 - offset);	break;	}
-		case 0x2C:	{	printf("%c", 122 - offset);	break;	}		
-/*	checking special characters	*/	
-		case 0x0C:	{	//printf("-");	
-						int * ptr = NULL;
-						printf("%d", *ptr);
-						break;	}
- 		case 0x0D:	{	printf("=");	break;	}	
- 		case 0x1A:	{	printf("[");	break;	}
- 		case 0x1B:	{	printf("]");	break;	}
- 		case 0x27:	{	printf(";");	break;	}
- 		case 0x28:	{	printf("'");	break;	}
- 		case 0x29:	{	printf("`");	break;	}
- 		case 0x33:	{	printf(",");	break;	}
- 		case 0x34:	{	printf(".");	break;	}
-		case 0x35:	{	printf("/");	break;	}
-		case 0x39:	{	printf(" ");	break;	}
- 		case 0x0E:	{	/*printf("");*/
-						// int ptr1 = 45;
-						// int a = ptr1 / 0;
-						// printf("%d",a);
- 						
-						 int * ptr = 0;
-						 int val = *ptr;
-						 printf("%d", ptr);	
- 						
-						//int a, b, c; // some integers
-						//int *pi;     // a pointer to an integer
-
-						//a = 5;
-						//pi = &a; // pi points to a
-						//b = *pi; // b is now 5
-						//pi = NULL;
-						//c = *pi; // this is a NULL pointer dereference
-						//printf("%d", c);
- 						break;	}
+	if(to_print == 0x1D)
+	{
+		ctrl = 1;
 	}
+
+	if(to_print == 0x9D)		
+	{
+		ctrl = 0;
+	}
+
+	if(ctrl && (to_print == 0x26))
+	{
+		reset_buf(buffer);
+		limit = 0;
+		line_count = 0;
+		goto done;
+	}
+
+	if(line_count == 127)
+		line_flag = 0;
+	else line_flag = 1;
+
+	if(!shift && line_flag)
+	{	
+		switch(to_print)									//check which button was pressed on the keyboard
+		{
+		/*	checking numbers	*/		
+			case 0x02:	{	setb(buffer, 49);	break;	}	//1
+			case 0x03:	{	setb(buffer, 50);	break;	}	//2
+			case 0x04:	{	setb(buffer, 51);	break;	}	//3		
+			case 0x05:	{	setb(buffer, 52);	break;	}	//4
+			case 0x06:	{	setb(buffer, 53);	break;	}	//5
+			case 0x07:	{	setb(buffer, 54);	break;	}	//6
+			case 0x08:	{	setb(buffer, 55);	break;	}	//7
+			case 0x09:	{	setb(buffer, 56);	break;	}	//8
+			case 0x0A:	{	setb(buffer, 57);	break;	}	//9
+			case 0x0B:	{	setb(buffer, 48);	break;	}	//0
+		
+		/*	checking letters	*/	
+			case 0x1E:	{	setb(buffer, 97 - offset);		break;	}						
+			case 0x30:	{	setb(buffer,  98 - offset);		break;	}
+			case 0x2E:	{	setb(buffer,  99 - offset);		break;	}
+			case 0x20:	{	setb(buffer,  100 - offset);	break;	}
+			case 0x12:	{	setb(buffer,  101 - offset);	break;	}
+			case 0x21:	{	setb(buffer,  102 - offset);	break;	}
+			case 0x22:	{	setb(buffer,  103 - offset);	break;	}
+			case 0x23:	{	setb(buffer,  104 - offset);	break;	}
+			case 0x17:	{	setb(buffer,  105 - offset);	break;	}				
+			case 0x24:	{	setb(buffer,  106 - offset);	break;	}
+			case 0x25:	{	setb(buffer,  107 - offset);	break;	}
+			case 0x26:	{	setb(buffer,  108 - offset);	break;	}
+			case 0x32:	{	setb(buffer,  109 - offset);	break;	}
+			case 0x31:	{	setb(buffer,  110 - offset);	break;	}
+			case 0x18:	{	setb(buffer,  111 - offset);	break;	}
+			case 0x19:	{	setb(buffer,  112 - offset);	break;	}
+			case 0x10:	{	setb(buffer,  113 - offset);	break;	}
+			case 0x13:	{	setb(buffer,  114 - offset);	break;	}		
+			case 0x1F:	{	setb(buffer,  115 - offset);	break;	}				
+			case 0x14:	{	setb(buffer,  116 - offset);	break;	}
+			case 0x16:	{	setb(buffer,  117 - offset);	break;	}
+			case 0x2F:	{	setb(buffer,  118 - offset);	break;	}
+			case 0x11:	{	setb(buffer,  119 - offset);	break;	}
+			case 0x2D:	{	setb(buffer,  120 - offset);	break;	}
+			case 0x15:	{	setb(buffer,  121 - offset);	break;	}
+			case 0x2C:	{	setb(buffer,  122 - offset);	break;	}		
+	/*	checking special characters	*/	
+			case 0x0C:	{	setb(buffer, 45);	break;	}	//"-"
+	 		case 0x0D:	{	setb(buffer, 61);	break;	}	//"="
+	 		case 0x1A:	{	setb(buffer, 91);	break;	}	//"["
+	 		case 0x1B:	{	setb(buffer, 93);	break;	}	//"]"
+	 		case 0x27:	{	setb(buffer, 59);	break;	}	//";"
+	 		case 0x28:	{	setb(buffer, 39);	break;	}	//"'"
+	 		case 0x29:	{	setb(buffer, 96);	break;	}	//"`"
+	 		case 0x2B:	{	setb(buffer, 92);	break;	}	
+	 		case 0x33:	{	setb(buffer, 44);	break;	}	//","
+	 		case 0x34:	{	setb(buffer, 46);	break;	}	//"."
+			case 0x35:	{	setb(buffer, 47);	break;	}	//"/"
+			case 0x39:	{	setb(buffer, 32);	break;	}	//" "
+	 		case 0x0E:	{	
+	 						backspace(buffer, line_count);
+	 						if(limit >= 0) limit = limit-2; else limit = 77;
+	 						if(line_count >= 0) line_count = line_count - 2; else limit = -1;
+	 						break;	
+	 					}
+	 		case 0x1C:	{	
+	 						new_line(buffer);	
+							clear_buf_line(buffer);	
+							limit = -1;
+							line_count = -1;
+							break;	
+						}
+	 		default:	{
+							if(limit >= 0) limit--;
+							else limit = 78;
+							if(line_count >= 0) line_count--; else limit = -1;
+						}
+		}
+	}
+	else if(shift && line_flag)
+	{
+		switch(to_print)									//check which button was pressed on the keyboard
+		{
+				/*	checking numbers	*/		
+		case 0x02:	{	setb(buffer, 33);	break;	}	//"!"
+		case 0x03:	{	setb(buffer, 64);	break;	}	//"@"
+		case 0x04:	{	setb(buffer, 35);	break;	}	//"#"		
+		case 0x05:	{	setb(buffer, 36);	break;	}	//"$"
+		case 0x06:	{	setb(buffer, 37);	break;	}	//"%"
+		case 0x07:	{	setb(buffer, 94);	break;	}	//"^"
+		case 0x08:	{	setb(buffer, 38);	break;	}	//"&"
+		case 0x09:	{	setb(buffer, 42);	break;	}	//"*"
+		case 0x0A:	{	setb(buffer, 40);	break;	}	//"("
+		case 0x0B:	{	setb(buffer, 41);	break;	}	//")"
+	/*	checking letters	*/	
+
+		case 0x1E:	{	setb(buffer,  97 - offset);		break;	}						
+		case 0x30:	{	setb(buffer,  98 - offset);		break;	}
+		case 0x2E:	{	setb(buffer,  99 - offset);		break;	}
+		case 0x20:	{	setb(buffer,  100 - offset);	break;	}
+		case 0x12:	{	setb(buffer,  101 - offset);	break;	}
+		case 0x21:	{	setb(buffer,  102 - offset);	break;	}
+		case 0x22:	{	setb(buffer,  103 - offset);	break;	}
+		case 0x23:	{	setb(buffer,  104 - offset);	break;	}
+		case 0x17:	{	setb(buffer,  105 - offset);	break;	}				
+		case 0x24:	{	setb(buffer,  106 - offset);	break;	}
+		case 0x25:	{	setb(buffer,  107 - offset);	break;	}
+		case 0x26:	{	setb(buffer,  108 - offset);	break;	}
+		case 0x32:	{	setb(buffer,  109 - offset);	break;	}
+		case 0x31:	{	setb(buffer,  110 - offset);	break;	}
+		case 0x18:	{	setb(buffer,  111 - offset);	break;	}
+		case 0x19:	{	setb(buffer,  112 - offset);	break;	}
+		case 0x10:	{	setb(buffer,  113 - offset);	break;	}
+		case 0x13:	{	setb(buffer,  114 - offset);	break;	}		
+		case 0x1F:	{	setb(buffer,  115 - offset);	break;	}				
+		case 0x14:	{	setb(buffer,  116 - offset);	break;	}
+		case 0x16:	{	setb(buffer,  117 - offset);	break;	}
+		case 0x2F:	{	setb(buffer,  118 - offset);	break;	}
+		case 0x11:	{	setb(buffer,  119 - offset);	break;	}
+		case 0x2D:	{	setb(buffer,  120 - offset);	break;	}
+		case 0x15:	{	setb(buffer,  121 - offset);	break;	}
+		case 0x2C:	{	setb(buffer,  122 - offset);	break;	}	
+
+/*	checking special characters	*/	
+ 		case 0x0C:	{	setb(buffer, 95);	break;	}	//"_"
+ 		case 0x0D:	{	setb(buffer, 43);	break;	}	//"+"
+ 		case 0x1A:	{	setb(buffer, 123);	break;	}	//"{"
+ 		case 0x1B:	{	setb(buffer, 125);	break;	}	//"}"
+ 		case 0x27:	{	setb(buffer, 58);	break;	}	//":"
+ 		case 0x28:	{	setb(buffer, 34);	break;	}
+ 		case 0x29:	{	setb(buffer, 126);	break;	}	//"~"
+ 		case 0x2B:	{	setb(buffer, 124);	break;	}	//"|"
+ 		case 0x33:	{	setb(buffer, 60);	break;	}	//"<"
+ 		case 0x34:	{	setb(buffer, 62);	break;	}	//">"
+		case 0x35:	{	setb(buffer, 63);	break;	}	//"?"
+		case 0x39:	{	setb(buffer, 32);	break;	}	//" "
+		case 0x0E:	{	
+	 					backspace(buffer, line_count);
+	 					if(limit >= 0) limit = limit-2; else limit = 77;
+	 					if(line_count >= 0) line_count = line_count - 2; else limit = -1;
+	 					break;	
+	 				}
+		case 0x1C:	{	
+						new_line(buffer);
+						clear_buf_line(buffer);	
+						limit = -1;
+						line_count = -1;
+						break;	}
+		default:	{
+						if(limit >= 0) limit--;
+						else limit = 78;
+						if(line_count >= 0) line_count--; else limit = -1;
+					}
+				
+		}
+	}
+
+	else		// FULLY FILLED COMMAND LINE BUFFER
+	{
+		switch(to_print)
+		{
+			case 0x0E:	{	
+	 					backspace(buffer, line_count);
+	 					if(limit >= 0) limit = limit-1;
+	 					if(line_count >= 0) line_count = line_count - 1;
+	 					break;	
+	 					}
+			case 0x1C:	{	
+						new_line(buffer);
+						clear_buf_line(buffer);	
+						limit = 0;
+						line_count = 0;
+						break;	
+						}
+			default:	{
+						
+					}
+		}
+	}
+
+	if(line_flag)
+	{
+		limit++;
+		line_count++;
+	}
+
+	if(limit == 80)
+	{
+		new_line(buffer);
+		clear_buf_line(buffer);
+		limit = 0;
+	}
+
+	done:
+		return;
 //	index++;
 //	if(index == 81)
-	send_eoi(1);										//inform when finished handling interrupt
-	enable_irq(1);										//unmask so that new interrupts can be taken care of
+											//inform when finished handling interrupt
+	//enable_irq(1);										//unmask so that new interrupts can be taken care of
 }
 
+node* pass_buff()
+{
+	return buffer;
+}
 
+int pass_count()
+{
+	return line_count;
+}
 
 /* Dummy Interrupt handler */
 /********************************************************

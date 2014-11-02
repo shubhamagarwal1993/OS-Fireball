@@ -30,6 +30,21 @@ clear(void)
     }
 }
 
+void
+clear_line()
+{
+	int i = 0;
+	int index = 0;
+	if(screen_y != NUM_ROWS)
+		index = (NUM_COLS)*(screen_y);
+	else{screen_x = 0;}
+	for(i = index; i < index + NUM_COLS; i++)
+	{
+		*(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;	
+	}
+}
+
 /*
 * void clear_blue(void);
 *   Inputs: void
@@ -44,6 +59,23 @@ clear_blue(void)
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_BLUE;
     }
+}
+
+void
+reset_scr()
+{
+	clear();
+	screen_x = 0;
+	screen_y = 0;
+}
+
+void print_helper(char input, int x, int y)
+{
+	screen_x = x;
+	screen_y = y;
+	if(input != '\n')
+		printf("%c", input);
+	
 }
 
 /* Standard printf().
