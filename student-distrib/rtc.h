@@ -7,6 +7,15 @@
 
 extern void rtc_int_handler();
 
+<<<<<<< .mine
+
+int32_t rtc_open();
+int32_t rtc_read();
+int32_t rtc_write(uint32_t frequency);
+int32_t ece391_close();
+
+
+=======
 
 int32_t rtc_open();
 int32_t rtc_read();
@@ -21,6 +30,7 @@ int32_t ece391_close(int32_t fd);
 extern void test_rtc();
 extern void disable_rtc_test();
 
+>>>>>>> .r15203
 //#endif	/* ASM */
 
 #endif /* _rtc_H */

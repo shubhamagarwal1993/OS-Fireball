@@ -7,7 +7,24 @@ static inode_t* index_nodes;
 static data_block_t* data_blocks;
 
 
+<<<<<<< .mine
+static bootblock_t* boot_block;
+static inode * index_nodes;
+static dentry_t temp_dentry;
+static data_block data_blocks;
+
+
+
+
+
+
+
+
+
+void init_filesys(const uint32_t *bootblockptr)
+=======
 void init_filesys(const uint8_t *bootblockptr)
+>>>>>>> .r15203
 {
 	boot_block = (bootblock_t*)bootblockptr;
 	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);
@@ -27,13 +44,33 @@ void init_filesys(const uint8_t *bootblockptr)
 *	Function: Should check for file existance and copy to dentry 	*
 ********************************************************************/
 
+<<<<<<< .mine
+	// Test read_dentry_by_index
+
+	//ret_val = read_dentry_by_index(27, &blank);
+
+
+	//Test read_dentry_by_name
+	ret_val = read_dentry_by_name(name, &blank);
+	
+
+=======
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 {
+>>>>>>> .r15203
 	int i;
 
+<<<<<<< .mine
+	printf("Blank: ");
+	for(i = 0; i < strlen((int8_t*)name); i++)
+	printf("%c", blank.file_name[i]);
+	printf("\n");
+	
+=======
 	// Check for invalid pointers
 	if(fname == NULL)
 		return -1;
+>>>>>>> .r15203
 
 	if(dentry == NULL)
 		return -1;
@@ -55,6 +92,12 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 		if(entry_name_len > 31)
 			entry_name_len = 31;
 
+<<<<<<< .mine
+		if(typed_len > 32)
+			typed_len = 32;
+
+=======
+>>>>>>> .r15203
 		if(entry_name_len != typed_len)
 			continue;
 
@@ -147,9 +190,16 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 		if( (cur_data_block >= boot_block->num_data_blocks) || (cur_data_block < 0) )
 			return -1;
 
+<<<<<<< .mine
+		if(index != temp_index)
+			continue;
+
+		else						// Copy directory entry
+=======
 		// Find a pointer to the current data and copy_len for this block
 		data_start = (uint8_t*)(data_blocks + cur_data_block);
 		if(i == 0)
+>>>>>>> .r15203
 		{
 			data_start += (offset % BLOCKSIZE);
 			copy_len = ( (BLOCKSIZE - (offset % BLOCKSIZE)) < length )
@@ -239,11 +289,52 @@ uint32_t file_open()
 
 uint32_t file_read(const uint8_t* fname, uint32_t offset, uint8_t* buf, uint32_t length)
 {
+<<<<<<< .mine
+	//check if less than 0 and greater than max
+	if((inode < 0) || (inode >= boot_block->num_inodes))
+		return -1;
+=======
 	dentry_t* dentry;
 	read_dentry_by_name(fname, dentry);
 	return read_data((dentry->inode_num), offset, buf, length);
 }
+>>>>>>> .r15203
 
+<<<<<<< .mine
+	int valid_inode = 0;
+	int i;
+	uint32_t temp_inode;
+
+	// temp_inode = inode.data_blocks[];
+
+
+
+	// for(i = 0; i < boot_block->num_inodes; i++)
+	// {
+	// 	temp_index = boot_block->dir_entries[i].inode_num;
+
+	// 	if(index != temp_index)
+	// 		continue;
+	// 	else						// Copy directory entry
+	// 	{
+	// 		int j;
+	// 		for(j = 0; j < 32; j++)
+	// 			dentry->file_name[j] = boot_block->dir_entries[i].file_name[j];
+			
+	// 			dentry->file_type = boot_block->dir_entries[i].file_type;
+		 		
+	// 	 		// Copy reserved bytes
+	// 		for(j = 0; j < 24; j++)
+	// 			dentry->reserved[j] = boot_block->dir_entries[i].reserved[j];	
+
+	// 		valid_inode = 1;
+	// 	}	
+
+	// }	
+
+	// if(valid_inode == 0)
+	// 	return -1;
+=======
 uint32_t file_write()
 {
 	return -1;
@@ -251,6 +342,7 @@ uint32_t file_write()
 
 uint32_t file_close()
 {
+>>>>>>> .r15203
 	return 0;
 }
 

@@ -4,10 +4,14 @@
 #include "keyboard.h"
 
 
+<<<<<<< .mine
+volatile int32_t interrupt_number = 0;
+=======
 volatile int32_t interrupt_number = 0;
 int test_flag = 1;
 
 //int interrupt_number = 0;
+>>>>>>> .r15203
 /* RTC Interrupt handler */
 /********************************************************
 void													*
@@ -31,7 +35,24 @@ void rtc_int_handler()
 	enable_irq(8);
 }
 
+int32_t rtc_open()
+{	printf("inside rtc_open\n");
+	//init RTC to 2Hz. Then return 0 - should i write the rate as in i8259.c again or is that sufficient
+	int rate = 0xF;									// rate must be above 2 and not over 15
+	disable_irq(8);
+	outb(0x8A, 0x70);								// set index to register A, disable NMI
+	char prev = inb(0x71);							// get initial value of register A
+	outb(0x8A, 0x70);								// reset index to A
+	outb((prev & 0xF0) | rate, 0x71); 				//write only our rate to A. Note, rate is the bottom 4 bits.
 
+<<<<<<< .mine
+	outb(0x8B, 0x70);								// select register B, and disable NMI
+	prev = inb(0x71);								// read the current value of register B
+	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
+	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
+	enable_irq(8);									//the offset of the RTC is IRQ1	
+	printf("finished rtc_open\n");
+=======
 void test_rtc()
 {
 	if(interrupt_number > 20)
@@ -214,40 +235,67 @@ int32_t ece391_open(const uint8_t* filename)
 	// popl %eax;
 
 	// movl $0, %eax 				;return 0
+>>>>>>> .r15203
 	return 0;	
 }
 
-int32_t ece391_read(int32_t fd, void* buf, int32_t nbytes)
-{
+int32_t rtc_read()
+{	printf("inside rtc_read\n");
 	//For RTC, this call should always return 0, but only after an interrupt has occurred.
 	//set a flag and wait until the interrupt handler clears it then return 0
-
 	while(1)
 	{
 		if(interrupt_number > 0)
 		break;	
 	} 
 	interrupt_number = 0;
+	printf("finished rtc_read\n");
 	return 0;
 }
 
-int32_t ece391_write(int32_t fd, const void* buf, int32_t nbytes)
-{
-// The write system call writes data to the terminal or to a device (RTC). In the case of the terminal, all data should
-// 	be displayed to the screen immediately. In the case of the RTC, the system call should always accept only a 4-byte
-// 		integer specifying the interrupt rate in Hz, and should set the rate of periodic interrupts accordingly. Writes to regular
-// 			files should always return -1 to indicate failure since the file system is read-only. The call returns the number of bytes
-// 				written, or -1 on failure.
+int32_t rtc_write(uint32_t frequency)
+{	printf("inside rtc_write\n");
+//In the case of the RTC, the system call should always accept only a 4-byte
+// 		integer specifying the interrupt rate in Hz, and should set the rate of periodic interrupts accordingly.
+	int rate = 2;							// rate must be above 2 and not over 15
+	while(frequency != 32768 >> (rate-1))
+	{
+		rate++;
+	}
+	printf(" Rate is %d", rate);
+ 
+	disable_irq(8);
+	outb(0x8A, 0x70);								// set index to register A, disable NMI
+	char prev = inb(0x71);							// get initial value of register A
+	outb(0x8A, 0x70);								// reset index to A
+	outb((prev & 0xF0) | rate, 0x71); 				//write only our rate to A. Note, rate is the bottom 4 bits.
 
+	outb(0x8B, 0x70);								// select register B, and disable NMI
+	prev = inb(0x71);								// read the current value of register B
+	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
+	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
+	enable_irq(8);									//the offset of the RTC is IRQ1
+	printf("finished rtc_write\n");
 	return 0;
 }
 
-int32_t ece391_close(int32_t fd)
-{
+int32_t rtc_close()
+{	printf("inside rtc_close\n");
 // The close system call closes the specified file descriptor and makes it available for return from later calls to open.
 // 	You should not allow the user to close the default descriptors (0 for input and 1 for output). Trying to close an invalid
 // 		descriptor should result in a return value of -1; successful closes should return 0.
+	int rate = 0xF;									// rate must be above 2 and not over 15
+	disable_irq(8);
+	outb(0x8A, 0x70);								// set index to register A, disable NMI
+	char prev = inb(0x71);							// get initial value of register A
+	outb(0x8A, 0x70);								// reset index to A
+	outb((prev & 0xF0) | rate, 0x71); 				//write only our rate to A. Note, rate is the bottom 4 bits.
+
+	outb(0x8B, 0x70);								// select register B, and disable NMI
+	prev = inb(0x71);								// read the current value of register B
+	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
+	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
+	enable_irq(8);									//the offset of the RTC is IRQ1	
+	printf("finished rtc_close\n");	
 	return 0;
 }
-//how the RTC works and what the device driver needs to do to communicate with it.
-//Virtualizing the RTC is not required, but does make testing easier when you run multiple programs with the RTC open.
