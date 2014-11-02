@@ -18,6 +18,8 @@ int32_t ece391_read(int32_t fd, void* buf, int32_t nbytes);
 int32_t ece391_write(int32_t fd, const void* buf, int32_t nbytes);
 int32_t ece391_close(int32_t fd);
 
+extern void test_rtc();
+
 //#endif	/* ASM */
 
 #endif /* _rtc_H */

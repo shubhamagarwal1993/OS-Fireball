@@ -124,6 +124,7 @@ int pass_y()
 {
 	return buf_y;
 }
+
 /*
 void buf_main()
 {

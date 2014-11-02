@@ -2,25 +2,21 @@
 #include "keyboard.h"
 #include "lib.h"
 #include "buffer.h"
+#include "i8259.h"
 
-int test_count = 0;
+// /int test_count = 0;
 
-void init_terminal()
+void terminal_open(int key)
 {
-	//printf("Hello");
-	
-}
-
-void terminal_open()
-{
-	node* buf = pass_buff();	
-	//terminal_open(buf);
-	terminal_write(buf, test_count);
+	node* buf = pass_buff();
+	terminal_write(buf, 1, key);
 }
 
 char* terminal_read(node* buf, int counter)
 {
-	char output[counter];
+	char* output;
+	char out[counter];
+	char * fault = "Invalid read";
 	int y = pass_y();
 	int line_count = pass_count();
 	
@@ -34,16 +30,24 @@ char* terminal_read(node* buf, int counter)
 	{
 		for(i = index; i < index+counter; i++)
 		{
-			output[i-index] = buf[i].mo;
+			out[i-index] = buf[i].mo;
 		}
+		output = out;
 	}
-	else output[0] = "f";
+	else 
+	{
+		output = fault;
+	}
 	return output;
 }
 
-int32_t terminal_write(node* buf, int counter)
+int32_t terminal_write(node* buf, int counter, int key)
 {
-	printb(buf);
+	int test_count = pass_count();
+	//char* test = "lol, yiss!";
+	//if(test_count == 50) cout(test);
+	if( (test_count % counter == 0) || (key == 0x1C) || (key == 0x0E))
+		printb(buf);
 	/*char* data;
 	char* output;
 	data = terminal_read(buf, 128);
@@ -67,24 +71,28 @@ int terminal_close()
 	return 0;
 }
 
-void test_read_write(node* buf)
+void test_read_write(node* buf, int key)
 {
 	//printf(" Hi");
-	if(test_count != 128)
-		terminal_write(buf, test_count);
+	int test_count = pass_count();
+	if(test_count != 127)
+		terminal_write(buf, test_count, key);
 	//	printb(buf);
 	else
 	{
-		char* halwai = terminal_read(buf, 100);
-		reset_buf(buf);
+		disable_irq(1);
+		char* halwai = terminal_read(buf, 0);
+		//reset_buf(buf);
 		int i = 0;
-		for(i = 0; i < 100; i++)
+		for(i = 0; i < 82; i++)
 		{
+			if (i == 0)
+				new_line(buf);
 			setb(buf, halwai[i]);
 			if (i == 79)
 				new_line(buf);
 		}
-		
+		// new_line(buf);
 		printb(buf);
 	}
 	test_count++;

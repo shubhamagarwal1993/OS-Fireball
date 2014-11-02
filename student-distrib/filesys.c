@@ -1,5 +1,6 @@
 #include "filesys.h"
 #include "lib.h"
+#include "keyboard.h"
 
 static bootblock_t* boot_block;
 static inode_t* index_nodes;
@@ -151,14 +152,14 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 
 void test_filesys()
 {
-	clear();
+	//clear();
 
 	// Print filesystem data
-	/*
 	printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", 
 			boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
 	printf("boot block address: 0x%x\nindex nodes address: 0x%x\ndata blocks address: 0x%x\n", 
 			boot_block, index_nodes, data_blocks);
+	/*
 	*/
 
 	// Test read_dentry_by_name
@@ -175,6 +176,7 @@ void test_filesys()
 	*/
 
 	// Print filled dentry (read_dentry_by_name or read_dentry_by_index)
+	//printf("Filled dentry: \n");
 	/*
 	int i;
 	printf("Filled dentry: \n");

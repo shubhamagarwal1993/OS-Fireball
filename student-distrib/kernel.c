@@ -161,7 +161,7 @@ entry (unsigned long magic, unsigned long addr)
 		tss.esp0 = 0x800000;
 		ltr(KERNEL_TSS);
 	}
-
+	reset_scr();
 	/* Init the PIC */
 	i8259_init();
 
@@ -186,10 +186,11 @@ entry (unsigned long magic, unsigned long addr)
 	//printf("Enabling Interrupts\n");
 	sti();
 	
-	// rtc_open();
-	// rtc_read();
-	// reset_scr();
-
+	rtc_open();
+	rtc_read();
+	test_filesys();
+	// test_rtc();
+	//reset_scr();
 	//node* buf = pass_buff();
 	//test_read_write(buf);
 	/* Execute the first program (`shell') ... */

@@ -23,10 +23,19 @@ void rtc_int_handler()
 	//test_interrupts();									//calls function that writes video memory to screen.
 	interrupt_number++;
 	interrupt_number++;
+	//test_rtc();
 	send_eoi(8);
 	outb(0x0C, 0x70);									// select register C
 	inb(0x71);											// just throw away contents
 	enable_irq(8);
+}
+
+
+void test_rtc()
+{
+	if(interrupt_number > 20)
+		rtc_write(64);
+	printf("%d", interrupt_number);
 }
 
 int32_t rtc_open()
@@ -49,7 +58,7 @@ int32_t rtc_open()
 }
 
 int32_t rtc_read()
-{	printf("inside rtc_read\n");
+{	//printf("inside rtc_read\n");
 	//For RTC, this call should always return 0, but only after an interrupt has occurred.
 	//set a flag and wait until the interrupt handler clears it then return 0
 	while(1)
@@ -58,12 +67,12 @@ int32_t rtc_read()
 		break;	
 	} 
 	interrupt_number = 0;
-	printf("finished rtc_read\n");
+	//printf("finished rtc_read\n");
 	return 0;
 }
 
 int32_t rtc_write(uint32_t frequency)
-{	printf("inside rtc_write\n");
+{	//printf("inside rtc_write\n");
 //In the case of the RTC, the system call should always accept only a 4-byte
 // 		integer specifying the interrupt rate in Hz, and should set the rate of periodic interrupts accordingly.
 	int rate = 2;							// rate must be above 2 and not over 15
@@ -71,7 +80,7 @@ int32_t rtc_write(uint32_t frequency)
 	{
 		rate++;
 	}
-	printf(" Rate is %d", rate);
+	//printf(" Rate is %d", rate);
  
 	disable_irq(8);
 	outb(0x8A, 0x70);								// set index to register A, disable NMI
@@ -84,7 +93,7 @@ int32_t rtc_write(uint32_t frequency)
 	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
 	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
 	enable_irq(8);									//the offset of the RTC is IRQ1
-	printf("finished rtc_write\n");
+	//printf("finished rtc_write\n");
 	return 0;
 }
 

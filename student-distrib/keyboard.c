@@ -26,7 +26,10 @@ int line_count = 0;
 void kbd_int_handler()
 {
 	if(reset_flag == 0)
+	{
+		reset_scr();
 		reset_buf(buffer);
+	}
 	reset_flag = 1;
 
 	int to_print;										//disable line so we can complete this before handling some other interrupt 	
@@ -35,8 +38,9 @@ void kbd_int_handler()
 	//printb(buffer);
 	//init_terminal();
 	
-	terminal_open();
-	//test_read_write(buffer);
+	//test_filesys();
+	//terminal_open(to_print);
+	test_read_write(buffer, to_print);
 	
 	send_eoi(1);
 }
@@ -304,6 +308,22 @@ node* pass_buff()
 int pass_count()
 {
 	return line_count;
+}
+
+void cout(char *input)
+{
+	int len = strlen(input);
+	int i = 0;
+	new_line(buffer);
+	for(i = 0; i < len; i++)
+	{
+		setb(buffer, input[i]);
+		if(input[i] == '\n')
+			new_line(buffer);
+	}
+	new_line(buffer);
+	limit = 0;
+	line_count = 0;
 }
 
 /* Dummy Interrupt handler */

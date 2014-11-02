@@ -16,6 +16,10 @@ extern node* pass_buff();
 
 extern int pass_count();
 
+extern void extern_print(char *input);
+
+extern void cout(char *input);
+
 extern void dummy_int_handler();
 
 #endif	/* ASM */
