@@ -1,7 +1,6 @@
 boot.o: boot.S multiboot.h x86_desc.h types.h
 wrapper.o: wrapper.S wrapper.h keyboard.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
-x86_paging.o: x86_paging.S paging.h types.h
 buffer.o: buffer.c buffer.h lib.h types.h keyboard.h wrapper.h i8259.h
 filesys.o: filesys.c filesys.h types.h lib.h
 i8259.o: i8259.c i8259.h types.h lib.h

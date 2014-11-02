@@ -5,76 +5,31 @@ static bootblock_t* boot_block;
 static inode_t* index_nodes;
 static data_block_t* data_blocks;
 
-//static dentry_t temp_dentry;
 
 void init_filesys(const uint8_t *bootblockptr)
 {
-	clear();
-	printf("init file system\n");
-
 	boot_block = (bootblock_t*)bootblockptr;
 	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);
 	data_blocks = (data_block_t*)(bootblockptr + (BLOCKSIZE * (boot_block->num_inodes + 1))); 
 
-	// printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
-	// printf("boot block address: 0x%x\nindex nodes address: 0x%x\ndata blocks address: 0x%x\n", boot_block, index_nodes, data_blocks);
-
-	// uint8_t name[32] = "hello";
-	// dentry_t blank;
-	int32_t ret_val = -1;
-
-	// Test read_dentry_by_name
-	/*
-	ret_val = read_dentry_by_name(name, &blank);
-
-	int i;
-	printf("Name: ");
-	for(i = 0; i < strlen((int8_t*)name); i++)
-	printf("%c", name[i]);
-	printf("\n");
-
-	printf("Blank: ");
-	for(i = 0; i < strlen((int8_t*)name); i++)
-	printf("%c", blank.file_name[i]);
-	printf("\n");
-	*/
-
-	// Test read_dentry_by_index
-	/*
-	ret_val = read_dentry_by_index(27, &blank);
-	*/
-
-	// Test read_data
-	/*
-	uint8_t buf[400] = { 0 };
-	ret_val = read_data(15, 0, buf, 400);
-	int i;
-	printf("\n");
-	for(i = 0; i < 400; i++)
-		printf("%c", buf[i]);
-	printf("\n");
-	*/
-
-	// Print return value
-	// printf("Return value = %d\n", ret_val);
+	//test_filesys();
 
 }
 
-void fopen()
-{
-	return;
-}
-
-
-void fclose()
-{
-	return;
-}
 
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 {
 	int i;
+
+	// Check for invalid pointers
+	if(fname == NULL)
+		return -1;
+
+	if(dentry == NULL)
+		return -1;
+
+
 	uint32_t typed_len = strlen((int8_t*)fname);
 
 	for(i = 0; i < boot_block->num_dir_entries; i++)
@@ -109,49 +64,34 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 		return 0;
 	}
 
+	// is not on the file system
 	return -1;		
 
 }
 
 
-//fill dentry(second arg) with the file name, file type, and inode number for the file, then return 0. 
+
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 {
-	//check if less than 0 and greater than max
-	if((index < 0) || (index >= boot_block->num_inodes))
+	// Check for invalid index
+	if(index >= boot_block->num_dir_entries)
 		return -1;
 
-	int valid_inode = 0;
-	int i;
-	uint32_t temp_index;
+	dentry_t* cur_entry = &(boot_block->dir_entries[index]);
 
-	for(i = 0; i < boot_block->num_inodes; i++)
-	{
-		temp_index = boot_block->dir_entries[i].inode_num;
+	// Copy the directory entry
+	strncpy((int8_t*)dentry->file_name, (int8_t*)cur_entry->file_name, 32);
+	dentry->file_type = cur_entry->file_type;
+	dentry->inode_num = cur_entry->inode_num;
+	// Copy reserved bytes
+	int j;
+	for(j = 0; j < 24; j++)
+		dentry->reserved[j] = cur_entry->reserved[j];
 
-		if(index != temp_index)
-			continue;
-		else						// Copy directory entry
-		{
-			int j;
-			for(j = 0; j < 32; j++)
-				dentry->file_name[j] = boot_block->dir_entries[i].file_name[j];
-			
-				dentry->file_type = boot_block->dir_entries[i].file_type;
-		 		
-		 		// Copy reserved bytes
-			for(j = 0; j < 24; j++)
-				dentry->reserved[j] = boot_block->dir_entries[i].reserved[j];	
-
-			valid_inode = 1;
-		}	
-
-	}	
-
-	if(valid_inode == 0)
-		return -1;
 	return 0;
 }
+
+
 
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length)
 {
@@ -208,3 +148,60 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 
 	return copied;
 }
+
+void test_filesys()
+{
+	clear();
+
+	// Print filesystem data
+	/*
+	printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", 
+			boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
+	printf("boot block address: 0x%x\nindex nodes address: 0x%x\ndata blocks address: 0x%x\n", 
+			boot_block, index_nodes, data_blocks);
+	*/
+
+	// Test read_dentry_by_name
+	/*
+	dentry_t dentry;
+	uint8_t name[33] = "hello";
+	printf("Return value = %d\n", read_dentry_by_name(name, &dentry));
+	*/
+
+	// Test read_dentry_by_index
+	/*
+	dentry_t dentry;
+	printf("Return value = %d\n", read_dentry_by_index(3, &dentry));
+	*/
+
+	// Print filled dentry (read_dentry_by_name or read_dentry_by_index)
+	/*
+	int i;
+	printf("Filled dentry: \n");
+	printf("Name: %s\n", dentry.file_name);
+	printf("Type: %d\n", dentry.file_type);
+	printf("Inode #: %d\n", dentry.inode_num);
+	printf("Reserved: 0x");
+	for(i = 0; i < 24; i++)
+		printf("%x", dentry.reserved[i]);
+	printf("\n");
+	*/
+
+
+	// Test read_data
+	/*
+	uint8_t buf[6000] = { 0 };
+	printf("Return value = %d\n", read_data(0x10, 000, buf, 6000));
+	int j;
+	for(j = 0; j < 6000; j++)
+		printf("%c", buf[j]);
+	printf("\n");
+	*/
+
+}
+
+
+
+
+
+

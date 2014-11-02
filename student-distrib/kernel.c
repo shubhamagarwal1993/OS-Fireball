@@ -13,7 +13,6 @@
 #include "int_handler.h"
 #include "paging.h"
 #include "terminal.h"
-#include "rtc.h"
 #include "filesys.h"
  
 #define PIC1			0x20		/*IO base address for master PIC*/
@@ -173,20 +172,18 @@ entry (unsigned long magic, unsigned long addr)
 	set_idt();
 
 	init_paging();
-	// test_paging();
-
-	// init_rtc();				
+			
 	init_keyboard();
 	init_rtc();
 	init_filesys(filesystem_address);
 
-	printf("initialization is completed\n");
+	//printf("initialization is completed\n");
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	printf("Enabling Interrupts\n");
+	//printf("Enabling Interrupts\n");
 	sti();
 	
 	rtc_open();
