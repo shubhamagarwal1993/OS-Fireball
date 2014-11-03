@@ -4,6 +4,9 @@
 #include "buffer.h"
 #include "i8259.h"
 
+
+volatile int enter_flag = 0;
+volatile int length = 0;
 /* 
  * terminal_open()
  *   DESCRIPTION: Opens the terminal and allows typing to it
@@ -38,13 +41,21 @@ char* terminal_read(node* buf, int counter)
 	if(line_count >= 80)
 		index = (y-1)*80;
 	else index = y*80;
-
+	if(enter_flag == 1)
+		index = (y-1)*80;
 	int i = 0;
 	if( (counter > 0) && (counter <= 128) )
 	{
 		for(i = index; i < index+counter; i++)
 		{
+			length++; 
 			out[i-index] = buf[i].mo;
+			if(buf[i+1].mo == '\n')
+			{
+				//index = y - 1;
+				output = out;
+				break;
+			}
 		}
 		output = out;
 	}
@@ -113,16 +124,31 @@ void test_read_write(node* buf, int key)
 {
 	//printf(" Hi");
 	int test_count = pass_count();
-	if(test_count != 127)
+	if((test_count != 127)&&(key != 0x1C))
 		terminal_write(buf, test_count, key);
 	//	printb(buf);
 	else
 	{
+		if(key == 0x1C)
+			enter_flag = 1;
 		disable_irq(1);
+		int count = 127;
 		char* halwai = terminal_read(buf, 127);
 		//reset_buf(buf);
+		if(enter_flag)
+			count = length;
 		int i = 0;
-		for(i = 0; i < 127; i++)
+		/*
+		while((i < 127) || (halwai[i] != '\n'))
+		{
+			if (i == 0)
+				new_line(buf);
+			setb(buf, halwai[i]);
+			if (i == 79)
+				new_line(buf);
+			i++;
+		}*/
+		for(i = 0; i < count; i++)
 		{
 			if (i == 0)
 				new_line(buf);
