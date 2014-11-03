@@ -195,7 +195,7 @@ void kbd_logic(int to_print)
 	//case - no shift, no caps lock
 	if(!shift && line_flag)
 	{			
-			if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A))
+			if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A) && (to_print != 0x1D))
 			{
 				int printchar = kbdus[to_print];
 				if(printchar >= 97 && printchar <=122)
@@ -231,7 +231,7 @@ void kbd_logic(int to_print)
 	{
 		
 		
-		if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A))
+		if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A) && (to_print != 0x1D))
 		{
 			int printchar = kbdus_shift[to_print];
 			if(printchar >= 65 && printchar <=90)
