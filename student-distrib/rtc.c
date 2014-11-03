@@ -30,6 +30,15 @@ void rtc_int_handler()
 	enable_irq(8);
 }
 
+/*	This is just for testing the RTC & shows up initially before typing	*/
+/********************************************************
+void													*
+test_rtc()												*	
+*	Inputs:			void								*
+*	Outputs:		writes rtc output to screen  	 	*
+*	Return Value:	void								*
+*	Function: Should execute test_interrupts handler	*
+********************************************************/
 void test_rtc()
 {
 	if(interrupt_number > 20)

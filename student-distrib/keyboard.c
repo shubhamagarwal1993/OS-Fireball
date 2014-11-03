@@ -3,12 +3,91 @@
 #include "buffer.h"
 #include "terminal.h"
 
-/*
-	LOLWUT EDGE CASE
-	When you are holding backspace and you go from 79 to 78 on the x position i.e - 79-78 on the buffer, when you start typing again, you type on the same line, and overwrite the
-	old values. Basically new_line does not get called when you start typing after holding down backspace and you delete beyond 78
+/* KBDUS means US Keyboard Layout. This is a scancode table
+*  used to layout a standard US keyboard. I have left some
+*  comments in to give you an idea of what key is what, even
+*  though I set it's array index to 0. You can change that to
+*  whatever you want using a macro, if you wish! */
+unsigned char kbdus[128] =
+{
+    0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
+  '9', '0', '-', '=', '\b',	/* Backspace */
+  '\t',			/* Tab */
+  'q', 'w', 'e', 'r',	/* 19 */
+  't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',	/* Enter key */
+    0,			/* 29   - Control */
+  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',	/* 39 */
+ '\'', '`',   0,		/* Left shift */
+ '\\', 'z', 'x', 'c', 'v', 'b', 'n',			/* 49 */
+  'm', ',', '.', '/',   0,				/* Right shift */
+  '*',
+    0,	/* Alt */
+  ' ',	/* Space bar */
+    0,	/* Caps lock */
+    0,	/* 59 - F1 key ... > */
+    0,   0,   0,   0,   0,   0,   0,   0,
+    0,	/* < ... F10 */
+    0,	/* 69 - Num lock*/
+    0,	/* Scroll Lock */
+    0,	/* Home key */
+    0,	/* Up Arrow */
+    0,	/* Page Up */
+  '-',
+    0,	/* Left Arrow */
+    0,
+    0,	/* Right Arrow */
+  '+',
+    0,	/* 79 - End key*/
+    0,	/* Down Arrow */
+    0,	/* Page Down */
+    0,	/* Insert Key */
+    0,	/* Delete Key */
+    0,   0,   0,
+    0,	/* F11 Key */
+    0,	/* F12 Key */
+    0,	/* All other keys are undefined */
+};	
 
-*/
+unsigned char kbdus_shift[128] =
+{
+    0,  27, '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
+  '(', ')', '_', '+', '\b',	/* Backspace */
+  '\t',			/* Tab */
+  'Q', 'W', 'E', 'R',	/* 19 */
+  'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',	/* Enter key */
+    0,			/* 29   - Control */
+  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',	/* 39 */
+ '\"', '~',   0,		/* Left shift */
+ '|', 'Z', 'X', 'C', 'V', 'B', 'N',			/* 49 */
+  'M', '<', '>', '?',   0,				/* Right shift */
+  '*',
+    0,	/* Alt */
+  ' ',	/* Space bar */
+    0,	/* Caps lock */
+    0,	/* 59 - F1 key ... > */
+    0,   0,   0,   0,   0,   0,   0,   0,
+    0,	/* < ... F10 */
+    0,	/* 69 - Num lock*/
+    0,	/* Scroll Lock */
+    0,	/* Home key */
+    0,	/* Up Arrow */
+    0,	/* Page Up */
+  '-',
+    0,	/* Left Arrow */
+    0,
+    0,	/* Right Arrow */
+  '+',
+    0,	/* 79 - End key*/
+    0,	/* Down Arrow */
+    0,	/* Page Down */
+    0,	/* Insert Key */
+    0,	/* Delete Key */
+    0,   0,   0,
+    0,	/* F11 Key */
+    0,	/* F12 Key */
+    0,	/* All other keys are undefined */
+};	
+
 
 node buffer[NUM_COLS*NUM_ROWS];
 int reset_flag = 0;
@@ -40,8 +119,8 @@ void kbd_int_handler()
 	//init_terminal();
 	
 	//test_filesys();
-	//terminal_open(to_print);
-	test_read_write(buffer, to_print);
+	terminal_open(to_print);
+	//test_read_write(buffer, to_print);
 	
 	send_eoi(1);
 }
@@ -64,14 +143,10 @@ void kbd_logic(int to_print)
 
 	if(to_print == 0x2A || to_print == 0x36)
 		shift = 1;
-	if(shift) offset = 32;
 
 	//shift disabled
 	if(to_print == 0xAA || to_print == 0xB6)
-	{
-		offset = 0;
 		shift = 0;
-	}
 
 	if(to_print == 0x3A)
 	{
@@ -80,21 +155,14 @@ void kbd_logic(int to_print)
 			offset = 32;
 		else offset = 0;
 	}	
-
-	if(shift && (caps_count%2 == 1))
-		offset = 0;
-	else if(!shift && (caps_count%2 == 0))
-		offset = 0;
 	
+	/* control press and release */
 	if(to_print == 0x1D)
-	{
 		ctrl = 1;
-	}
 
 	if(to_print == 0x9D)		
-	{
 		ctrl = 0;
-	}
+
 
 	if(ctrl && (to_print == 0x26))
 	{
@@ -110,155 +178,64 @@ void kbd_logic(int to_print)
 
 	if(!shift && line_flag)
 	{	
-		switch(to_print)									//check which button was pressed on the keyboard
-		{
+
 		/*	checking numbers	*/		
-			case 0x02:	{	setb(buffer, 49);	break;	}	//1
-			case 0x03:	{	setb(buffer, 50);	break;	}	//2
-			case 0x04:	{	setb(buffer, 51);	break;	}	//3		
-			case 0x05:	{	setb(buffer, 52);	break;	}	//4
-			case 0x06:	{	setb(buffer, 53);	break;	}	//5
-			case 0x07:	{	setb(buffer, 54);	break;	}	//6
-			case 0x08:	{	setb(buffer, 55);	break;	}	//7
-			case 0x09:	{	setb(buffer, 56);	break;	}	//8
-			case 0x0A:	{	setb(buffer, 57);	break;	}	//9
-			case 0x0B:	{	setb(buffer, 48);	break;	}	//0
-		
-		/*	checking letters	*/	
-			case 0x1E:	{	setb(buffer, 97 - offset);		break;	}						
-			case 0x30:	{	setb(buffer,  98 - offset);		break;	}
-			case 0x2E:	{	setb(buffer,  99 - offset);		break;	}
-			case 0x20:	{	setb(buffer,  100 - offset);	break;	}
-			case 0x12:	{	setb(buffer,  101 - offset);	break;	}
-			case 0x21:	{	setb(buffer,  102 - offset);	break;	}
-			case 0x22:	{	setb(buffer,  103 - offset);	break;	}
-			case 0x23:	{	setb(buffer,  104 - offset);	break;	}
-			case 0x17:	{	setb(buffer,  105 - offset);	break;	}				
-			case 0x24:	{	setb(buffer,  106 - offset);	break;	}
-			case 0x25:	{	setb(buffer,  107 - offset);	break;	}
-			case 0x26:	{	setb(buffer,  108 - offset);	break;	}
-			case 0x32:	{	setb(buffer,  109 - offset);	break;	}
-			case 0x31:	{	setb(buffer,  110 - offset);	break;	}
-			case 0x18:	{	setb(buffer,  111 - offset);	break;	}
-			case 0x19:	{	setb(buffer,  112 - offset);	break;	}
-			case 0x10:	{	setb(buffer,  113 - offset);	break;	}
-			case 0x13:	{	setb(buffer,  114 - offset);	break;	}		
-			case 0x1F:	{	setb(buffer,  115 - offset);	break;	}				
-			case 0x14:	{	setb(buffer,  116 - offset);	break;	}
-			case 0x16:	{	setb(buffer,  117 - offset);	break;	}
-			case 0x2F:	{	setb(buffer,  118 - offset);	break;	}
-			case 0x11:	{	setb(buffer,  119 - offset);	break;	}
-			case 0x2D:	{	setb(buffer,  120 - offset);	break;	}
-			case 0x15:	{	setb(buffer,  121 - offset);	break;	}
-			case 0x2C:	{	setb(buffer,  122 - offset);	break;	}		
-	/*	checking special characters	*/	
-			case 0x0C:	{	setb(buffer, 45);	break;	}	//"-"
-	 		case 0x0D:	{	setb(buffer, 61);	break;	}	//"="
-	 		case 0x1A:	{	setb(buffer, 91);	break;	}	//"["
-	 		case 0x1B:	{	setb(buffer, 93);	break;	}	//"]"
-	 		case 0x27:	{	setb(buffer, 59);	break;	}	//";"
-	 		case 0x28:	{	setb(buffer, 39);	break;	}	//"'"
-	 		case 0x29:	{	setb(buffer, 96);	break;	}	//"`"
-	 		case 0x2B:	{	setb(buffer, 92);	break;	}	
-	 		case 0x33:	{	setb(buffer, 44);	break;	}	//","
-	 		case 0x34:	{	setb(buffer, 46);	break;	}	//"."
-			case 0x35:	{	setb(buffer, 47);	break;	}	//"/"
-			case 0x39:	{	setb(buffer, 32);	break;	}	//" "
-	 		case 0x0E:	{	
-	 						backspace(buffer, line_count);
-	 						if(limit >= 0) limit = limit-2; else limit = 77;
-	 						if(line_count >= 0) line_count = line_count - 2; else limit = -1;
-	 						break;	
-	 					}
-	 		case 0x1C:	{	
-	 						new_line(buffer);	
-							clear_buf_line(buffer);	
-							limit = -1;
-							line_count = -1;
-							break;	
-						}
-	 		default:	{
-							if(limit >= 0) limit--;
-							else limit = 78;
-							if(line_count >= 0) line_count--; else limit = -1;
-						}
-		}
+			if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A))
+			{
+				int printchar = kbdus[to_print];
+				if(printchar >= 97 && printchar <=122)
+					printchar = printchar - offset;
+				setb(buffer, printchar);
+			}
+	 		else if(to_print == 0x0E)
+	 		{	
+	 			backspace(buffer, line_count);
+	 			if(limit >= 0) limit = limit-2; else limit = 77;
+	 			if(line_count >= 0) line_count = line_count - 2; else limit = -1;
+	 		}
+	 		else if(to_print == 0x1C)
+	 		{	
+	 			new_line(buffer);	
+				clear_buf_line(buffer);	
+				limit = 0;
+				line_count = 0;
+			}
+	 		else
+	 		{
+				if(limit >= 0) limit--;
+				else limit = 78;
+				if(line_count >= 0) line_count--; else limit = -1;
+			}
 	}
 	else if(shift && line_flag)
 	{
-		switch(to_print)									//check which button was pressed on the keyboard
+		
+		
+		if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A))
 		{
-				/*	checking numbers	*/		
-		case 0x02:	{	setb(buffer, 33);	break;	}	//"!"
-		case 0x03:	{	setb(buffer, 64);	break;	}	//"@"
-		case 0x04:	{	setb(buffer, 35);	break;	}	//"#"		
-		case 0x05:	{	setb(buffer, 36);	break;	}	//"$"
-		case 0x06:	{	setb(buffer, 37);	break;	}	//"%"
-		case 0x07:	{	setb(buffer, 94);	break;	}	//"^"
-		case 0x08:	{	setb(buffer, 38);	break;	}	//"&"
-		case 0x09:	{	setb(buffer, 42);	break;	}	//"*"
-		case 0x0A:	{	setb(buffer, 40);	break;	}	//"("
-		case 0x0B:	{	setb(buffer, 41);	break;	}	//")"
-	/*	checking letters	*/	
-
-		case 0x1E:	{	setb(buffer,  97 - offset);		break;	}						
-		case 0x30:	{	setb(buffer,  98 - offset);		break;	}
-		case 0x2E:	{	setb(buffer,  99 - offset);		break;	}
-		case 0x20:	{	setb(buffer,  100 - offset);	break;	}
-		case 0x12:	{	setb(buffer,  101 - offset);	break;	}
-		case 0x21:	{	setb(buffer,  102 - offset);	break;	}
-		case 0x22:	{	setb(buffer,  103 - offset);	break;	}
-		case 0x23:	{	setb(buffer,  104 - offset);	break;	}
-		case 0x17:	{	setb(buffer,  105 - offset);	break;	}				
-		case 0x24:	{	setb(buffer,  106 - offset);	break;	}
-		case 0x25:	{	setb(buffer,  107 - offset);	break;	}
-		case 0x26:	{	setb(buffer,  108 - offset);	break;	}
-		case 0x32:	{	setb(buffer,  109 - offset);	break;	}
-		case 0x31:	{	setb(buffer,  110 - offset);	break;	}
-		case 0x18:	{	setb(buffer,  111 - offset);	break;	}
-		case 0x19:	{	setb(buffer,  112 - offset);	break;	}
-		case 0x10:	{	setb(buffer,  113 - offset);	break;	}
-		case 0x13:	{	setb(buffer,  114 - offset);	break;	}		
-		case 0x1F:	{	setb(buffer,  115 - offset);	break;	}				
-		case 0x14:	{	setb(buffer,  116 - offset);	break;	}
-		case 0x16:	{	setb(buffer,  117 - offset);	break;	}
-		case 0x2F:	{	setb(buffer,  118 - offset);	break;	}
-		case 0x11:	{	setb(buffer,  119 - offset);	break;	}
-		case 0x2D:	{	setb(buffer,  120 - offset);	break;	}
-		case 0x15:	{	setb(buffer,  121 - offset);	break;	}
-		case 0x2C:	{	setb(buffer,  122 - offset);	break;	}	
-
-/*	checking special characters	*/	
- 		case 0x0C:	{	setb(buffer, 95);	break;	}	//"_"
- 		case 0x0D:	{	setb(buffer, 43);	break;	}	//"+"
- 		case 0x1A:	{	setb(buffer, 123);	break;	}	//"{"
- 		case 0x1B:	{	setb(buffer, 125);	break;	}	//"}"
- 		case 0x27:	{	setb(buffer, 58);	break;	}	//":"
- 		case 0x28:	{	setb(buffer, 34);	break;	}
- 		case 0x29:	{	setb(buffer, 126);	break;	}	//"~"
- 		case 0x2B:	{	setb(buffer, 124);	break;	}	//"|"
- 		case 0x33:	{	setb(buffer, 60);	break;	}	//"<"
- 		case 0x34:	{	setb(buffer, 62);	break;	}	//">"
-		case 0x35:	{	setb(buffer, 63);	break;	}	//"?"
-		case 0x39:	{	setb(buffer, 32);	break;	}	//" "
-		case 0x0E:	{	
-	 					backspace(buffer, line_count);
-	 					if(limit >= 0) limit = limit-2; else limit = 77;
-	 					if(line_count >= 0) line_count = line_count - 2; else limit = -1;
-	 					break;	
-	 				}
-		case 0x1C:	{	
-						new_line(buffer);
-						clear_buf_line(buffer);	
-						limit = -1;
-						line_count = -1;
-						break;	}
-		default:	{
-						if(limit >= 0) limit--;
-						else limit = 78;
-						if(line_count >= 0) line_count--; else limit = -1;
-					}
-				
+			int printchar = kbdus_shift[to_print];
+			if(printchar >= 65 && printchar <=90)
+				printchar = printchar + offset;
+			setb(buffer, printchar);
+		}
+	 	else if(to_print == 0x0E)
+	 	{	
+	 		backspace(buffer, line_count);
+	 		if(limit >= 0) limit = limit-2; else limit = 77;
+	 		if(line_count >= 0) line_count = line_count - 2; else limit = -1;
+	 	}
+	 	else if(to_print == 0x1C)
+	 	{	
+	 		new_line(buffer);	
+			clear_buf_line(buffer);	
+			limit = 0;
+			line_count = 0;
+		}
+	 	else
+	 	{
+			if(limit >= 0) limit--;
+			else limit = 78;
+			if(line_count >= 0) line_count--; else limit = -1;
 		}
 	}
 
