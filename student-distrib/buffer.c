@@ -116,7 +116,7 @@ void new_line(node* buf)
 {
 	if(buf_x != NUM_COLS)
 	{	
-		int index = NUM_COLS*(buf_y) + buf_x;
+		//int index = NUM_COLS*(buf_y) + buf_x;
 		//buf[index + 1].mo = '\n'; 
 	}
 	buf_x = 0;

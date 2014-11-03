@@ -204,6 +204,78 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
  */
 void test_filesys()
 {
+	// Test file_read
+	/*
+	*/
+	uint8_t buf[300] = { 0 };
+	uint8_t* bufptr = buf;
+	uint8_t name[33] = "frame1.txt";
+	uint32_t len = 100;
+	int k;
+	
+	printf("Return value: %d\n", file_read(name, bufptr, len));
+	printf("Return value: %d\n", file_read(name, bufptr + len, len));
+	printf("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
+
+	for(k = 0; k < 300; k++)
+		printf("%c", buf[k]);
+	printf("\n");
+
+
+
+	// Test file_read on long file
+	/*
+	uint8_t buf[6000] = { 0 };
+	uint8_t* bufptr = buf;
+	uint8_t name[33] = "verylargetxtwithverylongname.txt";
+	uint32_t len = 500;
+	int k;
+	
+	printf("Return value: %d\n", file_read(name, bufptr, len));
+	printf("Return value: %d\n", file_read(name, bufptr + len, len));
+	printf("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
+
+	for(k = 0; k < (len * 3); k++)
+		printf("%c", buf[k]);
+	printf("\n");
+	*/
+
+
+
+	// Test file_read on non-text file
+	/*
+	uint8_t buf[30] = { 0 };
+	uint8_t* bufptr = buf;
+	uint8_t name[33] = "cat";
+	uint32_t len = 30;
+	int k;
+	
+	printf("Return value: %d\n", file_read(name, bufptr, len));
+
+	for(k = 0; k < 30; k++)
+		printf("%x ", buf[k]);
+	printf("\n");
+	*/
+
+
+
+	// Test dir_read
+	/*
+	int32_t cnt;
+	uint8_t buf2[33];
+	while (0 != (cnt = dir_read (buf2, 32))) {
+        if (-1 == cnt) {
+	        printf("directory entry read failed\n");
+	        break;
+	    }
+	    buf2[cnt] = '\n';
+	    printf("%s\n", buf2);
+    }
+    */
+
+
+    // Lower level testing functions
+
 	//clear();
 
 	// Print filesystem data
@@ -253,38 +325,6 @@ void test_filesys()
 		printf("%c", buf[j]);
 	printf("\n");
 	*/
-
-	// Test file_read
-	/*
-	*/
-	uint8_t buf[300] = { 0 };
-	uint8_t* bufptr = buf;
-	uint8_t name[32] = "frame1.txt";
-	uint32_t len = 100;
-	int k;
-	
-	printf("Return value: %d\n", file_read(name, bufptr, len));
-	printf("Return value: %d\n", file_read(name, bufptr + len, len));
-	printf("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
-
-	for(k = 0; k < 300; k++)
-		printf("%c", buf[k]);
-	printf("\n");
-
-	// Test dir_read
-	/*
-	int32_t cnt;
-	uint8_t buf2[33];
-	while (0 != (cnt = dir_read (buf2, 32))) {
-        if (-1 == cnt) {
-	        printf("directory entry read failed\n");
-	        break;
-	    }
-	    buf2[cnt] = '\n';
-	    printf("%s\n", buf2);
-    }
-    */
-
 }
 
 

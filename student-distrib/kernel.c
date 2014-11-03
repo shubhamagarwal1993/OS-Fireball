@@ -191,6 +191,7 @@ entry (unsigned long magic, unsigned long addr)
 	// test_rtc();
 	//reset_scr();
 
+
 	//node* buf = pass_buff();
 	//test_read_write(buf);
 	/* Execute the first program (`shell') ... */
