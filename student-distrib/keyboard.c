@@ -3,11 +3,10 @@
 #include "buffer.h"
 #include "terminal.h"
 
-/* KBDUS means US Keyboard Layout. This is a scancode table
-*  used to layout a standard US keyboard. I have left some
-*  comments in to give you an idea of what key is what, even
-*  though I set it's array index to 0. You can change that to
-*  whatever you want using a macro, if you wish! */
+/* 
+ * KBDUS means US Keyboard Layout. This is the basic scancode table
+ * used to layout a standard US keyboard. 
+*/
 unsigned char kbdus[128] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -48,6 +47,10 @@ unsigned char kbdus[128] =
     0,	/* All other keys are undefined */
 };	
 
+/* 
+ * KBDUS means US Keyboard Layout. This is the special character
+ * scancode table used to layout a standard US keyboard. 
+*/
 unsigned char kbdus_shift[128] =
 {
     0,  27, '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
@@ -88,20 +91,32 @@ unsigned char kbdus_shift[128] =
     0,	/* All other keys are undefined */
 };	
 
-
+/*
+ * Declaration of buffer and global variables to be used by the functions following.
+*/
 node buffer[NUM_COLS*NUM_ROWS];
-int reset_flag = 0;
+int reset_flag = 0;						//checks whether the screen/buffer needs to be cleared
 
-int caps_count = 0;
-int shift = 0;
-int ctrl = 0;
+int caps_count = 0;						//checks whether the caps lock is on
+int shift = 0;							//checks whether the shift key has been pressed
+int ctrl = 0;							//checks whether the ctrl key has been pressed
+
+//flags and counters used to determine the position of character output on the screen
 int offset = 0;
 int line_flag = 1;
-
 int limit = 0;
 int line_count = 0;
 
-
+/* 
+ * kbd_int_handler()
+ *   DESCRIPTION: This function is called when a keyboard interrupt is generated.
+ *				  It is responsible to call out the required functions with the
+ *				  necessary inputs.
+ *   INPUTS: -- 
+ *   OUTPUTS: --
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: none
+ */
 void kbd_int_handler()
 {
 	if(reset_flag == 0)
@@ -125,29 +140,28 @@ void kbd_int_handler()
 	send_eoi(1);
 }
 
-
-/* Keyboard Interrupt handler */
-/********************************************************
-void													*
-kbd_int_handler()										*	
-*	Inputs:			void								*
-*	Outputs:		prints pressed button on screen 	*
-*	Return Value:	void								*
-*	Function: Prints out character typed to screen		*
-********************************************************/
+/* 
+ * kbd_logic()
+ *   DESCRIPTION: This function is responsible for all the keyboard operations.
+ *				  Basis the input from the keyboard, this function decides the
+ *				  appropriate character to be printed. It also decides the location
+ *				  on the screen where this character needs to be printed.
+ *   INPUTS: the integer signal received from the keyboard interrupt. 
+ *   OUTPUTS: --
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: sets up the buffer that is to be printed to the screen.
+ */
 void kbd_logic(int to_print)
 {
-	//disable_irq(1);										//IRQ line was 1 so we get the port numbers
-									//store received info into char to check with which key was pressed 
-	
-
+	//shift enable - sets flag if shift is currently pressed.
 	if(to_print == 0x2A || to_print == 0x36)
 		shift = 1;
 
-	//shift disabled
+	//shift disabled - clears flag if shift has been released.
 	if(to_print == 0xAA || to_print == 0xB6)
 		shift = 0;
 
+	//caps_lock - sets or clears flag if caps lock is on or off
 	if(to_print == 0x3A)
 	{
 		caps_count++;
@@ -156,14 +170,15 @@ void kbd_logic(int to_print)
 		else offset = 0;
 	}	
 	
-	/* control press and release */
+	//control enable - sets flag if ctrl is currently pressed.
 	if(to_print == 0x1D)
 		ctrl = 1;
 
+	//control disabled - clears flag if ctrl has been released.
 	if(to_print == 0x9D)		
 		ctrl = 0;
 
-
+	//ctrl + L - reset screen if ctrl + L is hit
 	if(ctrl && (to_print == 0x26))
 	{
 		reset_buf(buffer);
@@ -172,14 +187,14 @@ void kbd_logic(int to_print)
 		goto done;
 	}
 
+	//disable typing if a command has hit the 128 character limit
 	if(line_count == 127)
 		line_flag = 0;
 	else line_flag = 1;
 
+	//case - no shift, no caps lock
 	if(!shift && line_flag)
-	{	
-
-		/*	checking numbers	*/		
+	{			
 			if((to_print != 0x0E) && (to_print != 0x1C) && !(to_print & 0x80) && (to_print != 0x2A) && (to_print != 0x36) && (to_print != 0x3A))
 			{
 				int printchar = kbdus[to_print];
@@ -187,12 +202,14 @@ void kbd_logic(int to_print)
 					printchar = printchar - offset;
 				setb(buffer, printchar);
 			}
+			//backspace
 	 		else if(to_print == 0x0E)
 	 		{	
 	 			backspace(buffer, line_count);
 	 			if(limit >= 0) limit = limit-2; else limit = 77;
 	 			if(line_count >= 0) line_count = line_count - 2; else limit = -1;
 	 		}
+	 		//enter
 	 		else if(to_print == 0x1C)
 	 		{	
 	 			new_line(buffer);	
@@ -200,6 +217,7 @@ void kbd_logic(int to_print)
 				limit = 0;
 				line_count = 0;
 			}
+			//default
 	 		else
 	 		{
 				if(limit >= 0) limit--;
@@ -207,6 +225,8 @@ void kbd_logic(int to_print)
 				if(line_count >= 0) line_count--; else limit = -1;
 			}
 	}
+
+	//case - shift, no caps lock
 	else if(shift && line_flag)
 	{
 		
@@ -218,12 +238,14 @@ void kbd_logic(int to_print)
 				printchar = printchar + offset;
 			setb(buffer, printchar);
 		}
+		//backspace
 	 	else if(to_print == 0x0E)
 	 	{	
 	 		backspace(buffer, line_count);
 	 		if(limit >= 0) limit = limit-2; else limit = 77;
 	 		if(line_count >= 0) line_count = line_count - 2; else limit = -1;
 	 	}
+	 	//enter
 	 	else if(to_print == 0x1C)
 	 	{	
 	 		new_line(buffer);	
@@ -231,6 +253,7 @@ void kbd_logic(int to_print)
 			limit = 0;
 			line_count = 0;
 		}
+		//default
 	 	else
 	 	{
 			if(limit >= 0) limit--;
@@ -239,16 +262,19 @@ void kbd_logic(int to_print)
 		}
 	}
 
-	else		// FULLY FILLED COMMAND LINE BUFFER
+	//case - command line is full
+	else
 	{
 		switch(to_print)
 		{
+			//backspace
 			case 0x0E:	{	
 	 					backspace(buffer, line_count);
 	 					if(limit >= 0) limit = limit-1;
 	 					if(line_count >= 0) line_count = line_count - 1;
 	 					break;	
 	 					}
+	 		//enter
 			case 0x1C:	{	
 						new_line(buffer);
 						clear_buf_line(buffer);	
@@ -262,12 +288,14 @@ void kbd_logic(int to_print)
 		}
 	}
 
+	//if typing is allowed
 	if(line_flag)
 	{
 		limit++;
 		line_count++;
 	}
 
+	//case - if screen line limit is hit
 	if(limit == 80)
 	{
 		new_line(buffer);
@@ -277,22 +305,45 @@ void kbd_logic(int to_print)
 
 	done:
 		return;
-//	index++;
-//	if(index == 81)
-											//inform when finished handling interrupt
-	//enable_irq(1);										//unmask so that new interrupts can be taken care of
 }
 
+/* 
+ * pass_buff()
+ *   DESCRIPTION: Helper function. Used to provide other functions
+ * 				  an access to the buffer.
+ *   INPUTS: -- 
+ *   OUTPUTS: the buffer
+ *   RETURN VALUE: node *
+ *   SIDE EFFECTS:
+ */
 node* pass_buff()
 {
 	return buffer;
 }
 
+/* 
+ * pass_count()
+ *   DESCRIPTION: Helper function. Used to provide other functions
+ * 				  an access to current number of characters in the 
+ * 				  current command.
+ *   INPUTS: -- 
+ *   OUTPUTS: the line count
+ *   RETURN VALUE: int
+ *   SIDE EFFECTS:
+ */
 int pass_count()
 {
 	return line_count;
 }
 
+/* 
+ * cout()
+ *   DESCRIPTION: Custom print function
+ *   INPUTS: character string to be printed 
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: prints required characters to the screen
+ */
 void cout(char *input)
 {
 	int len = strlen(input);
@@ -309,17 +360,16 @@ void cout(char *input)
 	line_count = 0;
 }
 
-/* Dummy Interrupt handler */
-/********************************************************
-void													*
-dummy_int_handler()										*	
-*	Inputs:			void								*
-*	Outputs:		for system calls			 	 	*
-*	Return Value:	void								*
-*	Function: Should execute test_interrupts handler	*
-********************************************************/
-/* Prints int # */
+/* 
+ * dummy_int_handler()
+ *   DESCRIPTION: for system calls
+ *   INPUTS: -- 
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: --
+ */
 void dummy_int_handler()
 {
+	//prints int #
 	printf("DUMMY INTERRUPT HANDLER");
 }

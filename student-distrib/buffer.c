@@ -9,6 +9,14 @@ static int buf_x;
 static int buf_y;
 static int backspace_flag;
 
+/* 
+ * reset_buf()
+ *   DESCRIPTION: Clears out the buffer. Also, maps x,y coordinates to respective buffer index.
+ *   INPUTS: the buffer
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: resets the buffer
+ */
 void reset_buf(node* buf)
 {
 	int i = 0;
@@ -32,6 +40,14 @@ void reset_buf(node* buf)
 	buf_y = 0;
 }
 
+/* 
+ * scroll_buf()
+ *   DESCRIPTION: Enables scrolling.
+ *   INPUTS: the buffer
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: modifies the buffer
+ */
 void scroll_buf(node* buf)
 {
 	int i = 0;
@@ -50,6 +66,14 @@ void scroll_buf(node* buf)
 	}
 }
 
+/* 
+ * set_buf()
+ *   DESCRIPTION: Places character at appropriate index of the buffer
+ *   INPUTS: the buffer, the input character
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: sets the buffer
+ */
 void setb(node* buf, char input)
 {
 	int index = NUM_COLS*(buf_y) + buf_x;
@@ -63,6 +87,14 @@ void setb(node* buf, char input)
 	backspace_flag = 1;
 }
 
+/* 
+ * printb()
+ *   DESCRIPTION: Prints the current buffer to the screen
+ *   INPUTS: the buffer
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: prints the buffer to the screen.
+ */
 void printb(node* buf)
 {
 	int i = 0;
@@ -72,6 +104,14 @@ void printb(node* buf)
 	}
 }
 
+/* 
+ * new_line()
+ *   DESCRIPTION: Switches to the next line of the buffer
+ *   INPUTS: the buffer
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: --
+ */
 void new_line(node* buf)
 {
 	if(buf_x != NUM_COLS)
@@ -85,6 +125,14 @@ void new_line(node* buf)
 	else scroll_buf(buf);
 }
 
+/* 
+ * clear_buf_line()
+ *   DESCRIPTION: clears out the current line before you start typing on it
+ *   INPUTS: the buffer
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: modifies the buffer
+ */
 void clear_buf_line(node* buf)
 {
 	int i = 0;
@@ -96,6 +144,14 @@ void clear_buf_line(node* buf)
 	}
 }
 
+/* 
+ * printb()
+ *   DESCRIPTION: Clears out the previos character and allows you to type from that index
+ *   INPUTS: the buffer, the current character count
+ *   OUTPUTS: --
+ *   RETURN VALUE: --
+ *   SIDE EFFECTS: modifies the buffer
+ */
 void backspace(node* buf, int line_count)
 {
 	if(line_count>0)
@@ -120,17 +176,16 @@ void backspace(node* buf, int line_count)
 	
 }
 
+/* 
+ * pass_count()
+ *   DESCRIPTION: Helper function. Used to provide other functions
+ * 				  an access to the current typing index's y-axis
+ *   INPUTS: -- 
+ *   OUTPUTS: the y coordinate
+ *   RETURN VALUE: int
+ *   SIDE EFFECTS:
+ */
 int pass_y()
 {
 	return buf_y;
 }
-
-/*
-void buf_main()
-{
-	
-
-	//kbd_int_handler(to_print);
-
-	
-}*/
