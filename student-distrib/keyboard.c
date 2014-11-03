@@ -206,7 +206,7 @@ void kbd_logic(int to_print)
 	 		else if(to_print == 0x0E)
 	 		{	
 	 			backspace(buffer, line_count);
-	 			if(limit >= 0) limit = limit-2; else limit = 77;
+	 			if(limit >= 0) limit = limit-2; else limit = 78;
 	 			if(line_count >= 0) line_count = line_count - 2; else limit = -1;
 	 		}
 	 		//enter
@@ -242,7 +242,7 @@ void kbd_logic(int to_print)
 	 	else if(to_print == 0x0E)
 	 	{	
 	 		backspace(buffer, line_count);
-	 		if(limit >= 0) limit = limit-2; else limit = 77;
+	 		if(limit >= 0) limit = limit-2; else limit = 78;
 	 		if(line_count >= 0) line_count = line_count - 2; else limit = -1;
 	 	}
 	 	//enter
