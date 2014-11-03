@@ -179,38 +179,6 @@ entry (unsigned long magic, unsigned long addr)
 
 	//printf("initialization is completed\n");
 
-<<<<<<< .mine
-	init_rtc();				
-	//init_keyboard();
-
-	// multiboot_info_t *mbi2;
-	// mbi2 = (multiboot_info_t *) addr;
-
-	// printf("Mbi2 address: 0x%x\n", mbi2[0]);
-	//printf("Mods address: 0x%x\n", filesystem_addr);
-
-	//module_t* mod2 = (module_t*)mbi2->mods_addr;
-	// printf("0x%x ", *((char*)(mod2->mod_start)));
-	// init_filesys((char*)mod2->mod_start);
-
-	//void* buf;
-	//ibuf = 0xF;
-
-	rtc_open();
-	rtc_read();
-	//rtc_write(2);
-	//rtc_close();
-
-	//init_filesys(filesystem_addr);	
-
-
-	//init_rtc();				//
-	printf("initialization is completed\n");
-
-//	enable_ints();		// (perform an STI) and reenable NMI if you wish
-
-=======
->>>>>>> .r15203
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -223,6 +191,7 @@ entry (unsigned long magic, unsigned long addr)
 	test_filesys();
 	// test_rtc();
 	//reset_scr();
+
 	//node* buf = pass_buff();
 	//test_read_write(buf);
 	/* Execute the first program (`shell') ... */
