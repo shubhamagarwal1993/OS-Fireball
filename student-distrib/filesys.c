@@ -6,12 +6,18 @@ static bootblock_t* boot_block;
 static inode_t* index_nodes;
 static data_block_t* data_blocks;
 
+static uint32_t file_position;
+static uint32_t directory_position;
+
 
 void init_filesys(const uint8_t *bootblockptr)
 {
 	boot_block = (bootblock_t*)bootblockptr;
 	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);
 	data_blocks = (data_block_t*)(bootblockptr + (BLOCKSIZE * (boot_block->num_inodes + 1))); 
+
+	file_position = 0;
+	directory_position = 0;
 
 	//test_filesys();
 
@@ -24,6 +30,7 @@ void init_filesys(const uint8_t *bootblockptr)
 *	Inputs:			filename, the dentry to copy to 				*
 *	Outputs:		writes dentry of filename to given dentry 		*
 *	Return Value:	return 0 if file found & copied properly		*
+*					return -1 if file is not in the filesystem		*
 *	Function: Should check for file existance and copy to dentry 	*
 ********************************************************************/
 
@@ -86,10 +93,15 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 *	Inputs:			index of file, the dentry to copy to			*
 *	Outputs:		writes dentry of file with index to given dentry*
 *	Return Value:	return 0 if file found & copied properly		*
+*					return -1 if index is invalid					*
 *	Function: Should check for file existance and copy to dentry 	*
 ********************************************************************/
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 {
+	// Check for invalid pointer
+	if(dentry == NULL)
+		return -1;
+
 	// Check for invalid index
 	if(index >= boot_block->num_dir_entries)
 		return -1;
@@ -113,10 +125,12 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 /************************************************************************************
 *int32_t																			*
 *read_data()																		*
-*	Inputs:			inode #, offset from , buffer to copy to, # of bytes from offset*
+*	Inputs:		inode, offset from start of file, buffer to fill, # of bytes to copy*
 *	Outputs:		writes dentry of filename to given dentry 						*
-*	Return Value:	return 0 indicates end of file is reached 						*
-*	Function: Should check for file existance and copy to buffer 					*
+*	Return Value:	number of bytes read into the buffer.							*
+*					return value of 0 indicates end of file has been reached 		*
+*	Function: 		Copies length bytes to buffer starting at offset bytes into 	*
+*					the given inode's data blocks									*
 ************************************************************************************/
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length)
 {
@@ -134,7 +148,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 	if(offset + length > cur_inode->length)
 		length = cur_inode->length - offset;
 
-	// Copy from each of the inode's data blocks into the buffer's consecutive memory
+	// Copy from each data block into the buffer
 	uint32_t i;
 	uint32_t copied = 0;
 	uint32_t cur_data_block;
@@ -147,17 +161,26 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 		if( (cur_data_block >= boot_block->num_data_blocks) || (cur_data_block < 0) )
 			return -1;
 
-		// Find a pointer to the current data and copy_len for this block
+		// Find a pointer to the start of the data block in the file system
 		data_start = (uint8_t*)(data_blocks + cur_data_block);
+
+		// If this is the first data block to copy from
 		if(i == 0)
 		{
+			// Account for the offset within this block
 			data_start += (offset % BLOCKSIZE);
-			copy_len = ( (BLOCKSIZE - (offset % BLOCKSIZE)) < length )
+
+			// If number of bytes before end of block < length, copy only the bytes in this block
+			// Otherwise copy the full length
+			copy_len = ( (BLOCKSIZE - (offset % BLOCKSIZE)) < length)
 					   ? (BLOCKSIZE - (offset % BLOCKSIZE))
 					   : length;
 		}
+		// For all subsequent blocks, copy from the beginning of the block
 		else 
 		{
+			// If the remaining length to be copied is longer than the block, copy the full block
+			// Otherwise copy the length remaining
 			copy_len = ((length - copied) > BLOCKSIZE)
 					   ? BLOCKSIZE
 					   : (length - copied); 
@@ -166,7 +189,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 		// Copy the data in this block
 		memcpy(buf, data_start, copy_len);
 
-
+		// Increment the count of bytes copied so far and the position in the buffer
 		copied += copy_len;
 		buf += copy_len;
 	}
@@ -175,20 +198,20 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 }
 
 
-/**************************************************
- For the handin, you must have some test/wrapper code that given a filename, a buffer, and a
-buffer length, will read data from the given file into the buffer.
-*****************************************************/
+/*
+ *	For the handin, you must have some test/wrapper code that given a filename, a buffer, and a
+ *	buffer length, will read data from the given file into the buffer.
+ */
 void test_filesys()
 {
 	//clear();
 
 	// Print filesystem data
+	/*
 	printf("num_dir_entries: 0x%x\nnum_inodes: 0x%x\nnum_data_blocks 0x%x\n", 
 			boot_block->num_dir_entries, boot_block->num_inodes, boot_block->num_data_blocks);
 	printf("boot block address: 0x%x\nindex nodes address: 0x%x\ndata blocks address: 0x%x\n", 
 			boot_block, index_nodes, data_blocks);
-	/*
 	*/
 
 	// Test read_dentry_by_name
@@ -218,30 +241,77 @@ void test_filesys()
 	printf("\n");
 	*/
 
-
 	// Test read_data
 	/*
-	uint8_t buf[6000] = { 0 };
-	printf("Return value = %d\n", read_data(0x10, 000, buf, 6000));
+	uint8_t buf[300] = { 0 };
 	int j;
-	for(j = 0; j < 6000; j++)
+
+	int ret_val = read_data(0x0D, 0, buf, 300);
+	printf("Return value = %d\n", ret_val);
+
+	for(j = 0; j < 300; j++)
 		printf("%c", buf[j]);
 	printf("\n");
 	*/
+
+	// Test file_read
+	/*
+	*/
+	uint8_t buf[300] = { 0 };
+	uint8_t* bufptr = buf;
+	uint8_t name[32] = "frame1.txt";
+	uint32_t len = 100;
+	int k;
+	
+	printf("Return value: %d\n", file_read(name, bufptr, len));
+	printf("Return value: %d\n", file_read(name, bufptr + len, len));
+	printf("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
+
+	for(k = 0; k < 300; k++)
+		printf("%c", buf[k]);
+	printf("\n");
+
+	// Test dir_read
+	/*
+	int32_t cnt;
+	uint8_t buf2[33];
+	while (0 != (cnt = dir_read (buf2, 32))) {
+        if (-1 == cnt) {
+	        printf("directory entry read failed\n");
+	        break;
+	    }
+	    buf2[cnt] = '\n';
+	    printf("%s\n", buf2);
+    }
+    */
 
 }
 
 
 uint32_t file_open()
 {
+	file_position = 0;
 	return 0;
 }
 
-uint32_t file_read(const uint8_t* fname, uint32_t offset, uint8_t* buf, uint32_t length)
+// Writes length bytes of file content to buffer
+uint32_t file_read(const uint8_t* fname, uint8_t* buf, uint32_t length)
 {
-	dentry_t* dentry;
-	read_dentry_by_name(fname, dentry);
-	return read_data((dentry->inode_num), offset, buf, length);
+	dentry_t dentry;
+	read_dentry_by_name(fname, &dentry);
+
+
+	if(dentry.file_type != 2)
+	{
+		printf("Can only read regular file types.\n");
+		return -1;
+	}
+
+	int bytes_read = read_data((dentry.inode_num), file_position, buf, length);
+
+	file_position += bytes_read;
+
+	return bytes_read;
 }
 
 uint32_t file_write()
@@ -257,25 +327,28 @@ uint32_t file_close()
 
 uint32_t dir_open()
 {
+	directory_position = 0;
 	return 0;
 }
-/************************************************************************
-should be similar to the 'ls' source code
 
-write a test case to show that we can read different types of files 
-*************************************************************************/
-
-uint32_t dir_read(uint32_t index, uint8_t* buf, uint32_t length)
+// Writes directory names in order to buffer one at a time
+uint32_t dir_read(uint8_t* buf, uint32_t length)
 {
-	dentry_t* dentry;
-	if(-1 == read_dentry_by_index(index, dentry))
+	dentry_t dentry;
+
+	if(directory_position >= boot_block->num_dir_entries)
 		return 0;
+
+	if(-1 == read_dentry_by_index(directory_position, &dentry))
+		return -1;
 
 	uint32_t name_len = (length > 32) ? 32 : length;
 
-	strncpy((int8_t*)buf, (int8_t*)dentry->file_name, name_len);
+	strncpy((int8_t*)buf, (int8_t*)dentry.file_name, name_len);
 
-	return length;
+	directory_position++;
+
+	return name_len;
 }
 
 uint32_t dir_write()

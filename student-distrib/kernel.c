@@ -188,7 +188,6 @@ entry (unsigned long magic, unsigned long addr)
 	
 	rtc_open();
 	rtc_read();
-	test_filesys();
 	// test_rtc();
 	//reset_scr();
 
