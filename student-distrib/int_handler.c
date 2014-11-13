@@ -11,6 +11,7 @@ void set_idt()
 {
 	set_exception();
 	set_interrupt();
+	//set_syscall_exception();
 }
 
 /* Exception handling functions below */
@@ -70,6 +71,13 @@ void set_interrupt()
 		SET_IDT_ENTRY(idt[40], &rtc_wrapper);
 		SET_IDT_ENTRY(idt[33], &kbd_wrapper);		
 }
+
+//--------------------------------------())_)(&)(*^^(*%*&^$%*&$&%$*&^))
+// /* System call exception */
+// void set_syscall_exception()
+// {
+// 	SET_IDT_ENTRY(idt[128], &syscall_handler);
+// }
 
 /* Exception handling functions below */
 
@@ -180,7 +188,7 @@ void general_protection()
 void page_fault()
 {
 	disable_irq(1);
-	clear_blue();
+//	clear_blue();
 	printf("Page Fault!");
 	while(1){}
 }

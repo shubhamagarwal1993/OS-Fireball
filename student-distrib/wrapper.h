@@ -8,6 +8,8 @@ void kbd_wrapper();
 
 void rtc_wrapper();
 
+void syscall_handler();
+
 #endif /* ASM */
 
 #endif /* _WRAPPER_H */

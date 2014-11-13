@@ -52,4 +52,6 @@ void machine_check();
 
 void floating_point_exception();
 
+void set_syscall_exception();
+
 #endif

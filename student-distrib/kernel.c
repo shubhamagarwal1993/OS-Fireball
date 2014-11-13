@@ -14,6 +14,7 @@
 #include "paging.h"
 #include "terminal.h"
 #include "filesys.h"
+#include "systemcalls.h" 
  
 #define PIC1			0x20		/*IO base address for master PIC*/
 #define PIC2			0xA0		/*IO base address for slave PIC */
@@ -177,6 +178,11 @@ entry (unsigned long magic, unsigned long addr)
 	init_rtc();
 	init_filesys(filesystem_address);
 
+	uint8_t fname[33] = "testprint";
+	int flag = execute(fname);
+	if(flag == 6)
+		printf("\n\n\n\n\nGAYYYYYYYYYYYYYYYYYYYYYYYYYYYYY\n");
+
 	//printf("initialization is completed\n");
 
 	/* Enable interrupts */
@@ -186,8 +192,8 @@ entry (unsigned long magic, unsigned long addr)
 	//printf("Enabling Interrupts\n");
 	sti();
 	
-	rtc_open();
-	rtc_read();
+//	rtc_open();
+//	rtc_read();
 	// test_rtc();
 	//reset_scr();
 

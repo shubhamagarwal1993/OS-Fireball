@@ -45,8 +45,6 @@ kbd_wrapper:
 
 
 
-
-
 rtc_wrapper:
 	pushal
 	call rtc_int_handler
