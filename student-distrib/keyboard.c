@@ -136,7 +136,6 @@ void kbd_int_handler()
 	//printb(buffer);
 	//init_terminal();
 	
-	//test_filesys();
 	terminal_open(to_print);
 	//test_read_write(buffer, to_print);
 	

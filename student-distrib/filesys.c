@@ -19,7 +19,7 @@ void init_filesys(const uint8_t *bootblockptr)
 	file_position = 0;
 	directory_position = 0;
 
-	//test_filesys();
+	test_filesys();
 
 }
 
@@ -206,7 +206,6 @@ void test_filesys()
 {
 	// Test file_read
 	/*
-	*/
 	uint8_t buf[300] = { 0 };
 	uint8_t* bufptr = buf;
 	uint8_t name[33] = "frame1.txt";
@@ -220,25 +219,26 @@ void test_filesys()
 	for(k = 0; k < 300; k++)
 		cout("%c", buf[k]);
 	cout("\n");
+	*/
 
 
 
 	// Test file_read on long file
-	/*
-	uint8_t buf[6000] = { 0 };
+	
+	uint8_t buf[10000] = {'\0'};
 	uint8_t* bufptr = buf;
 	uint8_t name[33] = "verylargetxtwithverylongname.txt";
-	uint32_t len = 500;
+	uint32_t len = 10000;
 	int k;
 	
 	printf("Return value: %d\n", file_read(name, bufptr, len));
 	printf("Return value: %d\n", file_read(name, bufptr + len, len));
 	printf("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
 
-	for(k = 0; k < (len * 3); k++)
+	for(k = 0; k < (len); k++)
 		printf("%c", buf[k]);
 	printf("\n");
-	*/
+	
 
 
 
@@ -340,12 +340,16 @@ uint32_t file_read(const uint8_t* fname, uint8_t* buf, uint32_t length)
 	dentry_t dentry;
 	read_dentry_by_name(fname, &dentry);
 
-
 	if(dentry.file_type != 2)
 	{
 		printf("Can only read regular file types.\n");
 		return -1;
 	}
+
+	uint32_t file_len = (index_nodes[dentry.inode_num]).length;
+
+	if(file_len <= file_position)
+		return 0;
 
 	int bytes_read = read_data((dentry.inode_num), file_position, buf, length);
 
