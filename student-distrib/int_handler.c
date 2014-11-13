@@ -75,6 +75,7 @@ void set_interrupt()
 
 void divide_error()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Divide error!");
 	while(1){}
@@ -82,6 +83,7 @@ void divide_error()
 
 void NMI_Interrupt()
 {
+	disable_irq(1);
 	clear_blue();	
 	printf("NMI Interrupt!");
 	while(1){}
@@ -89,12 +91,15 @@ void NMI_Interrupt()
 
 void breakpoint()
 {
+	disable_irq(1);
+	clear_blue();
 	printf("breakpoint!");
 	while(1){}
 }
 
 void overflow()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("overflow!");
 	while(1){}
@@ -102,6 +107,7 @@ void overflow()
 
 void BOUND_range_exceeded()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("BOUND range exceeded!");
 	while(1){}
@@ -109,6 +115,7 @@ void BOUND_range_exceeded()
 
 void invalid_opcode()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Invalid Opcode!");
 	while(1){}
@@ -116,6 +123,7 @@ void invalid_opcode()
 
 void device_not_available()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Device Not available");
 	while(1){}
@@ -123,6 +131,7 @@ void device_not_available()
 
 void double_fault()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Double Fault!");
 	while(1){}
@@ -130,6 +139,7 @@ void double_fault()
 
 void coprocessor_segment_overrun()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("coprocessor_segment_overrun!");
 	while(1){}
@@ -137,6 +147,7 @@ void coprocessor_segment_overrun()
 
 void invalid_TSS()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Invalid TSS!");
 	while(1){}
@@ -144,6 +155,7 @@ void invalid_TSS()
 
 void segment_not_present()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Segment not present!");
 	while(1){}
@@ -151,6 +163,7 @@ void segment_not_present()
 
 void stack_segment_fault()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Stack Segment Fault!");
 	while(1){}
@@ -158,6 +171,7 @@ void stack_segment_fault()
 
 void general_protection()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("General Protection");
 	while(1){}
@@ -165,13 +179,15 @@ void general_protection()
 
 void page_fault()
 {
-	//clear_blue();
+	disable_irq(1);
+	clear_blue();
 	printf("Page Fault!");
 	while(1){}
 }
 
 void floating_point_error()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Floating Point Error!");
 	while(1){}
@@ -179,6 +195,7 @@ void floating_point_error()
 
 void alignment_check()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Alignment Check!");
 	while(1){}
@@ -186,6 +203,7 @@ void alignment_check()
 
 void machine_check()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Machine Check");
 	while(1){}
@@ -193,6 +211,7 @@ void machine_check()
 
 void floating_point_exception()
 {
+	disable_irq(1);
 	clear_blue();
 	printf("Floating Point Exception");
 	while(1){}

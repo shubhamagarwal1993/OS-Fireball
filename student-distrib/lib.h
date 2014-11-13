@@ -14,6 +14,10 @@
  	char mo;
  }node;
 
+int32_t cout(int8_t *format, ...);
+int32_t puts_cout(int8_t* s);
+void put_cout(uint8_t c);
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);

@@ -5,8 +5,8 @@
 
 #define NUM_COLS 80
 #define NUM_ROWS 25
-static int buf_x;
-static int buf_y;
+int buf_x;
+int buf_y;
 static int backspace_flag;
 
 /* 

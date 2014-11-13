@@ -124,6 +124,9 @@ void kbd_int_handler()
 		reset_scr();
 		reset_buf(buffer);
 		disable_rtc_test();
+		int a = 13;
+		cout("%d test", a);
+		//printf("%s test\n", a);
 	}
 	reset_flag = 1;
 
@@ -344,6 +347,7 @@ int pass_count()
  *   RETURN VALUE: --
  *   SIDE EFFECTS: prints required characters to the screen
  */
+ /*
 void cout(char *input)
 {
 	int len = strlen(input);
@@ -358,7 +362,7 @@ void cout(char *input)
 	new_line(buffer);
 	limit = 0;
 	line_count = 0;
-}
+}*/
 
 /* 
  * dummy_int_handler()

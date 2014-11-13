@@ -213,13 +213,13 @@ void test_filesys()
 	uint32_t len = 100;
 	int k;
 	
-	printf("Return value: %d\n", file_read(name, bufptr, len));
-	printf("Return value: %d\n", file_read(name, bufptr + len, len));
-	printf("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
+	cout("Return value: %d\n", file_read(name, bufptr, len));
+	cout("Return value: %d\n", file_read(name, bufptr + len, len));
+	cout("Return value: %d\n", file_read(name, bufptr + 2 * len, len));
 
 	for(k = 0; k < 300; k++)
-		printf("%c", buf[k]);
-	printf("\n");
+		cout("%c", buf[k]);
+	cout("\n");
 
 
 

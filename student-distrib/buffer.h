@@ -3,6 +3,9 @@
 
 #include "lib.h"
 
+extern int buf_x;
+extern int buf_y;
+
 //extern void set_buffer(node* buffer);
 
 extern void reset_buf(node* buf);
