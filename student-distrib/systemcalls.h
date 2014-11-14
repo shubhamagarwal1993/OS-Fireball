@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+
 //int32_t halt(uint8_t status);
 int32_t execute(const uint8_t* command);
 //int32_t read(int32_t fd, void* buf, int32_t nbytes);
@@ -15,9 +16,29 @@ int32_t execute(const uint8_t* command);
 //int32_t sigreturn(void);
 
 /*	Helper functions for execute(const uint8_t* command)	*/
-//uint8_t* parse(const uint8_t* input);
-
-int32_t execute(const uint8_t* command);
 char* parse(char* input);
+void stdin_jmp_table(int32_t fd);
+void stdout_jmp_table(int32_t fd);
+
+/***********************************************************************/
+/*	PROCESS CONTROL BLOCK	*/
+/***********************************************************************/
+//each cell of PCB
+typedef struct file_array{
+	uint32_t* file_op;		 			//pointer to file operations table pointer
+	uint32_t file_inode;				//inode pointer to inode number of file in file system
+	uint32_t file_pos;					//keeps position of where we are in the file
+	uint32_t flags;						//this flag tells us which fds are available
+}file_array_t;
+
+//PCB structure 
+typedef struct pcb{
+//	file_array_t file_fds;				//array of open files are represented with a file array defined above
+	uint32_t fd;						//integer index into this array is called a file descriptor and this integer is how user-level programs identify the open file
+	uint32_t parent_bp;					//keep track of parent process' base pointer
+	uint32_t parent_sp;					//keep track of parent prcoess' stack pointer
+//	uint32_t 
+//	uint32_t
+}pcb_t;
 
 #endif /* _SYSTEMCALLS_H */
