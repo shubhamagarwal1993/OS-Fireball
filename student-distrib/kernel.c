@@ -181,7 +181,7 @@ entry (unsigned long magic, unsigned long addr)
 	uint8_t fname[33] = "testprint";
 	int flag = execute(fname);
 	if(flag == 6)
-		printf("\n\n\n\n\nGAYYYYYYYYYYYYYYYYYYYYYYYYYYYYY\n");
+		printf("\n\n\n\n\nGAYYYYYYtsoeytr0e987yt98e765te39 65t3w0453YYYYYYYY\n");
 
 	//printf("initialization is completed\n");
 

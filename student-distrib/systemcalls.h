@@ -30,7 +30,6 @@ typedef struct file_array{
 	uint32_t flags;						//this flag tells us which fds are available
 }file_array_t;
 
-
 //PCB structure 
 typedef struct pcb{
 	file_array_t file_fds[8];			//array of open files are represented with a file array defined above

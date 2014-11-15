@@ -19,7 +19,7 @@ void init_filesys(const uint8_t *bootblockptr)
 	file_position = 0;
 	directory_position = 0;
 
-	test_filesys();
+	//test_filesys();
 
 }
 
