@@ -11,7 +11,6 @@ void set_idt()
 {
 	set_exception();
 	set_interrupt();
-	//set_syscall_exception();
 }
 
 /* Exception handling functions below */
@@ -69,15 +68,10 @@ void set_interrupt()
 		idt[33] = idt_entry; 
 		idt[40] = idt_entry; 
 		SET_IDT_ENTRY(idt[40], &rtc_wrapper);
-		SET_IDT_ENTRY(idt[33], &kbd_wrapper);		
+		SET_IDT_ENTRY(idt[33], &kbd_wrapper);
+		SET_IDT_ENTRY(idt[128], &syscall_handler);		
 }
 
-//--------------------------------------())_)(&)(*^^(*%*&^$%*&$&%$*&^))
-// /* System call exception */
-// void set_syscall_exception()
-// {
-// 	SET_IDT_ENTRY(idt[128], &syscall_handler);
-// }
 
 /* Exception handling functions below */
 
