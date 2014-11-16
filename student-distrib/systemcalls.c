@@ -39,7 +39,7 @@ int32_t execute(const uint8_t* command)
 
 
 	//cout("AFTER PAGING_+_)_(*&)*&^R(@$*YR(R TWE(B& R^%$B&($%(@&$%\n\n\n\n\n\n\n\n");
-	//program_load(fname, PGRM_IMG);
+	program_load(fname, PGRM_IMG);
 
 	/*	Looking for processes	*/
 	int process_id = 0;
@@ -100,6 +100,7 @@ int32_t execute(const uint8_t* command)
 
 	jump_to_userspace();
 
+	return 0;
 }
 
 
