@@ -18,6 +18,7 @@ int index = 0;
 uint8_t open_processes = 0;
 uint32_t k_sp = 0;
 uint32_t entry_addr = 0;
+int process_id = 0;
 
 int32_t execute(const uint8_t* command)
 {
@@ -57,7 +58,6 @@ int32_t execute(const uint8_t* command)
 	program_load(fname, PGRM_IMG);
 
 	/*	Looking for processes	*/
-	int process_id = 0;
 	uint8_t process_mask = 0x80;
 	//int i;
 	uint8_t temp = open_processes;
@@ -80,7 +80,6 @@ int32_t execute(const uint8_t* command)
 
 	asm volatile("movl %%esp, %0":"=g"(curr_process->parent_sp));
 	asm volatile("movl %%ebp, %0":"=g"(curr_process->parent_bp));
-
 	
 	if(open_processes == 0x10)
 	{
@@ -210,8 +209,41 @@ void get_arg(int i, char* input)
 
 int32_t halt(uint8_t status)
 {
-	cout("HALT!\n");
-	return 0;
+	// pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
+
+	// if(curr_process->child_flag == 0)
+	// {
+	// 	//if the current process is the parent process, not sure what to do
+	// }
+	
+	// else if(curr_process->child_flag == 1)
+	// {
+	// 	int i = 0;
+	// 	uint8_t process_mask = 0x80;
+	// 	uint8_t temp = open_processes;
+	// 	for(i = 0; i < curr_process->parent_process_id; i++)
+	// 	{
+	// 		//temp = temp & 0x80;
+	// 		//if(temp == 0)
+	// 		//{
+	// 			process_mask = (process_mask >> 1);
+	// 			open_processes |= process_mask;
+	// 			process_id = i;
+	// 			break;
+	// 		}
+				
+	// 		temp = temp << 1;
+	// 	}			
+
+	// 	//set kernel stack pointer and kernel base pointer
+	// 	//back to the parent's base pointer and stack pointer
+	// 	//respectively.
+	// 	uint32_t p_sp = curr_process->parent_sp;
+	// 	uint32_t p_bp = curr_process->parent_bp;
+	// 	set_ESP(p_sp);
+	// 	set_EBP(p_bp);
+	// }
+	return 183;
 }
 
 int32_t read(int32_t fd, void* buf, int32_t nbytes)

@@ -1,6 +1,8 @@
 #ifndef _SYSTEMCALLS_H
 #define _SYSTEMCALLS_H
 
+#ifndef ASM
+
 #include "types.h"
 
 
@@ -47,4 +49,30 @@ typedef struct pcb{
 //	uint32_t
 }pcb_t;
 
+/* Puts a pointer to parent esp in ESP register 
+ * Outputs: None
+ * Inputs:  
+ * Clobbers eax
+ */
+#define set_ESP(p_sp)                   		\
+do {                                   			\
+	asm volatile("movl %0, %%eax \n\t"			\
+				 "movl %%eax, %%esp"			\
+				 : 								\
+				 : "r" (p_sp)					\
+				 : "eax", "memory"				\
+				 );       						\
+} while(0)
+
+#define set_EBP(p_bp)                   		\
+do {                                   			\
+	asm volatile("movl %0, %%eax \n\t"			\
+				 "movl %%eax, %%ebp"			\
+				 : 								\
+				 : "r" (p_bp)					\
+				 : "eax", "memory"				\
+				 );       						\
+} while(0)
+
+#endif /* ASM */
 #endif /* _SYSTEMCALLS_H */
