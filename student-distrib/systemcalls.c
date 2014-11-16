@@ -21,12 +21,8 @@ uint32_t k_sp = 0;
 int32_t execute(const uint8_t* command)
 {
 	char* cmd = (char*)command;
-	
-	char* filename = parse(cmd);
-	uint8_t* fname = (uint8_t*)filename;
-	//uint8_t* fname = (uint8_t*)parse(cmd);
+	uint8_t* fname = (uint8_t*)parse(cmd);
 	get_arg(index, cmd);
-	uint8_t* arg = (uint8_t*)args;
 
 	/* Executable check */
 	uint8_t elf_check[4];
@@ -36,13 +32,13 @@ int32_t execute(const uint8_t* command)
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
 		return -1;	
 
-	cout("BEFORE PAGING\n");
+	//cout("BEFORE PAGING\n");
 
 	/* Set up paging - */
 	task_mem_init();
 
 
-	cout("AFTER PAGING_+_)_(*&)*&^R(@$*YR(R TWE(B& R^%$B&($%(@&$%\n\n\n\n\n\n\n\n");
+	//cout("AFTER PAGING_+_)_(*&)*&^R(@$*YR(R TWE(B& R^%$B&($%(@&$%\n\n\n\n\n\n\n\n");
 	//program_load(fname, PGRM_IMG);
 
 	/*	Looking for processes	*/

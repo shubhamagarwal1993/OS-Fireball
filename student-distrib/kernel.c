@@ -178,9 +178,9 @@ entry (unsigned long magic, unsigned long addr)
 	// init_rtc();
 	init_filesys(filesystem_address);
 
-	reset_buf(buffer);
-
 	uint8_t fname[33] = "testprint";
+
+	reset_buf(buffer);
 
 	int flag = execute(fname);
 	if(flag == 6)
@@ -192,7 +192,6 @@ entry (unsigned long magic, unsigned long addr)
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
 	//printf("Enabling Interrupts\n");
-	reset_buf(buffer);
 
 	sti();
 	

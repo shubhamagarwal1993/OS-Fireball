@@ -63,8 +63,8 @@ void init_PD()
 	for(i = 0; i < NUM_PDE; i++)
 	{
 		PD[i] = PDE_default;
-		PD0[i] = PDE_default;
-		PD1[i] = PDE_default;
+		//PD0[i] = PDE_default;
+		//PD1[i] = PDE_default;
 	}
 
  	cur_PD = PD;
@@ -90,6 +90,19 @@ void init_PD()
 
 	// Pass the address of the page directory into the PBDR
  	set_PDBR(PD);
+
+
+
+ 	// Temporarily copy all of PD into PD0 and PD1
+ 	int j;
+	for(j = 0; j < NUM_PDE; j++)
+	{
+		PD0[j] = PD[j];
+		PD1[j] = PD[j];
+	}
+
+
+	
 }
 
 /*
@@ -149,14 +162,15 @@ uint32_t task_mem_init()
 	if(task_count == 0)
 	{
 		cur_PD = PD0;
-		map_4MB_page(PGRM_IMG, PAGE1, 0);
+		map_4MB_page(PGRM_IMG, PAGE1, 1);
+		set_PDBR(PD0);
 	}
 
 	else if(task_count == 1)
 	{
 		cur_PD = PD1;
 		map_4MB_page(PGRM_IMG, PAGE2, 1);
-		//set_PDBR(PD2);
+		set_PDBR(PD1);
 	}
 
 	else return -1;
