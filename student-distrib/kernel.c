@@ -182,7 +182,9 @@ entry (unsigned long magic, unsigned long addr)
 
 	reset_buf(buffer);
 
-	
+	int flag = execute(fname);
+	if(flag == 6)
+		cout("GAYYYYYYtsoeytr0e987yt98e765te39a65t3w0453YYYYYYYYanmbsbdnmbamsnbdmbamsnbasasasasaxczczxsdasdasd");
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -191,8 +193,6 @@ entry (unsigned long magic, unsigned long addr)
 	//printf("Enabling Interrupts\n");
 
 	sti();
-	
-	int flag = execute(fname);
 	// rtc_open();
 	// rtc_read();
 

@@ -10,6 +10,8 @@
 #define NUM_ROWS 25
 
 extern node buffer[NUM_COLS*NUM_ROWS];
+extern int line_count;
+extern int limit;
 
 extern void kbd_int_handler();
 
