@@ -18,6 +18,8 @@ int32_t close(int32_t fd);
 /*	Helper functions for execute(const uint8_t* command)	*/
 char* parse(char* input);
 void get_arg(int i, char* input);
+
+void get_arg(int i, char* input);
 int32_t empty(void);
 /***********************************************************************/
 /*	PROCESS CONTROL BLOCK	*/

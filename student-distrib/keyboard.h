@@ -25,6 +25,10 @@ extern void extern_print(char *input);
 
 extern void dummy_int_handler();
 
+//char* parse(char* input);
+
+//void get_arg(int i, char* input);
+
 #endif	/* ASM */
 
 #endif 	/* KEYBOARD */

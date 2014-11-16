@@ -178,10 +178,12 @@ entry (unsigned long magic, unsigned long addr)
 	// init_rtc();
 	init_filesys(filesystem_address);
 
+	reset_buf(buffer);
+
 	uint8_t fname[33] = "testprint";
 	int flag = execute(fname);
 	if(flag == 6)
-		printf("\n\n\n\n\nGAYYYYYYtsoeytr0e987yt98e765te39 65t3w0453YYYYYYYY\n");
+		cout("GAYYYYYYtsoeytr0e987yt98e765te39 65t3w0453YYYYYYYY\n");
 
 	//printf("initialization is completed\n");
 

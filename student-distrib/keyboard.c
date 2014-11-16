@@ -107,6 +107,10 @@ int line_flag = 1;
 int limit = 0;
 int line_count = 0;
 
+// char* args;
+// int space_seen = 0;
+// int index = 0;
+
 /* 
  * kbd_int_handler()
  *   DESCRIPTION: This function is called when a keyboard interrupt is generated.
@@ -121,11 +125,24 @@ void kbd_int_handler()
 {
 	if(reset_flag == 0)
 	{
-		reset_scr();
-		reset_buf(buffer);
+		//reset_scr();
+		//reset_buf(buffer);
 		disable_rtc_test();
-		int a = 13;
-		cout("%d test", a);
+		//int a = 13;
+		//cout("%d test", a);
+		// char* mofo = " Halwai fuckshubham.txt";
+		// char* output = parse(mofo);
+		// get_arg(index, mofo);
+		
+
+		// if(output == "-1")
+		// 	cout("Fail");
+		// else cout("%s", output);
+		// cout("\n");
+		// if(args == "-1")
+		// 	cout("Fail");
+		// else cout("%s", args);
+		// cout("\n");
 		//printf("%s test\n", a);
 	}
 	reset_flag = 1;
@@ -337,6 +354,60 @@ int pass_count()
 {
 	return line_count;
 }
+
+// char* parse(char* input)
+// {
+// 	int len = strlen(input);
+// 	char* output = "random str1";
+	
+// 	if(len == 0)
+// 	{
+// 		output = "-1";
+// 		return output;
+// 	}
+// 	else if(input[0] == ' ')
+// 	{
+// 		output = "-1";
+// 		return output;
+// 	}
+// 	else
+// 	{
+// 		int i = 0;
+// 		for(i = 0; i < len; i++)
+// 		{
+// 			if(input[i] == ' ')
+// 			{ 
+// 				space_seen = 1;
+// 				break;
+// 			}
+// 			output[i] = input[i];
+// 		}
+// 		output[i] = '\0';
+// 		index = i;
+// 	}
+// 	return output;
+// }
+
+// void get_arg(int i, char* input)
+// {
+// 		args = "random str2";
+		
+// 		if(input[0] == ' ')
+// 		{
+// 			args = "-1";
+// 			return;
+// 		}
+
+// 		int j = 0;
+// 		int arg_length = 0;
+// 		int len = strlen(input);
+// 		for(j = i + 1; j < len; j++)
+// 		{
+// 			args[j - i - 1] = input[j];
+// 			arg_length++;
+// 		}
+// 		args[arg_length] = '\0';
+// }
 
 /* 
  * cout()

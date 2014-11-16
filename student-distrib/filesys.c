@@ -406,6 +406,24 @@ uint32_t dir_close()
 	return 0;
 }
 
+
+uint32_t file_mem_loader(const uint8_t* fname, uint32_t addr)
+{
+	dentry_t dentry_copy;
+	if(read_dentry_by_name(fname, &dentry_copy) == -1)
+		return -1;
+
+	uint32_t inode_copy = dentry_copy.inode_num;
+
+	inode_t* cur_inode = &(index_nodes[inode_copy]);
+
+	// If length is invalid, reduce it to the highest valid length
+	uint32_t length_copy = cur_inode->length;
+	read_data(inode_copy, 0, &addr, length_copy);
+
+	return 0;
+}
+
 uint32_t program_load(const uint8_t* fname, uint32_t addr)
 {
 	uint8_t* position = (uint8_t*)addr;

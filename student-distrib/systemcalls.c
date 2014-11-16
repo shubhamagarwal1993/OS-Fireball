@@ -8,7 +8,6 @@
 #include "keyboard.h"
 #include "terminal.h"
 
-
 /*	global variables for parse 	*/
 char * args;
 int space_seen = 0;
@@ -18,7 +17,12 @@ uint8_t open_processes = 0;
 int32_t execute(const uint8_t* command)
 {
 	char* cmd = (char*)command;
-	uint8_t* fname = (uint8_t*)parse(cmd);
+	
+	char* filename = parse(cmd);
+	uint8_t* fname = (uint8_t*)filename;
+	//uint8_t* fname = (uint8_t*)parse(cmd);
+	get_arg(index, cmd);
+	uint8_t* arg = (uint8_t*)args;
 
 	/* Executable check */
 	uint8_t elf_check[4];
@@ -58,7 +62,10 @@ int32_t execute(const uint8_t* command)
 	asm volatile("movl %%esp, %0":"=g"(curr_process->parent_sp));
 	asm volatile("movl %%ebp, %0":"=g"(curr_process->parent_bp));
 
-	return 6;//8736490287643 0287654b208754r-907r0w97540987)(*&_(*&))_(*&$^_(*&#$)^#$%^$#*&#(*&#$^%(*$#&%)))
+	
+	
+
+	return 6;
 	/* TODO  */
 
 
@@ -119,6 +126,7 @@ char* parse(char* input)
 	}
 	return output;
 }
+
 void get_arg(int i, char* input)
 {
 		args = "random str2";
@@ -128,6 +136,7 @@ void get_arg(int i, char* input)
 			args = "-1";
 			return;
 		}
+
 		int j = 0;
 		int arg_length = 0;
 		int len = strlen(input);
@@ -138,3 +147,4 @@ void get_arg(int i, char* input)
 		}
 		args[arg_length] = '\0';
 }
+
