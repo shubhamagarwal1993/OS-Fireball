@@ -162,14 +162,14 @@ uint32_t task_mem_init()
 	if(task_count == 0)
 	{
 		cur_PD = PD0;
-		map_4MB_page(PGRM_IMG, PAGE1, 1);
+		map_4MB_page(PGRM_IMG, PAGE1, 1, 1);
 		set_PDBR(PD0);
 	}
 
 	else if(task_count == 1)
 	{
 		cur_PD = PD1;
-		map_4MB_page(PGRM_IMG, PAGE2, 1);
+		map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
 		set_PDBR(PD1);
 	}
 
@@ -180,14 +180,16 @@ uint32_t task_mem_init()
 	return 0;
 }
 
-void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, uint32_t user_super)
+void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, 
+				  uint32_t user_super, uint32_t read_write)
 {
 	PDE_t PDE = PDE_default;
 
 	uint32_t PD_offset;
 	PD_offset = get_PDE_offset(vir_addr);
 
-	PDE.user_super = user_super;
+	PDE.user_super = user_super; 
+	PDE.read_write = read_write;
 	SET_PDE_4MB_PAGE(PDE, phys_addr);
 
 	cur_PD[PD_offset] = PDE;

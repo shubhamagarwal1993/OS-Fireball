@@ -169,7 +169,8 @@ void init_VIDEO_PT();
 uint32_t get_PDE_offset(uint32_t addr);
 uint32_t get_PTE_offset(uint32_t addr);
 uint32_t get_Page_offset(uint32_t addr);
-void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, uint32_t user_super);
+void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, 
+				  uint32_t user_super, uint32_t read_write);
 
 #endif /* ASM */
 
