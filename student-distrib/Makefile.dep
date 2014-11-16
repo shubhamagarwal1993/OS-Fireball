@@ -1,7 +1,6 @@
 boot.o: boot.S multiboot.h x86_desc.h types.h
 wrapper.o: wrapper.S wrapper.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
-x86_paging.o: x86_paging.S paging.h types.h
 buffer.o: buffer.c buffer.h lib.h types.h keyboard.h wrapper.h rtc.h \
   i8259.h
 filesys.o: filesys.c filesys.h types.h lib.h keyboard.h wrapper.h rtc.h
@@ -16,8 +15,7 @@ keyboard.o: keyboard.c keyboard.h lib.h types.h wrapper.h rtc.h i8259.h \
 lib.o: lib.c lib.h types.h buffer.h keyboard.h wrapper.h rtc.h
 paging.o: paging.c paging.h types.h lib.h
 rtc.o: rtc.c rtc.h wrapper.h types.h lib.h i8259.h keyboard.h
-systemcalls.o: systemcalls.c systemcalls.h types.h int_handler.h \
-  multiboot.h x86_desc.h lib.h i8259.h debug.h filesys.h paging.h rtc.h \
-  wrapper.h terminal.h keyboard.h buffer.h
+systemcalls.o: systemcalls.c systemcalls.h types.h wrapper.h filesys.h \
+  paging.h rtc.h terminal.h keyboard.h lib.h buffer.h x86_desc.h
 terminal.o: terminal.c terminal.h types.h keyboard.h lib.h wrapper.h \
   rtc.h buffer.h i8259.h

@@ -174,3 +174,4 @@ void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, uint32_t user_super);
 #endif /* ASM */
 
 #endif /* PAGING_H */
+

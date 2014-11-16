@@ -10,6 +10,8 @@ void rtc_wrapper();
 
 void syscall_handler();
 
+void jump_to_userspace();
+
 #endif /* ASM */
 
 #endif /* _WRAPPER_H */

@@ -21,6 +21,8 @@ void get_arg(int i, char* input);
 
 void get_arg(int i, char* input);
 int32_t empty(void);
+void stdin(uint32_t fd);
+void stdout(uint32_t fd);
 /***********************************************************************/
 /*	PROCESS CONTROL BLOCK	*/
 /***********************************************************************/
@@ -39,6 +41,8 @@ typedef struct pcb{
 	uint32_t parent_bp;					//keep track of parent process' base pointer
 	uint32_t parent_sp;					//keep track of parent prcoess' stack pointer
 	uint8_t process_id;
+	uint32_t parent_process_id;
+	uint32_t child_flag;
 //	uint32_t 
 //	uint32_t
 }pcb_t;

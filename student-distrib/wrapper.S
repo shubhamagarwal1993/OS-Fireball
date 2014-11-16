@@ -8,7 +8,7 @@ kernel_ds:
 
 .text
 
-.globl kbd_wrapper, rtc_wrapper, syscall_handler, jump_table
+.globl kbd_wrapper, rtc_wrapper, jump_to_userspace, syscall_handler, jump_table
 
 kbd_wrapper:
 	pushl %eax
@@ -42,13 +42,30 @@ kbd_wrapper:
 	; popal
 	; iret
 
-
-
 rtc_wrapper:
 	pushal
 	call rtc_int_handler
 	popal
 	iret
+
+jump_to_userspace:
+ 		
+    cli
+    movl 4(%esp), %ebx
+    movl $0x23, %ax
+    movl %ax, %ds 	
+    movl %ax, %es 	
+    movl %ax, %fs 	
+    movl %ax, %gs 	
+                   		
+    movl %esp, %eax
+    pushl $0x23	
+    pushl %eax 		
+    pushf
+    pushl $0x1B
+    pushl %ebx 		
+    iret		
+   					 
 
 syscall_handler:
 	cmpl $1, %eax

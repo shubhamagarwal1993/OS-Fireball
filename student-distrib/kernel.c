@@ -181,17 +181,19 @@ entry (unsigned long magic, unsigned long addr)
 	reset_buf(buffer);
 
 	uint8_t fname[33] = "testprint";
+
 	int flag = execute(fname);
 	if(flag == 6)
 		cout("GAYYYYYYtsoeytr0e987yt98e765te39 65t3w0453YYYYYYYY\n");
 
-	//printf("initialization is completed\n");
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
 	//printf("Enabling Interrupts\n");
+	reset_buf(buffer);
+
 	sti();
 	
 	// rtc_open();
