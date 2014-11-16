@@ -16,6 +16,8 @@ void set_exception();
 
 void set_interrupt();
 
+void set_systemcall();
+
 void divide_error();
 
 void NMI_Interrupt();

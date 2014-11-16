@@ -178,14 +178,11 @@ entry (unsigned long magic, unsigned long addr)
 	// init_rtc();
 	init_filesys(filesystem_address);
 
-	uint8_t fname[33] = "testprint";
+	uint8_t fname[33] = "shell";
 
 	reset_buf(buffer);
 
-	int flag = execute(fname);
-	if(flag == 6)
-		cout("GAYYYYYYtsoeytr0e987yt98e765te39 65t3w0453YYYYYYYY\n");
-
+	
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -195,6 +192,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	sti();
 	
+	int flag = execute(fname);
 	// rtc_open();
 	// rtc_read();
 

@@ -51,18 +51,19 @@ rtc_wrapper:
 jump_to_userspace:
  		
     cli
-    movl 4(%esp), %ebx
-    movl $0x23, %ax
-    movl %ax, %ds 	
-    movl %ax, %es 	
-    movl %ax, %fs 	
-    movl %ax, %gs 	
+    movl 28(%esp), %ebx
+    mov $0x2B, %ax
+    mov %ax, %ds	
                    		
     movl %esp, %eax
-    pushl $0x23	
-    pushl %eax 		
+    
+	pushl $0x2B
+    pushl $0x083FFFFC		
     pushf
-    pushl $0x1B
+    popl %eax
+    orl $0xC2, %eax
+    pushl %eax
+    pushl $0x23
     pushl %ebx 		
     iret		
    					 
@@ -70,7 +71,6 @@ jump_to_userspace:
 syscall_handler:
 	cmpl $1, %eax
 	jl call_fail
-	addl $-1, %eax
 	pushl %ebx
 	pushl %ecx
 	pushl %edx
@@ -95,4 +95,4 @@ end_call:
 	iret
 
 jump_table:
-.long 0x0, execute
+.long 0x0, halt, execute, read, write, open, close, getargs, vidmap

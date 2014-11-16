@@ -11,6 +11,7 @@ void set_idt()
 {
 	set_exception();
 	set_interrupt();
+	set_systemcall();
 }
 
 /* Exception handling functions below */
@@ -68,8 +69,23 @@ void set_interrupt()
 		idt[33] = idt_entry; 
 		idt[40] = idt_entry; 
 		SET_IDT_ENTRY(idt[40], &rtc_wrapper);
-		SET_IDT_ENTRY(idt[33], &kbd_wrapper);
-		SET_IDT_ENTRY(idt[128], &syscall_handler);		
+		SET_IDT_ENTRY(idt[33], &kbd_wrapper);		
+}
+
+
+void set_systemcall()
+{
+	idt_desc_t idt_entry;
+	idt_entry.seg_selector = KERNEL_CS;		
+	idt_entry.dpl = 3;
+	idt_entry.present = 1;
+	idt_entry.size = 1;
+	idt_entry.reserved0	= 0;
+	idt_entry.reserved1 = 1;
+	idt_entry.reserved2 = 1;
+	idt_entry.reserved3 = 0;
+	idt[128] = idt_entry;
+	SET_IDT_ENTRY(idt[128], &syscall_handler);	
 }
 
 

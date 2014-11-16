@@ -17,6 +17,7 @@ int space_seen = 0;
 int index = 0;
 uint8_t open_processes = 0;
 uint32_t k_sp = 0;
+uint32_t entry_addr = 0;
 
 int32_t execute(const uint8_t* command)
 {
@@ -32,9 +33,23 @@ int32_t execute(const uint8_t* command)
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
 		return -1;	
 
-	//cout("BEFORE PAGING\n");
+	//getting the address of where to put the program
+	dentry_t dentry_temp;
+	if(-1 == read_dentry_by_name((uint8_t*)fname, &dentry_temp))
+		return -1;
+	uint32_t inode_num_temp = dentry_temp.inode_num;
+	uint8_t buf_temp[4];
+	int ret_val = read_data(inode_num_temp, 24, buf_temp, 4);
+	if(-1 == ret_val)
+		return -1;
+	int k = 0;
+	for(k = 0; k < 4; k++)
+		entry_addr |= (buf_temp[k] << 8*k);
 
-	/* Set up paging - */
+
+	cout("BEFORE PAGING\n");
+
+	/* Set up paging */
 	task_mem_init();
 
 
@@ -89,14 +104,14 @@ int32_t execute(const uint8_t* command)
 	}	
 
 
-	tss.esp0 = 0x80000000 - 0x2000*process_id - 4;
+	tss.esp0 = 0x00800000 - 0x2000*process_id - 4;
 	k_sp = tss.esp0;
 
 	cout("\nfvkjdrhbgkjfdbgkjf 0 0 0 0 0 0 ");
 
 	//open stdin and stdout
-	stdin(0);									//kernel should automatically open stdin and stdout
-	stdout(1);									//which correspond to fd 0 and 1 respectively
+	//stdin(0);									//kernel should automatically open stdin and stdout
+	//stdout(1);									//which correspond to fd 0 and 1 respectively
 
 	jump_to_userspace();
 
@@ -124,16 +139,16 @@ int32_t close(int32_t fd)
 
 void stdin(uint32_t fd)
 {
-//	pcb_t* curr_process = (pcb_t*)(0x00800000 & 0x2000);
-//	curr_process->file_fds[fd].file_op = stdin_jmp_table;
-//	curr_process->file_fds[fd].flags = 1;
+	pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*fd);
+	curr_process->file_fds[fd].file_op = stdin_jmp_table;
+	curr_process->file_fds[fd].flags = 1;
 	cout("just read terminal\n");
 }
 void stdout(uint32_t fd)
 {
-//	pcb_t* curr_process = (pcb_t*)(0x00800000 & 0x2000);
-//	curr_process->file_fds[fd].file_op = stdin_jmp_table;		
-//	curr_process->file_fds[fd].flags = 1;
+	pcb_t* curr_process = (pcb_t*)(0x00800000 & 0x2000);
+	curr_process->file_fds[fd].file_op = stdin_jmp_table;		
+	curr_process->file_fds[fd].flags = 1;
 	cout("stdout comp\n");
 }
 
@@ -192,3 +207,33 @@ void get_arg(int i, char* input)
 		args[arg_length] = '\0';
 }
 
+
+int32_t halt(uint8_t status)
+{
+	cout("HALT!\n");
+	return 0;
+}
+
+int32_t read(int32_t fd, void* buf, int32_t nbytes)
+{
+		cout("READ!\n");
+	return 0;
+}
+
+int32_t write(int32_t fd, const void* buf, int32_t nbytes)
+{
+		cout("WRITE!\n");
+	return 0;
+}
+
+int32_t getargs(uint8_t* buf, int32_t nbytes)
+{
+		cout("GETARGS!\n");
+	return 0;
+}
+
+int32_t vidmap(uint8_t** screen_start) 
+{
+		cout("LOLIDK!\n");
+	return 0;
+}
