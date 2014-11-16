@@ -11,9 +11,16 @@
 #define VIDEO_MEM 	0xB8000
 #define KERNEL_MEM 	0x400000
 
+#define PD_align	0x400000
+#define PT_align	0x1000
+
 /* Number of pages in the Page directory */
 #define NUM_PDE 1024
 #define NUM_PTE 1024
+
+#define PGRM_IMG	0x08048000
+#define PAGE1		0x800000
+#define PAGE2		0xC00000
 
 #ifndef ASM
 
@@ -143,11 +150,17 @@ do {                                   			\
 				 );       						\
 } while(0)
 
+#define INVLPG(addr)										\
+do{															\
+	asm volatile("invlpg (%0)" ::"r" (addr) : "memory");	\
+} while(0)
+
 
 /* Global */
 
 extern void init_paging();
 extern void test_paging();
+extern uint32_t task_mem_init();
 
 /* Local functions */
 
@@ -156,6 +169,7 @@ void init_VIDEO_PT();
 uint32_t get_PDE_offset(uint32_t addr);
 uint32_t get_PTE_offset(uint32_t addr);
 uint32_t get_Page_offset(uint32_t addr);
+void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, uint32_t user_super);
 
 #endif /* ASM */
 

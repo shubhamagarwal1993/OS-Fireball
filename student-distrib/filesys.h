@@ -48,4 +48,6 @@ uint32_t dir_read(uint8_t* buf, uint32_t length);
 uint32_t dir_write();
 uint32_t dir_close();
 
+uint32_t program_load(const uint8_t* fname, uint32_t addr);
+
 #endif

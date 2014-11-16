@@ -5,8 +5,17 @@
 #include "paging.h"
 #include "lib.h"
 
-static PDE_t PD[NUM_PDE] __attribute__((aligned (0x400000)));
+static uint32_t task_count = 0;
+
+static PDE_t PD[NUM_PDE] __attribute__((aligned (0x1000)));
+static PDE_t PD0[NUM_PDE] __attribute__((aligned (0x1000)));
+static PDE_t PD1[NUM_PDE] __attribute__((aligned (0x1000)));
 static PTE_t VIDEO_PT[NUM_PTE] __attribute__((aligned (0x1000)));
+
+static PDE_t PDE_default;
+static PTE_t PTE_default;
+
+static PDE_t* cur_PD = NULL;
 
 void init_paging()
 {
@@ -38,7 +47,6 @@ void init_paging()
 void init_PD()
 {
 	// Fill the page directory with blank entries
-	PDE_t PDE_default;
 	PDE_default.present = 0;
 	PDE_default.read_write = 0;
 	PDE_default.user_super = 0;
@@ -55,7 +63,11 @@ void init_PD()
 	for(i = 0; i < NUM_PDE; i++)
 	{
 		PD[i] = PDE_default;
+		PD0[i] = PDE_default;
+		PD1[i] = PDE_default;
 	}
+
+ 	cur_PD = PD;
 
 	// Set up video memory PDE
 	int video_offset;
@@ -73,7 +85,6 @@ void init_PD()
 	PDE_t PDE_kernel;
 	PDE_kernel = PDE_default;
 	PDE_kernel.global = 1;
-	PDE_kernel.user_super = 0;
 	SET_PDE_4MB_PAGE(PDE_kernel, KERNEL_MEM);
 	PD[kernel_offset] = PDE_kernel;
 
@@ -90,7 +101,6 @@ void init_PD()
 void init_VIDEO_PT()
 {
 	// Fill the video page table with blank entries
-	PTE_t PTE_default;
 	PTE_default.present = 0;
 	PTE_default.read_write = 0;
 	PTE_default.user_super = 0;
@@ -134,6 +144,43 @@ uint32_t get_Page_offset(uint32_t addr)
 	return (addr & 0x00000FFF);
 }
 
+uint32_t task_mem_init()
+{
+	if(task_count == 0)
+	{
+		cur_PD = PD0;
+		map_4MB_page(PGRM_IMG, PAGE1, 0);
+	}
+
+	else if(task_count == 1)
+	{
+		cur_PD = PD1;
+		map_4MB_page(PGRM_IMG, PAGE2, 1);
+		//set_PDBR(PD2);
+	}
+
+	else return -1;
+
+	task_count++;
+
+	return 0;
+}
+
+void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, uint32_t user_super)
+{
+	PDE_t PDE = PDE_default;
+
+	uint32_t PD_offset;
+	PD_offset = get_PDE_offset(vir_addr);
+
+	PDE.user_super = user_super;
+	SET_PDE_4MB_PAGE(PDE, phys_addr);
+
+	cur_PD[PD_offset] = PDE;
+	//INVLPG(vir_addr);
+}
+
+
 /*
  * void test_paging()
  * 	Description: Attempts to access specific places in memory
@@ -147,7 +194,7 @@ void test_paging()
 	// printf("\n%x\n", *a);
 
 	// Access Kernel memory
-	uint8_t* b = (uint8_t*) 0x0040E000;
+	uint8_t* b = (uint8_t*) 0x00400000;
 	printf("\n%x\n", *b);
 
 	// Access Video memory
