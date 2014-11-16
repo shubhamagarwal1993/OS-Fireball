@@ -178,7 +178,7 @@ entry (unsigned long magic, unsigned long addr)
 	// init_rtc();
 	init_filesys(filesystem_address);
 
-	uint8_t fname[33] = "shell";
+	uint8_t fname[33] = "testprint";
 
 	reset_buf(buffer);
 

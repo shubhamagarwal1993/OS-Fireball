@@ -49,9 +49,9 @@ rtc_wrapper:
 	iret
 
 jump_to_userspace:
- 		
-    cli
-    movl 28(%esp), %ebx
+ 	
+ 	cli
+    movl 32(%esp), %ebx
     mov $0x2B, %ax
     mov %ax, %ds	
                    		
@@ -64,20 +64,21 @@ jump_to_userspace:
     orl $0xC2, %eax
     pushl %eax
     pushl $0x23
-    pushl %ebx 		
+    pushl %ebx 	
+    sti	
     iret		
    					 
 
 syscall_handler:
 	cmpl $1, %eax
 	jl call_fail
-	pushl %ebx
-	pushl %ecx
-	pushl %edx
 	pushl %esp
 	pushl %ebp
 	pushl %esi
 	pushl %edi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
 	call *jump_table(, %eax, 4)
 	jmp end_call
 
@@ -85,13 +86,14 @@ call_fail:
 	movl $-1, %eax
 
 end_call:
+	popl %ebx
+	popl %ecx
+	popl %edx
 	popl %edi
 	popl %esi
 	popl %ebp
 	popl %esp
-	popl %edx
-	popl %ecx
-	popl %ebx
+
 	iret
 
 jump_table:

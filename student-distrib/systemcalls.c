@@ -121,7 +121,7 @@ int32_t execute(const uint8_t* command)
 
 //making a file operations jump table
 uint32_t stdin_jmp_table[4] = {0, (uint32_t)terminal_read, 0, 0};													//
-uint32_t stdout_jmp_table[4] = {0, 0, (uint32_t)terminal_write, 0};													//
+uint32_t stdout_jmp_table[4] = {0, 0, (uint32_t)cout, 0};															//
 uint32_t rtc_jmp_table[4] = {(int32_t)rtc_open, (int32_t)rtc_read, (int32_t)rtc_write, (int32_t)rtc_close};			//
 uint32_t file_jmp_table[4] = {(int32_t)file_open, (int32_t)file_read, (int32_t)file_write, (int32_t)file_close};	//
 uint32_t dir_jmp_table[4] = {(int32_t)dir_open, (int32_t)dir_read, (int32_t)dir_write, (int32_t)dir_close};			//
@@ -248,24 +248,26 @@ int32_t halt(uint8_t status)
 
 int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
-		cout("READ!\n");
+	cout("READ!\n");
 	return 0;
 }
 
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
-		cout("WRITE!\n");
+
+	cout(buf);
+	printf("%s", buf);
 	return 0;
 }
 
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
-		cout("GETARGS!\n");
+	cout("GETARGS!\n");
 	return 0;
 }
 
 int32_t vidmap(uint8_t** screen_start) 
 {
-		cout("LOLIDK!\n");
+	cout("LOLIDK!\n");
 	return 0;
 }
