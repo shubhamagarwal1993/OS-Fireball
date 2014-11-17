@@ -14,4 +14,3 @@ extern void test_read_write(node* buf, int key);
 
 
 #endif /* TERMINAL */
-

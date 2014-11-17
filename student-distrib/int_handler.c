@@ -234,4 +234,3 @@ void floating_point_exception()
 	printf("Floating Point Exception");
 	while(1){}
 }
-

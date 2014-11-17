@@ -51,7 +51,7 @@ typedef struct pcb{
 
 /* Puts a pointer to parent esp in ESP register 
  * Outputs: None
- * Inputs: parent process' stack pointer 
+ * Inputs:  
  * Clobbers eax
  */
 #define set_ESP(p_sp)                   		\
@@ -64,11 +64,6 @@ do {                                   			\
 				 );       						\
 } while(0)
 
-/* Puts a pointer to parent ebp in EBP register 
- * Outputs: None
- * Inputs: parent process' base pointer 
- * Clobbers eax
- */
 #define set_EBP(p_bp)                   		\
 do {                                   			\
 	asm volatile("movl %0, %%eax \n\t"			\

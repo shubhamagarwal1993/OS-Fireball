@@ -217,4 +217,3 @@ void test_paging()
 	// uint8_t* c = (uint8_t*) 0x000B8000;
 	// printf("\n%x\n", *c);
 }
-

@@ -175,4 +175,3 @@ void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr,
 #endif /* ASM */
 
 #endif /* PAGING_H */
-

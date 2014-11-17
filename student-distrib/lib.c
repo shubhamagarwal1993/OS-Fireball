@@ -766,20 +766,15 @@ puts_cout(int8_t* s)
 void
 put_cout(uint8_t c)
 {
-	if(line_count != 127)
-	{
-	    if(c == '\n' || c == '\r' || limit == 79) {
-	        buf_y++;
-	        buf_x=0;
-	        limit = 0;
-	        line_count = 0;
-	    } else {
-	        buffer[NUM_COLS*buf_y + buf_x].mo = c;
-	        buf_x++;
-	        limit++;
-	        line_count++;
-	        buf_x %= NUM_COLS;
-	        buf_y = (buf_y + (buf_x / NUM_COLS)) % NUM_ROWS;
-	    }
-	}
+    if(c == '\n' || c == '\r') {
+        buf_y++;
+        buf_x=0;
+    } else {
+        //*(uint8_t *)(video_mem + ((NUM_COLS*buf_y + buf_x) << 1)) = c;
+        //*(uint8_t *)(video_mem + ((NUM_COLS*buf_y + buf_x) << 1) + 1) = ATTRIB;
+        buffer[NUM_COLS*buf_y + buf_x].mo = c;
+        buf_x++;
+        buf_x %= NUM_COLS;
+        buf_y = (buf_y + (buf_x / NUM_COLS)) % NUM_ROWS;
+    }
 }

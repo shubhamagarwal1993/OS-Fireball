@@ -10,8 +10,6 @@
 #define NUM_ROWS 25
 
 extern node buffer[NUM_COLS*NUM_ROWS];
-extern int line_count;
-extern int limit;
 
 extern void kbd_int_handler();
 
@@ -34,4 +32,3 @@ extern void dummy_int_handler();
 #endif	/* ASM */
 
 #endif 	/* KEYBOARD */
-
