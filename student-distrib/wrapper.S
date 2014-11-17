@@ -17,7 +17,7 @@ kbd_wrapper:
 	pushw %es
 	pushw %fs
 	pushw %gs
-	call kbd_int_handler
+	call terminal_open
 	popw %gs
 	popw %fs
 	popw %es

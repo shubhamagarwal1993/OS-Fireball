@@ -29,7 +29,7 @@ int32_t execute(const uint8_t* command)
 
 	/* Executable check */
 	uint8_t elf_check[4];
-	file_open();
+	open(fname);
 	file_read(fname, elf_check, 4);
 
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
@@ -102,7 +102,7 @@ int32_t execute(const uint8_t* command)
 	tss.esp0 = 0x00800000 - 0x2000*process_id - 4;
 	k_sp = tss.esp0;
 
-	cout("\nfvkjdrhbgkjfdbgkjf 0 0 0 0 0 0 ");
+	//cout("\nfvkjdrhbgkjfdbgkjf 0 0 0 0 0 0 ");
 
 	//open stdin and stdout
 	//stdin(0);									//kernel should automatically open stdin and stdout
@@ -118,12 +118,12 @@ int32_t execute(const uint8_t* command)
 //making a file operations jump table
 uint32_t stdin_jmp_table[4] = {0, (uint32_t)terminal_read, 0, 0};													//
 uint32_t stdout_jmp_table[4] = {0, 0, (uint32_t)cout, 0};															//
-uint32_t rtc_jmp_table[4] = {(int32_t)rtc_open, (int32_t)rtc_read, (int32_t)rtc_write, (int32_t)rtc_close};			//
-uint32_t file_jmp_table[4] = {(int32_t)file_open, (int32_t)file_read, (int32_t)file_write, (int32_t)file_close};	//
-uint32_t dir_jmp_table[4] = {(int32_t)dir_open, (int32_t)dir_read, (int32_t)dir_write, (int32_t)dir_close};			//
+uint32_t rtc_jmp_table[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)rtc_write, (uint32_t)rtc_close};			//
+uint32_t file_jmp_table[4] = {(uint32_t)file_open, (uint32_t)file_read, (uint32_t)file_write, (uint32_t)file_close};	//
+uint32_t dir_jmp_table[4] = {(uint32_t)dir_open, (uint32_t)dir_read, (uint32_t)dir_write, (uint32_t)dir_close};			//
 
-/* NOTES: 
- *	2: Must have access to the inode array -- filesys arrays global?
+/* int32_t open(const uint8_t* filename)
+ *	
  *
  *
  */
@@ -152,21 +152,27 @@ int32_t open(const uint8_t* filename)
 			farray[fd].file_op = rtc_jmp_table;
 			farray[fd].file_inode = NULL;
 			farray[fd].file_pos = 0;
+			farray[fd].flags = 1;
+			rtc_open();
 			break;
 
 		case 1: // Directory
 			farray[fd].file_op = dir_jmp_table;
 			farray[fd].file_inode = NULL;
 			farray[fd].file_pos = 0;
+			farray[fd].flags = 1;
+			dir_open();
 			break;
 
 		case 2:	// File
 			farray[fd].file_op = file_jmp_table;
 			farray[fd].file_inode = &(index_nodes[dentry.inode_num]);
 			farray[fd].file_pos = 0;
+			farray[fd].flags = 1;
+			file_open();
 			break;
 
-		default: // Invalid
+		default: // Invalid type
 			return -1;
 	}
 
@@ -194,7 +200,7 @@ void stdin(uint32_t fd)
 }
 void stdout(uint32_t fd)
 {
-	curr_process->file_fds[fd].file_op = stdin_jmp_table;		
+	curr_process->file_fds[fd].file_op = stdout_jmp_table;		
 	curr_process->file_fds[fd].flags = 1;
 	cout("stdout comp\n");
 }
@@ -311,55 +317,35 @@ int32_t halt(uint8_t status)
 
 int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
-/* Get the current process */
+
+	// TBI - pass other arguments inside buf
+
+	terminal_read(buf, nbytes);
+
 	// pcb_t* cur_PCB = curr_process;
 
-	// file_array_t* farray = cur_PCB->file_fds;
+	// uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
+	// fptr = cur_PCB->file_fds[fd].file_op[1];
 
-	// /* Find next open slot in the file array */
-	// uint32_t fd = 0;
-	// while(farray[fd].flags == 1)
-	// 	fd++;
+	// fptr(buf, nbytes);
 
-	// /* Check if there's space for the file and open a valid dentry*/
-	// dentry_t dentry;
-	// if(fd > 7 || -1 == read_dentry_by_name(filename, &dentry))
-	// 	return -1;
+	// asm ("pushl %%esi\n\t"	
+	// 	 "call *fptr\n\t"
 
-	// // Fill the file array entry
-	// switch(dentry.file_type)
-	// {
-	// 	case 0: // RTC
-	// 		farray[fd].file_op = rtc_jmp_table;
-	// 		farray[fd].file_inode = NULL;
-	// 		farray[fd].file_pos = 0;
-	// 		break;
-
-	// 	case 1: // Directory
-	// 		farray[fd].file_op = dir_jmp_table;
-	// 		farray[fd].file_inode = NULL;
-	// 		farray[fd].file_pos = 0;
-	// 		break;
-
-	// 	case 2:	// File
-	// 		farray[fd].file_op = file_jmp_table;
-	// 		farray[fd].file_inode = &(index_nodes[dentry.inode_num]);
-	// 		farray[fd].file_pos = 0;
-	// 		break;
-
-	// 	default: // Invalid
-	// 		return -1;
-	// }
-
-
-	return 0;
+	// 	: "=r"
+	// 	: "r" (fptr), "r" (buf), "r" (nbytes) 
+	// 	: 
+	// 	);
+	return nbytes;
 }
 
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
 
+	terminal_write(buf, nbytes);
+
 	cout("%s", buf);
-	// /printf("%s", buf);
+	printf("%s", buf);
 	return 0;
 }
 

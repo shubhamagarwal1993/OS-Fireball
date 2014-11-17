@@ -155,6 +155,7 @@ void kbd_int_handler()
 	kbd_logic(to_print, buffer);
 	//printb(buffer);
 	//init_terminal();
+
 	terminal_write(buffer, 1);
 	//terminal_open(to_print);
 	//test_read_write(buffer, to_print);

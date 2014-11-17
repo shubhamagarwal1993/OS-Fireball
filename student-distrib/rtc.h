@@ -8,13 +8,8 @@
 extern void rtc_int_handler();
 
 int32_t rtc_open();
-int32_t rtc_read();
-int32_t rtc_write(uint32_t frequency);
-int32_t ece391_close();
-
-int32_t rtc_open();
-int32_t rtc_read();
-int32_t rtc_write(uint32_t frequency);
+int32_t rtc_read(char* buf, int32_t count);
+int32_t rtc_write(char* buf, int32_t frequency);
 int32_t rtc_close();
 
 extern void test_rtc();
