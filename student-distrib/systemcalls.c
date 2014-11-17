@@ -47,7 +47,6 @@ int32_t execute(const uint8_t* command)
 	for(k = 0; k < 4; k++)
 		entry_addr |= (buf_temp[k] << 8*k);
 
-
 	/*	Looking for processes	*/
 	uint8_t process_mask = 0x80;
 	//int i;
@@ -93,7 +92,7 @@ int32_t execute(const uint8_t* command)
 	for(i = 0; i < 8; i++)
 	{
 		curr_process->file_fds[i].file_op = NULL;
-		curr_process->file_fds[i].file_inode = 0;
+		curr_process->file_fds[i].file_inode = NULL;
 		curr_process->file_fds[i].file_pos = 0;
 		curr_process->file_fds[i].flags = 0;
 	}	
@@ -122,8 +121,57 @@ uint32_t rtc_jmp_table[4] = {(int32_t)rtc_open, (int32_t)rtc_read, (int32_t)rtc_
 uint32_t file_jmp_table[4] = {(int32_t)file_open, (int32_t)file_read, (int32_t)file_write, (int32_t)file_close};	//
 uint32_t dir_jmp_table[4] = {(int32_t)dir_open, (int32_t)dir_read, (int32_t)dir_write, (int32_t)dir_close};			//
 
+/* NOTES: 
+ *	2: Must have access to the inode array -- filesys arrays global?
+ *
+ *
+ */
+
 int32_t open(const uint8_t* filename)
 {
+	/* Get the current process */
+	pcb_t* cur_PCB = (pcb_t *)(0x00800000 - (0x2000)*process_id);
+
+	file_array_t* farray = cur_PCB->file_fds;
+
+	/* Find next open slot in the file array */
+	uint32_t fd = 0;
+	while(farray[fd].flags == 1)
+		fd++;
+
+	/* Check if there's space for the file and open a valid dentry*/
+	dentry_t dentry;
+	if(fd > 7 || -1 == read_dentry_by_name(filename, &dentry))
+		return -1;
+
+	// Fill the file array entry
+	switch(dentry.file_type)
+	{
+		case 0: // RTC
+			farray[fd].file_op = rtc_jmp_table;
+			farray[fd].file_inode = NULL;
+			farray[fd].file_pos = 0;
+			break;
+
+		case 1: // Directory
+			farray[fd].file_op = dir_jmp_table;
+			farray[fd].file_inode = NULL;
+			farray[fd].file_pos = 0;
+			break;
+
+		case 2:	// File
+			farray[fd].file_op = file_jmp_table;
+			farray[fd].file_inode = &(index_nodes[dentry.inode_num]);
+			farray[fd].file_pos = 0;
+			break;
+
+		default: // Invalid
+			return -1;
+	}
+
+	// Mark that this entry of the file array is in use
+	farray[fd].flags = 1;
+
 	return 0;
 }
 
@@ -261,6 +309,14 @@ int32_t halt(uint8_t status)
 int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
 	cout("READ!\n");
+
+
+
+
+
+
+
+
 	return 0;
 }
 

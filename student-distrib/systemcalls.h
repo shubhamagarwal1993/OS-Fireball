@@ -4,6 +4,7 @@
 #ifndef ASM
 
 #include "types.h"
+#include "filesys.h"
 
 
 int32_t halt(uint8_t status);
@@ -31,7 +32,7 @@ void stdout(uint32_t fd);
 //each cell of PCB
 typedef struct file_array{
 	uint32_t* file_op;		 			//pointer to file operations table pointer
-	uint32_t file_inode;				//inode pointer to inode number of file in file system
+	inode_t* file_inode;				//inode pointer to inode number of file in file system
 	uint32_t file_pos;					//keeps position of where we are in the file
 	uint32_t flags;						//this flag tells us which fds are available
 }file_array_t;

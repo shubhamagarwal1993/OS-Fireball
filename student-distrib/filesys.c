@@ -2,9 +2,9 @@
 #include "lib.h"
 #include "keyboard.h"
 
-static bootblock_t* boot_block;
-static inode_t* index_nodes;
-static data_block_t* data_blocks;
+bootblock_t* boot_block;
+inode_t* index_nodes;
+data_block_t* data_blocks;
 
 static uint32_t file_position;
 static uint32_t directory_position;

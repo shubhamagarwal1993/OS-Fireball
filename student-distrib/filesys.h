@@ -18,7 +18,7 @@ typedef struct{
 	uint32_t num_data_blocks;
 	uint8_t reserved[52];
 	dentry_t dir_entries[63];
-} bootblock_t;
+}bootblock_t;
 
 typedef struct{
 	uint32_t length;
@@ -28,6 +28,11 @@ typedef struct{
 typedef struct{
 	uint8_t data[4096];
 }data_block_t;
+
+// Filesystem structures
+extern bootblock_t* boot_block;
+extern inode_t* index_nodes;
+extern data_block_t* data_blocks;
 
 
 extern void init_filesys(const uint8_t *bootblockptr);
