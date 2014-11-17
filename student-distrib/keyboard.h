@@ -10,6 +10,7 @@
 #define NUM_ROWS 25
 
 extern node buffer[NUM_COLS*NUM_ROWS];
+extern volatile int enter_press;
 
 extern void kbd_int_handler();
 

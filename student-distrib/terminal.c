@@ -11,6 +11,17 @@ volatile int to_print;
 node* curr_buff;
 node* screens[3] = {0,0,0};
 int screen_num = 0;
+node buffer[NUM_COLS*NUM_ROWS];
+
+// void init_terminal()
+// {
+// 	node buffer[NUM_COLS*NUM_ROWS];
+// 	curr_buff = buffer;
+// 	screens[screen_num] = curr_buff;
+// 	screen_num++;
+// 	//return curr_buff;
+// }
+
 /* 
  * terminal_open()
  *   DESCRIPTION: Opens the terminal and allows typing to it
@@ -21,7 +32,6 @@ int screen_num = 0;
  */
 node* terminal_open()
 {
-	node buffer[NUM_COLS*NUM_ROWS];
 	curr_buff = buffer;
 	screens[screen_num] = curr_buff;
 	screen_num++;
@@ -37,41 +47,69 @@ node* terminal_open()
  *   RETURN VALUE: string
  *   SIDE EFFECTS: --
  */
-char* terminal_read(node* buf, int counter)
+uint32_t terminal_read(uint8_t* buf, int counter)
 {
+	sti();
+	node* buffer = curr_buff;
+	to_print = inb(0x60);
 	char* output;
 	char out[counter];
-	char * fault = "Invalid read";
+	//char * fault = "Invalid read";
+	int line_count;
+	int beforeline_count = pass_count();
+
+	while(1)
+	{
+		if(length == 127)
+			break;
+		if(enter_press == 1)
+			break;
+		else line_count = pass_count();
+	}
+		enter_press = 0;
 	int y = pass_y();
-	int line_count = pass_count();
-	
+	// int test_count = pass_count();
 	int index = 0;
 	if(line_count >= 80)
-		index = (y-1)*80;
-	else index = y*80;
+		index = (y-2)*80;
+	else index = (y-1)*80;
 	if(enter_flag == 1)
 		index = (y-1)*80;
+	//if( (counter > 0) && (counter <= 128) )
+	//{
 	int i = 0;
-	if( (counter > 0) && (counter <= 128) )
+	int j = 0;
+	for(i = index + 7; i < index + 127; i++, j++)
 	{
-		for(i = index; i < index+counter; i++)
+		length++; 
+		out[j] = buffer[i].mo;
+		// if( (length == 127) || (to_print == 0x1C) || (to_print == 0x0E))
+		// {
+		// 	counter = length - 1;
+		// 	break;
+		// }
+		if(buffer[i+1].mo == '\n')
 		{
-			length++; 
-			out[i-index] = buf[i].mo;
-			if(buf[i+1].mo == '\n')
-			{
-				//index = y - 1;
-				output = out;
-				break;
-			}
+			//index = y - 1;
+			output = out;
+			break;
 		}
-		output = out;
 	}
-	else 
+	output = out;
+	//}
+	//else 
+	//{
+	//	output = fault;
+	//}
+	int yudodis;
+	for(yudodis = 0; yudodis < length - 1; yudodis++)
 	{
-		output = fault;
+		buf[yudodis] = output[yudodis];
 	}
-	return output;
+	buf[yudodis] = '\0';
+	if(counter > 128)
+		return 128;
+	else return counter;
 }
 
 /* 
@@ -82,15 +120,23 @@ char* terminal_read(node* buf, int counter)
  *   RETURN VALUE: int32_t
  *   SIDE EFFECTS: --
  */
-int32_t terminal_write(node* buf, int counter)
+int32_t terminal_write(uint8_t* buf, int counter)
 {
 	//to_print = inb(0x60);
 	//kbd_int_handler();
-	int test_count = pass_count();
+
+	char* print_this = (char*)buf;
+	cout("%s", print_this);
+	printb(pass_buff());
+	return counter;
+
+	//previous code below:
+
+	//int test_count = pass_count();
 	//char* test = "lol, yiss!";
 	//if(test_count == 50) cout(test);
-	if( (test_count % counter == 0) || (to_print == 0x1C) || (to_print == 0x0E))
-		printb(buf);
+	//if( (test_count % counter == 0) || (to_print == 0x1C) || (to_print == 0x0E))
+	//	printb(buf);
 	/*char* data;
 	char* output;
 	data = terminal_read(buf, 128);
@@ -106,7 +152,6 @@ int32_t terminal_write(node* buf, int counter)
 	}
 	printf("%s", output);
 	return i/2;*/
-	return 0;
 }
 
 /* 
@@ -135,43 +180,43 @@ int terminal_close()
 void test_read_write(node* buf, int key)
 {
 	//printf(" Hi");
-	int test_count = pass_count();
-	if((test_count != 127)&&(key != 0x1C))
-		terminal_write(buf, test_count);
-	//	printb(buf);
-	else
-	{
-		if(key == 0x1C)
-			enter_flag = 1;
-		disable_irq(1);
-		int count = 127;
-		char* halwai = terminal_read(buf, 127);
-		//reset_buf(buf);
-		if(enter_flag)
-			count = length;
-		int i = 0;
-		/*
-		while((i < 127) || (halwai[i] != '\n'))
-		{
-			if (i == 0)
-				new_line(buf);
-			setb(buf, halwai[i]);
-			if (i == 79)
-				new_line(buf);
-			i++;
-		}*/
-		for(i = 0; i < count; i++)
-		{
-			if (i == 0)
-				new_line(buf);
-			setb(buf, halwai[i]);
-			if (i == 79)
-				new_line(buf);
-		}
-		// new_line(buf);
-		printb(buf);
-	}
-	test_count++;
+	// int test_count = pass_count();
+	// if((test_count != 127)&&(key != 0x1C))
+	// 	terminal_write(buf, test_count);
+	// //	printb(buf);
+	// else
+	// {
+	// 	if(key == 0x1C)
+	// 		enter_flag = 1;
+	// 	disable_irq(1);
+	// 	int count = 127;
+	// 	char* halwai = terminal_read(buf, 127);
+	// 	//reset_buf(buf);
+	// 	if(enter_flag)
+	// 		count = length;
+	// 	int i = 0;
+		
+	// 	while((i < 127) || (halwai[i] != '\n'))
+	// 	{
+	// 		if (i == 0)
+	// 			new_line(buf);
+	// 		setb(buf, halwai[i]);
+	// 		if (i == 79)
+	// 			new_line(buf);
+	// 		i++;
+	// 	}
+	// 	for(i = 0; i < count; i++)
+	// 	{
+	// 		if (i == 0)
+	// 			new_line(buf);
+	// 		setb(buf, halwai[i]);
+	// 		if (i == 79)
+	// 			new_line(buf);
+	// 	}
+	// 	// new_line(buf);
+	// 	printb(buf);
+	// }
+	// test_count++;
 }
 
 /* 

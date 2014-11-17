@@ -41,12 +41,13 @@ typedef struct file_array{
 typedef struct pcb{
 	file_array_t file_fds[8];			//array of open files are represented with a file array defined above
 	uint32_t fd;						//integer index into this array is called a file descriptor and this integer is how user-level programs identify the open file
-	uint32_t parent_bp;					//keep track of parent process' base pointer
-	uint32_t parent_sp;					//keep track of parent prcoess' stack pointer
+	uint32_t k_bp;					//keep track of parent process' base pointer
+	uint32_t k_sp;					//keep track of parent prcoess' stack pointer
 	uint32_t parent_PD;
 	uint8_t process_id;
-	uint32_t parent_process_id;
+	//uint32_t parent_process_id;
 	uint32_t child_flag;
+	struct pcb* parent_process;
 }pcb_t;
 
 /* Puts a pointer to parent esp in ESP register 

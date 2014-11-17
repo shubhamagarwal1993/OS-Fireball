@@ -17,7 +17,7 @@ kbd_wrapper:
 	pushw %es
 	pushw %fs
 	pushw %gs
-	call terminal_open
+	call kbd_int_handler
 	popw %gs
 	popw %fs
 	popw %es
@@ -58,8 +58,8 @@ jump_to_userspace:
     pushl $0x23
     pushl %ebx 	
     sti	
-    iret		
-   					 
+    iret	
+
 syscall_handler:
 	cmpl $1, %eax
 	jl call_fail

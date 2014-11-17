@@ -180,10 +180,9 @@ entry (unsigned long magic, unsigned long addr)
 
 	uint8_t fname[33] = "shell";
 	//node* buffer = pass_buff();
-	//reset_buf(buffer);
 
-	
-
+	node* buffer = terminal_open();
+	reset_buf(buffer);
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -191,8 +190,9 @@ entry (unsigned long magic, unsigned long addr)
 	//printf("Enabling Interrupts\n");
 
 	sti();
-	
+	printf("test");
 	int flag = execute(fname);
+	
 	// rtc_open();
 	// rtc_read();
 

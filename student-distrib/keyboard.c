@@ -106,6 +106,7 @@ int offset = 0;
 int line_flag = 1;
 int limit = 0;
 int line_count = 0;
+volatile int enter_press = 0;
 
 // char* args;
 // int space_seen = 0;
@@ -123,6 +124,7 @@ int line_count = 0;
  */
 void kbd_int_handler()
 {
+	
 	node* buffer = pass_buff();
 	if(reset_flag == 0)
 	{
@@ -131,9 +133,10 @@ void kbd_int_handler()
 
 		disable_rtc_test();
 
-		//int a = 13;
-		//cout("%d test", a);
-		// char* mofo = " Halwai fuckshubham.txt";
+		// int a = 13;
+		// cout("%d test\n", a);
+		//  char* mofo = " Halwai fuckshubham.txt";
+		// cout("%s\n", mofo);
 		// char* output = parse(mofo);
 		// get_arg(index, mofo);
 		
@@ -155,8 +158,11 @@ void kbd_int_handler()
 	kbd_logic(to_print, buffer);
 	//printb(buffer);
 	//init_terminal();
-
-	terminal_write(buffer, 1);
+	if(to_print == 0x1C || to_print == 0x0E)
+		enter_press = 1;
+	else enter_press = 0;
+	printb(buffer);
+	//terminal_write(buffer, 1);
 	//terminal_open(to_print);
 	//test_read_write(buffer, to_print);
 	

@@ -12,8 +12,8 @@
 extern node buffer[NUM_COLS*NUM_ROWS];
 
 extern node* terminal_open();
-extern char* terminal_read(node* buf, int counter);
-extern int32_t terminal_write(node* buf, int counter);
+extern uint32_t terminal_read(uint8_t* buf, int counter);
+extern int32_t terminal_write(uint8_t* buf, int counter);
 extern int terminal_close();
 extern void test_read_write(node* buf, int key);
 extern node* pass_buff();
