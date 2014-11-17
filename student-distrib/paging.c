@@ -91,8 +91,6 @@ void init_PD()
 	// Pass the address of the page directory into the PBDR
  	set_PDBR(PD);
 
-
-
  	// Temporarily copy all of PD into PD0 and PD1
  	int j;
 	for(j = 0; j < NUM_PDE; j++)
@@ -101,8 +99,6 @@ void init_PD()
 		PD1[j] = PD[j];
 	}
 
-
-	
 }
 
 /*
@@ -157,8 +153,11 @@ uint32_t get_Page_offset(uint32_t addr)
 	return (addr & 0x00000FFF);
 }
 
+// Returns parent process PD or -1 on fail
 uint32_t task_mem_init()
 {
+	uint32_t prev_PD = (uint32_t)cur_PD;
+
 	if(task_count == 0)
 	{
 		cur_PD = PD0;
@@ -177,7 +176,7 @@ uint32_t task_mem_init()
 
 	task_count++;
 
-	return 0;
+	return prev_PD;
 }
 
 void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, 

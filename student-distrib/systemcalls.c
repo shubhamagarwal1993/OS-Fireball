@@ -48,15 +48,6 @@ int32_t execute(const uint8_t* command)
 		entry_addr |= (buf_temp[k] << 8*k);
 
 
-	cout("BEFORE PAGING\n");
-
-	/* Set up paging */
-	task_mem_init();
-
-
-	//cout("AFTER PAGING_+_)_(*&)*&^R(@$*YR(R TWE(B& R^%$B&($%(@&$%\n\n\n\n\n\n\n\n");
-	program_load(fname, PGRM_IMG);
-
 	/*	Looking for processes	*/
 	uint8_t process_mask = 0x80;
 	//int i;
@@ -78,10 +69,15 @@ int32_t execute(const uint8_t* command)
 
 	pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
 
+	/* Set up paging */
+	curr_process->parent_PD = task_mem_init();
+
+	program_load(fname, PGRM_IMG);
+
 	asm volatile("movl %%esp, %0":"=g"(curr_process->parent_sp));
 	asm volatile("movl %%ebp, %0":"=g"(curr_process->parent_bp));
 	
-	if(open_processes == 0x10)
+	if(open_processes == 0x80)
 	{
 		curr_process->parent_process_id = 0;
 		curr_process->child_flag = 0;
@@ -89,9 +85,9 @@ int32_t execute(const uint8_t* command)
 	}
 	else
 	{
-		pcb_t* temp = (pcb_t *)curr_process->parent_sp;
-		curr_process->parent_process_id = temp->process_id;
-		temp->child_flag = 1;
+		pcb_t* parent_process = (pcb_t *) (curr_process->parent_sp & 0xFFFFE000);
+		curr_process->parent_process_id = parent_process->process_id;
+		parent_process->child_flag = 1;
 	}
 	
 	for(i = 0; i < 8; i++)
@@ -209,40 +205,56 @@ void get_arg(int i, char* input)
 
 int32_t halt(uint8_t status)
 {
-	// pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
+	pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
+	pcb_t* parent_process = (pcb_t *)(0x00800000 - (0x2000)*(curr_process->parent_process_id));
 
-	// if(curr_process->child_flag == 0)
-	// {
-	// 	//if the current process is the parent process, not sure what to do
-	// }
+
+	if(curr_process->parent_process_id == 0)
+	{
+		//if the current process is the parent process, not sure what to do
+		return -1;
+	}
 	
-	// else if(curr_process->child_flag == 1)
-	// {
-	// 	int i = 0;
-	// 	uint8_t process_mask = 0x80;
-	// 	uint8_t temp = open_processes;
-	// 	for(i = 0; i < curr_process->parent_process_id; i++)
-	// 	{
-	// 		//temp = temp & 0x80;
-	// 		//if(temp == 0)
-	// 		//{
-	// 			process_mask = (process_mask >> 1);
-	// 			open_processes |= process_mask;
-	// 			process_id = i;
-	// 			break;
-	// 		}
-				
-	// 		temp = temp << 1;
-	// 	}			
 
-	// 	//set kernel stack pointer and kernel base pointer
-	// 	//back to the parent's base pointer and stack pointer
-	// 	//respectively.
-	// 	uint32_t p_sp = curr_process->parent_sp;
-	// 	uint32_t p_bp = curr_process->parent_bp;
-	// 	set_ESP(p_sp);
-	// 	set_EBP(p_bp);
-	// }
+	//else if(curr_process->child_flag == 1)
+	else
+	{
+		//modify open_processes to indicate that current process is not running anymore
+		int i = 0;
+		uint8_t process_mask = 0x01;
+		for(i = 0; i < curr_process->parent_process_id; i++)
+		{
+			process_mask = process_mask << 1;
+		}
+		open_processes = open_processes ^ process_mask;
+
+		//clear parent process' child flag
+		parent_process->child_flag = 0;
+
+		//load the page directory of the parent
+		set_PDBR(curr_process->parent_PD);
+
+		//set the k_sp and tss to point back to parent process' k_sp and tss
+		tss.esp0 = 0x00800000 - 0x2000*(curr_process->process_id) - 4;
+		k_sp = tss.esp0;
+
+		//set kernel stack pointer and kernel base pointer
+		//back to the parent's base pointer and stack pointer
+		//respectively.
+		uint32_t p_sp = curr_process->parent_sp;
+		uint32_t p_bp = curr_process->parent_bp;
+		set_ESP(p_sp);
+		set_EBP(p_bp);
+
+		//return this status back to parent process
+		asm volatile("pushl %0;"::"g"(status));
+		asm volatile("popl %eax");
+
+		//go back to parent's instruction pointer
+		asm volatile("leave");
+		asm volatile("ret");
+			
+	}
 	return 183;
 }
 
@@ -255,7 +267,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
 
-	cout(buf);
+	cout("%s", buf);
 	printf("%s", buf);
 	return 0;
 }
