@@ -30,13 +30,13 @@ int32_t execute(const uint8_t* command)
 	get_arg(index, cmd);
 
 	/*	Looking for processes	*/
-	uint8_t process_mask = 0x80;
+	uint8_t process_mask = MASK;
 	//int i;
 	uint8_t temp = open_processes;
 	int i = 0;
 	for(i = 1; i <= 8; i++)
 	{
-		temp = temp & 0x80;
+		temp = temp & MASK;
 		if(temp == 0)
 		{
 			process_mask = process_mask >> (i-1);
@@ -86,14 +86,14 @@ int32_t execute(const uint8_t* command)
 
 	program_load(fname, PGRM_IMG);
 
-	k_bp = 0x00800000 - (0x2000)*(process_id - 1) - 4;
+	k_bp = _8MB - (_8KB)*(process_id - 1) - 4;
 	curr_process = (pcb_t *) (k_bp & 0xFFFFE000);
 	curr_process->k_sp = k_bp;
 	curr_process->k_bp = k_bp;
 	curr_process->process_id = process_id;
 	curr_process->parent_PD = parent_PD;
 	
-	if(open_processes == 0x80)
+	if(open_processes == MASK)
 	{
 		//curr_process->parent_process_id = 0;
 		curr_process->parent_process = curr_process;
@@ -118,7 +118,7 @@ int32_t execute(const uint8_t* command)
 	asm volatile("movl %%esp, %0":"=g"(curr_process->k_sp));
 	asm volatile("movl %%ebp, %0":"=g"(curr_process->k_bp));
 	
-	tss.esp0 = 0x00800000 - 0x2000*(process_id - 1) - 4;
+	tss.esp0 = _8MB - _8KB*(process_id - 1) - 4;
 	//tss.esp0 = curr_process->k_sp;
 	tss.ss0 = KERNEL_DS;
 	//k_sp = tss.esp0;
@@ -315,7 +315,7 @@ int32_t halt(uint8_t status)
 	{
 		//modify open_processes to indicate that current process is not running anymore
 		int i = 0;
-		uint8_t process_mask = 0x80;
+		uint8_t process_mask = MASK;
 		for(i = 0; i < (curr_process->process_id)-1; i++)
 		{
 			process_mask = process_mask >> 1;

@@ -6,6 +6,9 @@
 #include "types.h"
 #include "filesys.h"
 
+#define _8MB	0x00800000
+#define _8KB	0x2000
+#define MASK	0x80
 
 int32_t halt(uint8_t status);
 int32_t execute(const uint8_t* command);
