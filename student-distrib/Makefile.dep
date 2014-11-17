@@ -13,7 +13,7 @@ kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
   filesys.h systemcalls.h
 keyboard.o: keyboard.c keyboard.h lib.h types.h wrapper.h rtc.h i8259.h \
   buffer.h terminal.h
-lib.o: lib.c lib.h types.h buffer.h keyboard.h wrapper.h rtc.h
+lib.o: lib.c lib.h types.h buffer.h keyboard.h wrapper.h rtc.h terminal.h
 paging.o: paging.c paging.h types.h lib.h
 rtc.o: rtc.c rtc.h wrapper.h types.h lib.h i8259.h keyboard.h
 systemcalls.o: systemcalls.c systemcalls.h types.h filesys.h wrapper.h \

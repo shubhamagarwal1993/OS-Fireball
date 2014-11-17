@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "buffer.h"
 #include "keyboard.h"
+#include "terminal.h"
 #define VIDEO 0xB8000
 #define NUM_COLS 80
 #define NUM_ROWS 25
@@ -772,6 +773,7 @@ put_cout(uint8_t c)
     } else {
         //*(uint8_t *)(video_mem + ((NUM_COLS*buf_y + buf_x) << 1)) = c;
         //*(uint8_t *)(video_mem + ((NUM_COLS*buf_y + buf_x) << 1) + 1) = ATTRIB;
+        node* buffer = pass_buff();
         buffer[NUM_COLS*buf_y + buf_x].mo = c;
         buf_x++;
         buf_x %= NUM_COLS;

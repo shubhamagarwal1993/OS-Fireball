@@ -13,9 +13,7 @@ extern node buffer[NUM_COLS*NUM_ROWS];
 
 extern void kbd_int_handler();
 
-void kbd_logic(int to_print);
-
-extern node* pass_buff();
+extern void kbd_logic(int to_print, node* buffer);
 
 extern int pass_count();
 

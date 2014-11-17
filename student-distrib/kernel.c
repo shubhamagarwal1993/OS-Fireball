@@ -179,7 +179,7 @@ entry (unsigned long magic, unsigned long addr)
 	init_filesys(filesystem_address);
 
 	uint8_t fname[33] = "testprint";
-
+	node* buffer = pass_buff();
 	reset_buf(buffer);
 
 	

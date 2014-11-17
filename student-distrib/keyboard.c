@@ -94,7 +94,7 @@ unsigned char kbdus_shift[128] =
 /*
  * Declaration of buffer and global variables to be used by the functions following.
 */
-node buffer[NUM_COLS*NUM_ROWS];
+
 int reset_flag = 0;						//checks whether the screen/buffer needs to be cleared
 
 int caps_count = 0;						//checks whether the caps lock is on
@@ -123,6 +123,7 @@ int line_count = 0;
  */
 void kbd_int_handler()
 {
+	node* buffer = pass_buff();
 	if(reset_flag == 0)
 	{
 		//reset_scr();
@@ -151,11 +152,11 @@ void kbd_int_handler()
 
 	int to_print;										//disable line so we can complete this before handling some other interrupt 	
 	to_print = inb(0x60);
-	kbd_logic(to_print);
+	kbd_logic(to_print, buffer);
 	//printb(buffer);
 	//init_terminal();
-	
-	terminal_open(to_print);
+	terminal_write(buffer, 1);
+	//terminal_open(to_print);
 	//test_read_write(buffer, to_print);
 	
 	send_eoi(1);
@@ -172,7 +173,7 @@ void kbd_int_handler()
  *   RETURN VALUE: none
  *   SIDE EFFECTS: sets up the buffer that is to be printed to the screen.
  */
-void kbd_logic(int to_print)
+void kbd_logic(int to_print, node* buffer)
 {
 	//shift enable - sets flag if shift is currently pressed.
 	if(to_print == 0x2A || to_print == 0x36)
@@ -326,20 +327,6 @@ void kbd_logic(int to_print)
 
 	done:
 		return;
-}
-
-/* 
- * pass_buff()
- *   DESCRIPTION: Helper function. Used to provide other functions
- * 				  an access to the buffer.
- *   INPUTS: -- 
- *   OUTPUTS: the buffer
- *   RETURN VALUE: node *
- *   SIDE EFFECTS:
- */
-node* pass_buff()
-{
-	return buffer;
 }
 
 /* 

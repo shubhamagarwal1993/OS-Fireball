@@ -7,6 +7,10 @@
 
 volatile int enter_flag = 0;
 volatile int length = 0;
+volatile int to_print;
+node* curr_buff;
+node* screens[3] = {0,0,0};
+int screen_num = 0;
 /* 
  * terminal_open()
  *   DESCRIPTION: Opens the terminal and allows typing to it
@@ -15,10 +19,14 @@ volatile int length = 0;
  *   RETURN VALUE: --
  *   SIDE EFFECTS:
  */
-void terminal_open(int key)
+node* terminal_open()
 {
-	node* buf = pass_buff();
-	terminal_write(buf, 1, key);
+	node buffer[NUM_COLS*NUM_ROWS];
+	curr_buff = buffer;
+	screens[screen_num] = curr_buff;
+	screen_num++;
+	return curr_buff;
+	//terminal_write(buffer, 1);
 }
 
 /* 
@@ -74,12 +82,14 @@ char* terminal_read(node* buf, int counter)
  *   RETURN VALUE: int32_t
  *   SIDE EFFECTS: --
  */
-int32_t terminal_write(node* buf, int counter, int key)
+int32_t terminal_write(node* buf, int counter)
 {
+	//to_print = inb(0x60);
+	//kbd_int_handler();
 	int test_count = pass_count();
 	//char* test = "lol, yiss!";
 	//if(test_count == 50) cout(test);
-	if( (test_count % counter == 0) || (key == 0x1C) || (key == 0x0E))
+	if( (test_count % counter == 0) || (to_print == 0x1C) || (to_print == 0x0E))
 		printb(buf);
 	/*char* data;
 	char* output;
@@ -109,6 +119,8 @@ int32_t terminal_write(node* buf, int counter, int key)
  */
 int terminal_close()
 {
+	screen_num--;
+	screens[screen_num] = 0;
 	return 0;
 }
 
@@ -125,7 +137,7 @@ void test_read_write(node* buf, int key)
 	//printf(" Hi");
 	int test_count = pass_count();
 	if((test_count != 127)&&(key != 0x1C))
-		terminal_write(buf, test_count, key);
+		terminal_write(buf, test_count);
 	//	printb(buf);
 	else
 	{
@@ -160,4 +172,18 @@ void test_read_write(node* buf, int key)
 		printb(buf);
 	}
 	test_count++;
+}
+
+/* 
+ * pass_buff()
+ *   DESCRIPTION: Helper function. Used to provide other functions
+ * 				  an access to the buffer.
+ *   INPUTS: -- 
+ *   OUTPUTS: the buffer
+ *   RETURN VALUE: node *
+ *   SIDE EFFECTS:
+ */
+node* pass_buff()
+{
+	return curr_buff;
 }
