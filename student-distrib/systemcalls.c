@@ -19,6 +19,7 @@ uint8_t open_processes = 0;
 uint32_t k_sp = 0;
 uint32_t entry_addr = 0;
 int process_id = 0;
+pcb_t* curr_process;
 
 int32_t execute(const uint8_t* command)
 {
@@ -66,7 +67,7 @@ int32_t execute(const uint8_t* command)
 		temp = temp << 1;
 	}
 
-	pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
+	curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
 
 	/* Set up paging */
 	curr_process->parent_PD = task_mem_init();
@@ -130,7 +131,7 @@ uint32_t dir_jmp_table[4] = {(int32_t)dir_open, (int32_t)dir_read, (int32_t)dir_
 int32_t open(const uint8_t* filename)
 {
 	/* Get the current process */
-	pcb_t* cur_PCB = (pcb_t *)(0x00800000 - (0x2000)*process_id);
+	pcb_t* cur_PCB = curr_process;
 
 	file_array_t* farray = cur_PCB->file_fds;
 
@@ -177,19 +178,22 @@ int32_t open(const uint8_t* filename)
 
 int32_t close(int32_t fd)
 {
+	pcb_t* cur_PCB = curr_process;
+
+	file_array_t* farray = cur_PCB->file_fds;
+
+	farray[fd].flags = 0;
 	return 0;
 }
 
 void stdin(uint32_t fd)
 {
-	pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*fd);
 	curr_process->file_fds[fd].file_op = stdin_jmp_table;
 	curr_process->file_fds[fd].flags = 1;
 	cout("just read terminal\n");
 }
 void stdout(uint32_t fd)
 {
-	pcb_t* curr_process = (pcb_t*)(0x00800000 & 0x2000);
 	curr_process->file_fds[fd].file_op = stdin_jmp_table;		
 	curr_process->file_fds[fd].flags = 1;
 	cout("stdout comp\n");
@@ -253,7 +257,6 @@ void get_arg(int i, char* input)
 
 int32_t halt(uint8_t status)
 {
-	pcb_t* curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
 	pcb_t* parent_process = (pcb_t *)(0x00800000 - (0x2000)*(curr_process->parent_process_id));
 
 
