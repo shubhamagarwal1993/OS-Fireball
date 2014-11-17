@@ -56,7 +56,6 @@ uint32_t terminal_read(uint8_t* buf, int counter)
 	char out[counter];
 	//char * fault = "Invalid read";
 	int line_count;
-	int beforeline_count = pass_count();
 
 	while(1)
 	{
@@ -124,9 +123,11 @@ int32_t terminal_write(uint8_t* buf, int counter)
 {
 	//to_print = inb(0x60);
 	//kbd_int_handler();
-
+	int i;
 	char* print_this = (char*)buf;
-	cout("%s", print_this);
+
+	for(i = 0; i < strlen(print_this); i++)
+		put_cout(print_this[i]);
 	printb(pass_buff());
 	return counter;
 

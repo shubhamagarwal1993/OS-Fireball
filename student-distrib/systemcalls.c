@@ -16,7 +16,7 @@ char * args;
 int space_seen = 0;
 int index = 0;
 uint8_t open_processes = 0;
-uint32_t k_sp = 0;
+uint32_t k_bp = 0;
 uint32_t entry_addr = 0;
 int process_id = 0;
 pcb_t* curr_process;
@@ -48,14 +48,20 @@ int32_t execute(const uint8_t* command)
 		temp = temp << 1;
 	}
 
+/*
+	asm volatile("movl %%esp, %0":"=g"(curr_process->k_sp));
+	asm volatile("movl %%ebp, %0":"=g"(curr_process->k_bp));
+*/
+/*
 	curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
 	curr_process->k_sp = curr_process->k_bp = parent_pcb - 4;
-	curr_process->process_id = process_id;
 	curr_process->parent_process = parent_pcb;
+	curr_process->process_id = process_id;
+*/
 
 	/* Executable check */
 	uint8_t elf_check[4];
-	open(fname);
+	file_open();
 	file_read(fname, elf_check, 4);
 
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
@@ -76,21 +82,28 @@ int32_t execute(const uint8_t* command)
 
 
 	/* Set up paging */
-	curr_process->parent_PD = task_mem_init();
+	uint32_t parent_PD = task_mem_init();
 
 	program_load(fname, PGRM_IMG);
+
+	k_bp = 0x00800000 - (0x2000)*(process_id - 1) - 4;
+	curr_process = (pcb_t *) (k_bp & 0xFFFFE000);
+	curr_process->k_sp = k_bp;
+	curr_process->k_bp = k_bp;
+	curr_process->process_id = process_id;
+	curr_process->parent_PD = parent_PD;
 	
 	if(open_processes == 0x80)
 	{
 		//curr_process->parent_process_id = 0;
-		curr_process->child_flag = 0;
 		curr_process->parent_process = curr_process;
-		// What else do we need??????????????????????
+		curr_process->child_flag = 0;
 	}
 	else
 	{
 		//pcb_t* parent_process = (pcb_t *) (curr_process->parent_sp & 0xFFFFE000);
 		//curr_process->parent_process_id = parent_process->process_id;
+		curr_process->parent_process = parent_pcb;
 		curr_process->parent_process->child_flag = 1;
 	}
 	
@@ -104,20 +117,22 @@ int32_t execute(const uint8_t* command)
 
 	asm volatile("movl %%esp, %0":"=g"(curr_process->k_sp));
 	asm volatile("movl %%ebp, %0":"=g"(curr_process->k_bp));
-
-	//tss.esp0 = 0x00800000 - 0x2000*(process_id - 1) - 4;
-	tss.esp0 = curr_process->k_sp;
+	
+	tss.esp0 = 0x00800000 - 0x2000*(process_id - 1) - 4;
+	//tss.esp0 = curr_process->k_sp;
 	tss.ss0 = KERNEL_DS;
-	k_sp = tss.esp0;
+	//k_sp = tss.esp0;
 
 
 	//open stdin and stdout
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
-	jump_to_userspace();
 
+	jump_to_userspace();
 	
+	asm volatile("ret_halt:\n\t"
+				 "ret");				
 
 	return 0;
 }
@@ -277,8 +292,21 @@ int32_t halt(uint8_t status)
 
 	if(curr_process == curr_process->parent_process)
 	{
-		//if the current process is the parent process
+		dentry_t dentry_temp;
+		if(-1 == read_dentry_by_name((uint8_t*)"shell", &dentry_temp))
 		return -1;
+		uint32_t inode_num_temp = dentry_temp.inode_num;
+		uint8_t buf_temp[4];
+		//if the current process is the parent process
+		int ret_val = read_data(inode_num_temp, 24, buf_temp, 4);
+		if(-1 == ret_val)
+			return -1;
+		int k = 0;
+		for(k = 0; k < 4; k++)
+			entry_addr |= (buf_temp[k] << 8*k);
+
+		jump_to_userspace_again(entry_addr);
+		
 	}
 	
 
@@ -299,7 +327,6 @@ int32_t halt(uint8_t status)
 
 
 		//load the page directory of the parent
-		set_PDBR(curr_process->parent_PD);
 
 		//set the k_sp and tss to point back to parent process' k_sp and tss
 		// tss.esp0 = 0x00800000 - 0x2000*(curr_process->parent_process_id) - 4;
@@ -310,17 +337,19 @@ int32_t halt(uint8_t status)
 		//respectively.
 		uint32_t p_sp = curr_process->parent_process->k_sp;
 		uint32_t p_bp = curr_process->parent_process->k_bp;
-		set_ESP(p_sp);
-		set_EBP(p_bp);
-
+		// set_ESP(p_sp);
+		// set_EBP(p_bp);
+		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
+		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
+		set_PDBR(curr_process->parent_PD);
 		//return this status back to parent process
-		asm volatile("pushl %0;"::"g"(status));
-		asm volatile("popl %eax");
+		// asm volatile("pushl %0;"::"g"(status));
+		// asm volatile("popl %eax");
 
 		//go back to parent's instruction pointer
 		//asm volatile("leave");
-		asm volatile("ret");
-			
+		//asm volatile("ret");
+		asm volatile("jmp ret_halt");	
 	}
 	return 183;
 }
@@ -352,7 +381,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
 	//int32_t num_bytes_written;
-	/*num_bytes_written = */terminal_write(buf, nbytes);
+	/*num_bytes_written = */terminal_write((void*)buf, nbytes);
 	return 0/*num_bytes_written*/;
 }
 

@@ -191,8 +191,8 @@ entry (unsigned long magic, unsigned long addr)
 
 	sti();
 	printf("test");
-	int flag = execute(fname);
-	
+	execute(fname);
+
 	// rtc_open();
 	// rtc_read();
 
