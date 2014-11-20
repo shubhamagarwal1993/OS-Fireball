@@ -132,7 +132,8 @@ int32_t execute(const uint8_t* command)
 	jump_to_userspace();
 	
 	asm volatile("ret_halt:\n\t"
-				 "ret");				
+				 "leave;\
+				 ret;");				
 
 	return 0;
 }
@@ -335,16 +336,17 @@ int32_t halt(uint8_t status)
 		//set kernel stack pointer and kernel base pointer
 		//back to the parent's base pointer and stack pointer
 		//respectively.
-		uint32_t p_sp = curr_process->parent_process->k_sp;
-		uint32_t p_bp = curr_process->parent_process->k_bp;
+		uint32_t p_sp = curr_process->/*parent_process->*/k_sp;
+		uint32_t p_bp = curr_process->/*parent_process->*/k_bp;
 		// set_ESP(p_sp);
 		// set_EBP(p_bp);
+		asm volatile("pushl %0;"::"g"(status));
+		asm volatile("popl %eax");
+
 		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
 		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
 		set_PDBR(curr_process->parent_PD);
 		//return this status back to parent process
-		// asm volatile("pushl %0;"::"g"(status));
-		// asm volatile("popl %eax");
 
 		//go back to parent's instruction pointer
 		//asm volatile("leave");
