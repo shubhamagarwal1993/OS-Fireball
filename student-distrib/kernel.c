@@ -190,7 +190,7 @@ entry (unsigned long magic, unsigned long addr)
 	//printf("Enabling Interrupts\n");
 
 	sti();
-	printf("test");
+	//printf("test");
 	execute(fname);
 
 	// rtc_open();

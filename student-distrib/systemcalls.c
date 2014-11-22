@@ -20,6 +20,7 @@ uint32_t k_bp = 0;
 uint32_t entry_addr = 0;
 int process_id = 0;
 pcb_t* curr_process;
+uint32_t retval;
 
 int32_t execute(const uint8_t* command)
 {
@@ -27,7 +28,9 @@ int32_t execute(const uint8_t* command)
 
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
-	get_arg(index, cmd);
+	//getargs(command, strlen(cmd));
+
+
 
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
@@ -48,10 +51,6 @@ int32_t execute(const uint8_t* command)
 		temp = temp << 1;
 	}
 
-/*
-	asm volatile("movl %%esp, %0":"=g"(curr_process->k_sp));
-	asm volatile("movl %%ebp, %0":"=g"(curr_process->k_bp));
-*/
 /*
 	curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
 	curr_process->k_sp = curr_process->k_bp = parent_pcb - 4;
@@ -88,8 +87,6 @@ int32_t execute(const uint8_t* command)
 
 	k_bp = _8MB - (_8KB)*(process_id - 1) - 4;
 	curr_process = (pcb_t *) (k_bp & 0xFFFFE000);
-	curr_process->k_sp = k_bp;
-	curr_process->k_bp = k_bp;
 	curr_process->process_id = process_id;
 	curr_process->parent_PD = parent_PD;
 	
@@ -115,9 +112,13 @@ int32_t execute(const uint8_t* command)
 		curr_process->file_fds[i].flags = 0;
 	}	
 
-	asm volatile("movl %%esp, %0":"=g"(curr_process->k_sp));
-	asm volatile("movl %%ebp, %0":"=g"(curr_process->k_bp));
-	
+	uint32_t ksp_temp;
+	uint32_t kbp_temp;
+	asm volatile("movl %%esp, %0":"=g"(ksp_temp));
+	asm volatile("movl %%ebp, %0":"=g"(kbp_temp));
+	curr_process->k_sp = ksp_temp;
+	curr_process->k_bp = kbp_temp;
+
 	tss.esp0 = _8MB - _8KB*(process_id - 1) - 4;
 	//tss.esp0 = curr_process->k_sp;
 	tss.ss0 = KERNEL_DS;
@@ -131,14 +132,11 @@ int32_t execute(const uint8_t* command)
 
 	jump_to_userspace();
 	
-	asm volatile("ret_halt:\n\t"
-				 "leave;\
-				 ret;");				
 
-	return 0;
+	asm volatile("ret_halt:\n\t");				
+
+	return retval;
 }
-
-
 
 //making a file operations jump table
 uint32_t stdin_jmp_table[4] = {0, (uint32_t)terminal_read, 0, 0};													//
@@ -147,12 +145,114 @@ uint32_t rtc_jmp_table[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)r
 uint32_t file_jmp_table[4] = {(uint32_t)file_open, (uint32_t)file_read, (uint32_t)file_write, (uint32_t)file_close};	//
 uint32_t dir_jmp_table[4] = {(uint32_t)dir_open, (uint32_t)dir_read, (uint32_t)dir_write, (uint32_t)dir_close};			//
 
+int32_t halt(uint8_t status)
+{
+	//pcb_t* parent_process = (pcb_t *)(0x00800000 - (0x2000)*(curr_process->parent_parent_process_id));
+	pcb_t* parent_process = curr_process->parent_process;
+
+	if(curr_process == curr_process->parent_process)
+	{
+		/*dentry_t dentry_temp;
+		if(-1 == read_dentry_by_name((uint8_t*)"shell", &dentry_temp))
+		return -1;
+		uint32_t inode_num_temp = dentry_temp.inode_num;
+		uint8_t buf_temp[4];
+		//if the current process is the parent process
+		int ret_val = read_data(inode_num_temp, 24, buf_temp, 4);
+		if(-1 == ret_val)
+			return -1;
+		int k = 0;
+		for(k = 0; k < 4; k++)
+			entry_addr |= (buf_temp[k] << 8*k);
+
+		jump_to_userspace_again(entry_addr);*/
+		printf("NOT ALLOWED");
+		return -1;
+		
+	}
+	
+	//else if(curr_process->child_flag == 1)
+	else
+	{
+		retval = (uint32_t)status;
+		//modify open_processes to indicate that current process is not running anymore
+		int i = 0;
+		uint8_t process_mask = MASK;
+		for(i = 0; i < (curr_process->process_id)-1; i++)
+		{
+			process_mask = process_mask >> 1;
+		}
+		open_processes = open_processes ^ process_mask;
+
+		//clear parent process' child flag
+		parent_process->child_flag = 0;
+
+
+		//load the page directory of the parent
+
+		//set the k_sp and tss to point back to parent process' k_sp and tss
+		tss.esp0 = 0x00800000 - 0x2000*(curr_process->process_id - 1) - 4;
+		// k_sp = tss.esp0;
+
+		//set kernel stack pointer and kernel base pointer
+		//back to the parent's base pointer and stack pointer
+		//respectively.
+		uint32_t p_sp = curr_process->/*parent_process->*/k_sp;
+		uint32_t p_bp = curr_process->/*parent_process->*/k_bp;
+		// set_ESP(p_sp);
+		// set_EBP(p_bp);
+
+		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
+		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
+		set_PDBR(curr_process->parent_PD);
+		//return this status back to parent process
+
+		curr_process = curr_process->parent_process;
+		//go back to parent's instruction pointer
+		//asm volatile("leave");
+		//asm volatile("ret");
+		asm volatile("jmp ret_halt");	
+	}
+	return 183;
+}
+
+
+int32_t read(int32_t fd, void* buf, int32_t nbytes)
+{
+
+	// TBI - pass other arguments inside buf
+	int32_t num_bytes_read;
+	num_bytes_read = terminal_read(buf, nbytes);
+
+	// pcb_t* cur_PCB = curr_process;
+
+	// uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
+	// fptr = cur_PCB->file_fds[fd].file_op[1];
+
+	// fptr(buf, nbytes);
+
+	// asm ("pushl %%esi\n\t"	
+	// 	 "call *fptr\n\t"
+
+	// 	: "=r"
+	// 	: "r" (fptr), "r" (buf), "r" (nbytes) 
+	// 	: 
+	// 	);
+	return num_bytes_read;
+}
+
+int32_t write(int32_t fd, const void* buf, int32_t nbytes)
+{
+	//int32_t num_bytes_written;
+	/*num_bytes_written = */terminal_write((void*)buf, nbytes);
+	return 0/*num_bytes_written*/;
+}
+
 /* int32_t open(const uint8_t* filename)
  *	
  *
  *
  */
-
 int32_t open(const uint8_t* filename)
 {
 	/* Get the current process */
@@ -217,6 +317,22 @@ int32_t close(int32_t fd)
 	return 0;
 }
 
+int32_t getargs(uint8_t* buf, int32_t nbytes)
+{
+	get_arg( (char*)buf, nbytes );
+	int32_t result = (int32_t*)args;
+	cout("GETARGS!\n");
+	cout("%s", args);
+	return result;
+}
+
+int32_t vidmap(uint8_t** screen_start) 
+{
+	cout("LOLIDK!\n");
+	return 0;
+}
+
+
 void stdin(uint32_t fd)
 {
 	curr_process->file_fds[fd].file_op = stdin_jmp_table;
@@ -264,7 +380,7 @@ char* parse(char* input)
 	return output;
 }
 
-void get_arg(int i, char* input)
+void get_arg(char* input, int nbytes)
 {
 		args = "random str2";
 		
@@ -276,125 +392,12 @@ void get_arg(int i, char* input)
 
 		int j = 0;
 		int arg_length = 0;
-		int len = strlen(input);
-		for(j = i + 1; j < len; j++)
+		//int len = strlen(input);
+		for(j = index + 1; j < nbytes; j++)
 		{
-			args[j - i - 1] = input[j];
+			args[j - index - 1] = input[j];
 			arg_length++;
 		}
 		args[arg_length] = '\0';
 }
 
-
-int32_t halt(uint8_t status)
-{
-	//pcb_t* parent_process = (pcb_t *)(0x00800000 - (0x2000)*(curr_process->parent_parent_process_id));
-	pcb_t* parent_process = curr_process->parent_process;
-
-	if(curr_process == curr_process->parent_process)
-	{
-		dentry_t dentry_temp;
-		if(-1 == read_dentry_by_name((uint8_t*)"shell", &dentry_temp))
-		return -1;
-		uint32_t inode_num_temp = dentry_temp.inode_num;
-		uint8_t buf_temp[4];
-		//if the current process is the parent process
-		int ret_val = read_data(inode_num_temp, 24, buf_temp, 4);
-		if(-1 == ret_val)
-			return -1;
-		int k = 0;
-		for(k = 0; k < 4; k++)
-			entry_addr |= (buf_temp[k] << 8*k);
-
-		jump_to_userspace_again(entry_addr);
-		
-	}
-	
-
-	//else if(curr_process->child_flag == 1)
-	else
-	{
-		//modify open_processes to indicate that current process is not running anymore
-		int i = 0;
-		uint8_t process_mask = MASK;
-		for(i = 0; i < (curr_process->process_id)-1; i++)
-		{
-			process_mask = process_mask >> 1;
-		}
-		open_processes = open_processes ^ process_mask;
-
-		//clear parent process' child flag
-		parent_process->child_flag = 0;
-
-
-		//load the page directory of the parent
-
-		//set the k_sp and tss to point back to parent process' k_sp and tss
-		// tss.esp0 = 0x00800000 - 0x2000*(curr_process->parent_process_id) - 4;
-		// k_sp = tss.esp0;
-
-		//set kernel stack pointer and kernel base pointer
-		//back to the parent's base pointer and stack pointer
-		//respectively.
-		uint32_t p_sp = curr_process->/*parent_process->*/k_sp;
-		uint32_t p_bp = curr_process->/*parent_process->*/k_bp;
-		// set_ESP(p_sp);
-		// set_EBP(p_bp);
-		asm volatile("pushl %0;"::"g"(status));
-		asm volatile("popl %eax");
-
-		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
-		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
-		set_PDBR(curr_process->parent_PD);
-		//return this status back to parent process
-
-		//go back to parent's instruction pointer
-		//asm volatile("leave");
-		//asm volatile("ret");
-		asm volatile("jmp ret_halt");	
-	}
-	return 183;
-}
-
-int32_t read(int32_t fd, void* buf, int32_t nbytes)
-{
-
-	// TBI - pass other arguments inside buf
-	int32_t num_bytes_read;
-	num_bytes_read = terminal_read(buf, nbytes);
-
-	// pcb_t* cur_PCB = curr_process;
-
-	// uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
-	// fptr = cur_PCB->file_fds[fd].file_op[1];
-
-	// fptr(buf, nbytes);
-
-	// asm ("pushl %%esi\n\t"	
-	// 	 "call *fptr\n\t"
-
-	// 	: "=r"
-	// 	: "r" (fptr), "r" (buf), "r" (nbytes) 
-	// 	: 
-	// 	);
-	return num_bytes_read;
-}
-
-int32_t write(int32_t fd, const void* buf, int32_t nbytes)
-{
-	//int32_t num_bytes_written;
-	/*num_bytes_written = */terminal_write((void*)buf, nbytes);
-	return 0/*num_bytes_written*/;
-}
-
-int32_t getargs(uint8_t* buf, int32_t nbytes)
-{
-	cout("GETARGS!\n");
-	return 0;
-}
-
-int32_t vidmap(uint8_t** screen_start) 
-{
-	cout("LOLIDK!\n");
-	return 0;
-}

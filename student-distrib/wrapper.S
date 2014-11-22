@@ -40,10 +40,11 @@ rtc_wrapper:
 	call rtc_int_handler
 	popal
 	iret
+	
 jump_to_userspace:
 	
  	cli
-    movl 32(%esp), %ebx
+    movl 40(%esp), %ebx
     mov $0x2B, %ax
     mov %ax, %ds	
                    		
@@ -51,13 +52,13 @@ jump_to_userspace:
     
 	pushl $0x2B
     pushl $0x083FFFFC		
-    pushf
+    pushfl
     popl %eax
-    orl $0xC2, %eax
+    orl $0x200, %eax
     pushl %eax
     pushl $0x23
     pushl %ebx 	
-    sti	
+    
     iret
 
 jump_to_userspace_again:
@@ -83,8 +84,6 @@ jump_to_userspace_again:
 syscall_handler:
 	cmpl $1, %eax
 	jl call_fail
-	pushl %esp
-	pushl %ebp
 	pushl %esi
 	pushl %edi
 	pushl %edx
@@ -100,8 +99,6 @@ end_call:
 	popl %edx
 	popl %edi
 	popl %esi
-	popl %ebp
-	popl %esp
 	iret
 jump_table:
 .long 0x0, halt, execute, read, write, open, close, getargs, vidmap

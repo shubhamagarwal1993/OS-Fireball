@@ -23,9 +23,8 @@ int32_t vidmap(uint8_t** screen_start);
 
 /*	Helper functions for execute(const uint8_t* command)	*/
 char* parse(char* input);
-void get_arg(int i, char* input);
+void get_arg(char* input, int nbytes);
 
-void get_arg(int i, char* input);
 int32_t empty(void);
 void stdin(uint32_t fd);
 void stdout(uint32_t fd);
@@ -80,3 +79,4 @@ do {                                   			\
 
 #endif /* ASM */
 #endif /* _SYSTEMCALLS_H */
+

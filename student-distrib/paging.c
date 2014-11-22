@@ -171,7 +171,12 @@ uint32_t task_mem_init()
 		map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
 		set_PDBR(PD1);
 	}
-
+	else if(task_count == 2)
+	{
+		cur_PD = PD1;
+		map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
+		set_PDBR(PD1);
+	}
 	else return -1;
 
 	task_count++;
