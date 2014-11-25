@@ -175,7 +175,7 @@ entry (unsigned long magic, unsigned long addr)
 	init_paging();
 			
 	init_keyboard();
-	// init_rtc();
+	init_rtc();
 	init_filesys(filesystem_address);
 
 	uint8_t fname[33] = "shell";

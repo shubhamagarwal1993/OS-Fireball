@@ -22,6 +22,25 @@ int process_id = 0;
 pcb_t* curr_process;
 uint32_t retval;
 
+
+// struct f_ops
+// {
+// 	uint32_t (*open)(void);
+// 	uint32_t (*read_file)(uint8_t* buf, uint32_t length, const uint8_t* fname);
+// 	uint32_t (*read_dir)(uint8_t* buf, uint32_t length);
+// 	uint32_t (*read_rtc)(char* buf, int count);
+// 	uint32_t (*read_terminal)(uint8_t* buf, int counter);
+// 	uint32_t (*write_file)(void);
+// 	uint32_t (*write_dir)(void);
+// 	uint32_t (*write_rtc)(char* buf, int32_t frequency);
+// 	uint32_t (*write_terminal)(uint8_t* buf, uint32_t length, const uint8_t* fname);
+// };
+
+// f_ops rtc_ops = {rtc_open, NULL, NULL, rtc_read, NULL, NULL, NULL, rtc_write, NULL};
+// f_ops file_ops = {file_open, file_read, NULL, NULL, NULL, file_write, NULL, NULL, NULL};
+// f_ops dir_ops = {dir_open, NULL, dir_read, NULL, NULL, NULL, dir_write, NULL, NULL};
+// f_ops
+
 int32_t execute(const uint8_t* command)
 {
 	pcb_t* parent_pcb = curr_process;
@@ -29,7 +48,6 @@ int32_t execute(const uint8_t* command)
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
 	//getargs(command, strlen(cmd));
-
 
 
 	/*	Looking for processes	*/
@@ -61,7 +79,7 @@ int32_t execute(const uint8_t* command)
 	/* Executable check */
 	uint8_t elf_check[4];
 	file_open();
-	file_read(fname, elf_check, 4);
+	file_read(elf_check, 4, fname);
 
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
 		return -1;	
@@ -216,38 +234,6 @@ int32_t halt(uint8_t status)
 	return 183;
 }
 
-
-int32_t read(int32_t fd, void* buf, int32_t nbytes)
-{
-
-	// TBI - pass other arguments inside buf
-	int32_t num_bytes_read;
-	num_bytes_read = terminal_read(buf, nbytes);
-
-	// pcb_t* cur_PCB = curr_process;
-
-	// uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
-	// fptr = cur_PCB->file_fds[fd].file_op[1];
-
-	// fptr(buf, nbytes);
-
-	// asm ("pushl %%esi\n\t"	
-	// 	 "call *fptr\n\t"
-
-	// 	: "=r"
-	// 	: "r" (fptr), "r" (buf), "r" (nbytes) 
-	// 	: 
-	// 	);
-	return num_bytes_read;
-}
-
-int32_t write(int32_t fd, const void* buf, int32_t nbytes)
-{
-	//int32_t num_bytes_written;
-	/*num_bytes_written = */terminal_write((void*)buf, nbytes);
-	return 0/*num_bytes_written*/;
-}
-
 /* int32_t open(const uint8_t* filename)
  *	
  *
@@ -304,16 +290,107 @@ int32_t open(const uint8_t* filename)
 	// Mark that this entry of the file array is in use
 	farray[fd].flags = 1;
 
-	return 0;
+	return fd;
 }
 
+// ------------------------------- READ ----------------------------------------------------------------
+int32_t read(int32_t fd, void* buf, int32_t nbytes)
+{
+	// int i = 0;	
+
+	if((fd < 0)||(fd > 7)||buf == NULL)
+	{
+		return -1;
+	} 
+
+	// uint8_t fname;
+	// uint32_t temp_inode_no = curr_process->file_fds[fd].file_inode;
+	// printf("inode num = %d\n", temp_inode_no);
+
+
+	// for(i = 0; i < boot_block->num_dir_entries; i++)
+	// {
+	// 	if(boot_block.num_inodes == temp_inode_no)
+	// 	{
+	// 		fname = boot_block.dir_entries[i].file_name;
+	// 	}
+	// }	
+
+	// // asm volatile("pushl %0"
+	// // 			 "pushl %1"
+	// // 			 "pushl %2"
+	// // 			 "call *%4":"g"(&fname), "g"(nbytes), "g"(buf), "g"(curr_process->file_fds[fd].file_op[1]));
+
+// ---------------------TERMINAL READ ONLY------------------------------
+	// // TBI - pass other arguments inside buf
+	//  int32_t num_bytes_read;
+	//  num_bytes_read = terminal_read(buf, nbytes);
+//---------------------------------------------------------------------
+	pcb_t* cur_PCB = curr_process;
+	int32_t num_bytes_read;
+
+	uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
+	fptr = cur_PCB->file_fds[fd].file_op[1];
+
+
+	num_bytes_read = fptr(buf, nbytes);
+
+	// asm volatile("pushl %%esi\n\t"	
+	// 	 "call *fptr\n\t"
+	// 	: 
+	// 	: "r" (fptr), "r" (buf), "r" (nbytes) 
+	// 	: 
+	// 	);
+
+	// 	/* Store the return value from the read function. */
+	// asm volatile("movl %%eax, %0":"=g"(num_bytes_read));
+	// asm volatile("addl $16, %esp    ;");
+	
+	// /* Update the current file's fileposition. */
+	
+	return num_bytes_read;
+}
+
+// ------------------------------- WRITE -------------------------------------------------------------
+int32_t write(int32_t fd, const void* buf, int32_t nbytes)
+{
+
+	// if((fd < 0)||(fd > 7)||buf == NULL)
+	// {
+	// 	return -1;
+	// } 	
+	// //int32_t num_bytes_written;
+	// 
+	//terminal_write((void*)buf, nbytes);
+	// return 0/*num_bytes_written*/;
+
+
+	pcb_t* cur_PCB = curr_process;
+	int32_t num_bytes_written;
+
+	uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
+	fptr = cur_PCB->file_fds[fd].file_op[2];
+
+	num_bytes_written = fptr(buf, nbytes);
+
+	return num_bytes_written;
+}
+
+// ------------------------------- CLOSE ----------------------------------------------------------------
 int32_t close(int32_t fd)
 {
+	
+	if((fd < 0)||(fd > 7))
+	{
+		return -1;
+	} 
+
 	pcb_t* cur_PCB = curr_process;
 
 	file_array_t* farray = cur_PCB->file_fds;
 
 	farray[fd].flags = 0;
+
 	return 0;
 }
 

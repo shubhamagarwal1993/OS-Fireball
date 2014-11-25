@@ -336,7 +336,7 @@ uint32_t file_open()
 }
 
 // Writes length bytes of file content to buffer
-uint32_t file_read(const uint8_t* fname, uint8_t* buf, uint32_t length)
+uint32_t file_read(uint8_t* buf, uint32_t length, const uint8_t* fname)
 {
 	dentry_t dentry;
 	read_dentry_by_name(fname, &dentry);
@@ -415,7 +415,7 @@ uint32_t program_load(const uint8_t* fname, uint32_t addr)
 	uint32_t len = 0x1000;
 	uint32_t ret;
 
-	while(0 != (ret = file_read(fname, buf, len))) 
+	while(0 != (ret = file_read(buf, len, fname))) 
 	{
 		if(ret == -1)
 			return -1;

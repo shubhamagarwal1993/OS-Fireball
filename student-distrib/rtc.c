@@ -4,7 +4,7 @@
 #include "keyboard.h"
 
 volatile int32_t interrupt_number = 0;
-int test_flag = 1;
+int test_flag = 0;
 
 //int interrupt_number = 0;
 /* RTC Interrupt handler */
@@ -19,11 +19,10 @@ rtc_int_handler()										*
 void rtc_int_handler()
 {
 	disable_irq(8);
-	//printf("RTC INTERRUPT HANDLER");
+//	printf("RTC INTERRUPT HANDLER");
 	//test_interrupts();									//calls function that writes video memory to screen.
-	interrupt_number++;
-	interrupt_number++;
-	test_rtc();
+	interrupt_number = 1;
+	//test_rtc();
 	send_eoi(8);
 	outb(0x0C, 0x70);									// select register C
 	inb(0x71);											// just throw away contents
@@ -53,10 +52,7 @@ void disable_rtc_test()
 }
 
 int32_t rtc_open()
-{	//printf("inside rtc_open\n");
-	//init RTC to 2Hz. Then return 0 - should i write the rate as in i8259.c again or is that sufficient
-								//the offset of the RTC is IRQ1	
-//	printf("finished rtc_open\n");
+{//	printf("inside rtc_open\n");
 	return 0;
 }
 
@@ -64,13 +60,12 @@ int32_t rtc_read(char* buf, int count)
 {	//printf("inside rtc_read\n");
 	//For RTC, this call should always return 0, but only after an interrupt has occurred.
 	//set a flag and wait until the interrupt handler clears it then return 0
-	while(1)
+	while(interrupt_number == 0)
 	{
-		if(interrupt_number > 0)
-		break;	
+
 	} 
 	interrupt_number = 0;
-	//printf("finished rtc_read\n");
+//	printf("finished rtc_read\n");
 	return 0;
 }
 
@@ -87,7 +82,7 @@ int32_t rtc_write(char* buf, int32_t frequency)
 	{
 		rate++;
 	}
-	//printf(" Rate is %d", rate);
+//	printf(" Rate is %d", rate);
  
 	disable_irq(8);
 	outb(0x8A, 0x70);								// set index to register A, disable NMI
@@ -100,16 +95,12 @@ int32_t rtc_write(char* buf, int32_t frequency)
 	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
 	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
 	enable_irq(8);									//the offset of the RTC is IRQ1
-	//printf("finished rtc_write\n");
+//	printf("finished rtc_write\n");
 	return 0;
 }
 
 int32_t rtc_close()
 {	//printf("inside rtc_close\n");
 // The close system call closes the specified file descriptor and makes it available for return from later calls to open.
-// 	You should not allow the user to close the default descriptors (0 for input and 1 for output). Trying to close an invalid
-// 		descriptor should result in a return value of -1; successful closes should return 0.
-							//the offset of the RTC is IRQ1	
-	//printf("finished rtc_close\n");	
 	return 0;
 }

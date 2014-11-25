@@ -769,14 +769,18 @@ put_cout(uint8_t c)
 {
     if(c == '\n' || c == '\r') {
         buf_y++;
+        screen_y++;
         buf_x=0;
+        screen_x = 0;
     } else {
         //*(uint8_t *)(video_mem + ((NUM_COLS*buf_y + buf_x) << 1)) = c;
         //*(uint8_t *)(video_mem + ((NUM_COLS*buf_y + buf_x) << 1) + 1) = ATTRIB;
         node* buffer = pass_buff();
         buffer[NUM_COLS*buf_y + buf_x].mo = c;
         buf_x++;
+        
         buf_x %= NUM_COLS;
+
         buf_y = (buf_y + (buf_x / NUM_COLS)) % NUM_ROWS;
     }
 }

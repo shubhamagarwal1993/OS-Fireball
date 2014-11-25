@@ -44,7 +44,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 extern void test_filesys();
 
 uint32_t file_open();
-uint32_t file_read(const uint8_t* fname, uint8_t* buf, uint32_t length);
+uint32_t file_read(uint8_t* buf, uint32_t length, const uint8_t* fname);
 uint32_t file_write();
 uint32_t file_close();
 

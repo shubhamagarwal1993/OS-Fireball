@@ -11,6 +11,7 @@ volatile int to_print;
 node* curr_buff;
 node* screens[3] = {0,0,0};
 int screen_num = 0;
+int buf_x;
 node buffer[NUM_COLS*NUM_ROWS];
 
 // void init_terminal()
@@ -50,12 +51,19 @@ node* terminal_open()
 uint32_t terminal_read(uint8_t* buf, int counter)
 {
 	sti();
+	int i = 0;
+	for (i = 0; i < strlen(buf); ++i)
+	{
+		buf[i] = '\0';
+	}
 	node* buffer = curr_buff;
 	to_print = inb(0x60);
 	char* output;
 	char out[counter];
 	//char * fault = "Invalid read";
 	int line_count;
+	int temp_buf_x = buf_x;
+
 
 	while(1)
 	{
@@ -76,9 +84,8 @@ uint32_t terminal_read(uint8_t* buf, int counter)
 		index = (y-1)*80;
 	//if( (counter > 0) && (counter <= 128) )
 	//{
-	int i = 0;
 	int j = 0;
-	for(i = index + 7; i < index + 127; i++, j++)
+	for(i = index + temp_buf_x; i < index + temp_buf_x + line_count; i++, j++)
 	{
 		length++; 
 		out[j] = buffer[i].mo;
@@ -90,6 +97,7 @@ uint32_t terminal_read(uint8_t* buf, int counter)
 		if(buffer[i+1].mo == '\n')
 		{
 			//index = y - 1;
+			// out[i - index - temp_buf_x] = '\n';
 			output = out;
 			break;
 		}
@@ -101,7 +109,7 @@ uint32_t terminal_read(uint8_t* buf, int counter)
 	//	output = fault;
 	//}
 	int yudodis;
-	for(yudodis = 0; yudodis < length - 1; yudodis++)
+	for(yudodis = 0; yudodis < length; yudodis++)
 	{
 		buf[yudodis] = output[yudodis];
 	}
