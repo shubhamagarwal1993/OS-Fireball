@@ -44,7 +44,7 @@ rtc_wrapper:
 jump_to_userspace:
 	
  	cli
-    movl 40(%esp), %ebx
+    movl 40(%esp), %ebx					#have to change to eax since ebx is used in leave and ret 			also see if the constant 40 is fine or not
     mov $0x2B, %ax
     mov %ax, %ds	
                    		

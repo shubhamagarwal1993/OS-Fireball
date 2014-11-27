@@ -158,7 +158,7 @@ void kbd_int_handler()
 	kbd_logic(to_print, buffer);
 	//printb(buffer);
 	//init_terminal();
-	if(to_print == 0x1C || to_print == 0x0E)
+	if(to_print == 0x1C)
 		enter_press = 1;
 	else enter_press = 0;
 	printb(buffer);

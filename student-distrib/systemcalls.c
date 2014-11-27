@@ -12,7 +12,7 @@
 #include "lib.h"
 
 /*	global variables for parse 	*/
-char * args;
+volatile char * args;
 int space_seen = 0;
 int index = 0;
 uint8_t open_processes = 0;
@@ -47,7 +47,7 @@ int32_t execute(const uint8_t* command)
 
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
-	//getargs(command, strlen(cmd));
+	get_arg(command, strlen(cmd));
 
 
 	/*	Looking for processes	*/
@@ -396,11 +396,11 @@ int32_t close(int32_t fd)
 
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
-	get_arg( (char*)buf, nbytes );
-	int32_t result = (int32_t*)args;
-	cout("GETARGS!\n");
-	cout("%s", args);
-	return result;
+	//get_arg( (char*)buf, nbytes );
+	buf = args;
+	//cout("GETARGS!\n");
+	//cout("%s", args);
+	return 0;
 }
 
 int32_t vidmap(uint8_t** screen_start) 

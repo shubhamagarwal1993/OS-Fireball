@@ -51,6 +51,8 @@ node* terminal_open()
 uint32_t terminal_read(uint8_t* buf, int counter)
 {
 	sti();
+	//screen_x = buf_x;
+	//screen_y = buf_y;
 	int i = 0;
 	for (i = 0; i < strlen(buf); ++i)
 	{
@@ -61,19 +63,26 @@ uint32_t terminal_read(uint8_t* buf, int counter)
 	char* output;
 	char out[counter];
 	//char * fault = "Invalid read";
-	int line_count;
+	//int line_count;
 	int temp_buf_x = buf_x;
+	int typed = line_count;
 
-
+	for (i = 0; i < counter; ++i)
+	{
+		out[i] = '\0';
+	}
 	while(1)
 	{
-		if(length == 127)
+		if((length == 127)||(enter_press == 1))
+		{	
+			
 			break;
-		if(enter_press == 1)
-			break;
-		else line_count = pass_count();
+		}
+		else typed = buf_x;
+		//	else line_count = pass_count();
 	}
-		enter_press = 0;
+	
+	enter_press = 0;
 	int y = pass_y();
 	// int test_count = pass_count();
 	int index = 0;
@@ -85,35 +94,27 @@ uint32_t terminal_read(uint8_t* buf, int counter)
 	//if( (counter > 0) && (counter <= 128) )
 	//{
 	int j = 0;
-	for(i = index + temp_buf_x; i < index + temp_buf_x + line_count; i++, j++)
+	for(i = index + temp_buf_x; i < index + typed; i++, j++)
 	{
 		length++; 
 		out[j] = buffer[i].mo;
-		// if( (length == 127) || (to_print == 0x1C) || (to_print == 0x0E))
-		// {
-		// 	counter = length - 1;
-		// 	break;
-		// }
 		if(buffer[i+1].mo == '\n')
 		{
-			//index = y - 1;
-			// out[i - index - temp_buf_x] = '\n';
+			index = y - 1;
+			out[i - index - temp_buf_x] = '\n';
 			output = out;
 			break;
 		}
+		
 	}
 	output = out;
-	//}
-	//else 
-	//{
-	//	output = fault;
-	//}
+	
 	int yudodis;
-	for(yudodis = 0; yudodis < length; yudodis++)
+	for(yudodis = 0; yudodis <= strlen(output); yudodis++)
 	{
 		buf[yudodis] = output[yudodis];
 	}
-	buf[yudodis] = '\0';
+	buf[yudodis+1] = '\n';
 	if(counter > 128)
 		return 128;
 	else return counter;
