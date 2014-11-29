@@ -47,6 +47,8 @@ driver_jt_t stdout_jt = {NULL, NULL, terminal_write, NULL};
 
 int32_t execute(const uint8_t* command)
 {
+	uint32_t flags;
+	cli_and_save(flags);
 	pcb_t* parent_pcb = curr_process;
 
 	char* cmd = (char*)command;
@@ -85,19 +87,31 @@ int32_t execute(const uint8_t* command)
 
 	dentry_t dentry_temp;
 	if(-1 == read_dentry_by_name(fname, &dentry_temp))
+	{
+		restore_flags(flags);
 		return -1;
+	}
 
 	if(-1 == read_data(dentry_temp.inode_num, 0, elf_check, 4))
+	{
+		restore_flags(flags);
 		return -1;
+	}
 
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
-		return -1;	
+	{
+		restore_flags(flags);
+		return -1;
+	}
 
 	/* Find the address of the file's first instruction */
 	uint8_t buf_temp[4];
 
 	if(-1 == read_data(dentry_temp.inode_num, 24, buf_temp, 4))
+	{
+		restore_flags(flags);
 		return -1;
+	}
 	int k = 0;
 	uint32_t entry_addr = 0;
 	for(k = 0; k < 4; k++)
@@ -107,10 +121,16 @@ int32_t execute(const uint8_t* command)
 	/* Set up paging */
 	PDE_t* PD_ptr = task_mem_init(process_id);
 	if(PD_ptr == NULL)
+	{
+		restore_flags(flags);
 		return -1;
+	}
 
 	if(-1 == program_load(fname, PGRM_IMG))
+	{
+		restore_flags(flags);	
 		return -1;
+	}
 
 	k_bp = _8MB - (_8KB)*(process_id - 1) - 4;
 	curr_process = (pcb_t *) (k_bp & 0xFFFFE000);
@@ -146,6 +166,8 @@ int32_t execute(const uint8_t* command)
 	curr_process->k_sp = ksp_temp;
 	curr_process->k_bp = kbp_temp;
 
+	curr_process->esp0 = tss.esp0;
+	curr_process->ss0 = tss.ss0;
 	tss.esp0 = _8MB - _8KB*(process_id - 1) - 4;
 	//tss.esp0 = curr_process->k_sp;
 	tss.ss0 = KERNEL_DS;
@@ -161,7 +183,7 @@ int32_t execute(const uint8_t* command)
 	
 
 	asm volatile("ret_halt:\n\t");				
-
+	restore_flags(flags);
 	return retval;
 }
 
@@ -174,6 +196,8 @@ uint32_t dir_jmp_table[4] = {(uint32_t)dir_open, (uint32_t)dir_read, (uint32_t)d
 
 int32_t halt(uint8_t status)
 {
+	uint32_t flags;
+	cli_and_save(flags);
 	//pcb_t* parent_process = (pcb_t *)(0x00800000 - (0x2000)*(curr_process->parent_parent_process_id));
 	pcb_t* parent_process = curr_process->parent_process;
 
@@ -218,7 +242,8 @@ int32_t halt(uint8_t status)
 		//load the page directory of the parent
 
 		//set the k_sp and tss to point back to parent process' k_sp and tss
-		tss.esp0 = 0x00800000 - 0x2000*(curr_process->process_id - 1) - 4;
+		tss.esp0 = curr_process->esp0;
+		tss.ss0 = curr_process->ss0;
 		// k_sp = tss.esp0;
 
 		//set kernel stack pointer and kernel base pointer
@@ -240,6 +265,7 @@ int32_t halt(uint8_t status)
 		//asm volatile("ret");
 		asm volatile("jmp ret_halt");	
 	}
+	restore_flags(flags);
 	return 183;
 }
 
@@ -250,6 +276,8 @@ int32_t halt(uint8_t status)
  */
 int32_t open(const uint8_t* filename)
 {
+	uint32_t flags;
+	cli_and_save(flags);
 	/* Get the current process */
 	pcb_t* cur_PCB = curr_process;
 
@@ -289,6 +317,7 @@ int32_t open(const uint8_t* filename)
 			return -1;
 	}
 
+	restore_flags(flags);
 	return fd;
 }
 
@@ -296,6 +325,8 @@ int32_t open(const uint8_t* filename)
 int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
 	// int i = 0;	
+	uint32_t flags;
+	cli_and_save(flags);
 
 	if((fd < 0) || (fd > 7) || buf == NULL || nbytes < 0)
 		return -1;
@@ -305,6 +336,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 	if(file->flags == 0 || file->file_op->read == NULL)
 		return -1;
 
+	restore_flags(flags);
 	return file->file_op->read(file, buf, nbytes);
 
 	// uint8_t fname;
@@ -358,6 +390,10 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 // ------------------------------- WRITE -------------------------------------------------------------
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
+	
+	uint32_t flags;
+	cli_and_save(flags);
+
 	if((fd < 0) || (fd > 7) || buf == NULL || nbytes < 0)
 		return -1;
 
@@ -366,6 +402,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 	if(file->flags == 0 || file->file_op->write == NULL)
 		return -1;
 
+	restore_flags(flags);
 	return file->file_op->write(file, buf, nbytes);
 
 	// if((fd < 0)||(fd > 7)||buf == NULL)
@@ -393,6 +430,9 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 int32_t close(int32_t fd)
 {
 	
+	uint32_t flags;
+	cli_and_save(flags);
+
 	if((fd < 0)||(fd > 7))
 	{
 		return -1;
@@ -403,25 +443,58 @@ int32_t close(int32_t fd)
 	file_t* farray = cur_PCB->file_fds;
 
 	farray[fd].flags = 0;
-
+	restore_flags(flags);
 	return 0;
 }
 
 int32_t getargs(uint8_t* buf, int32_t nbytes)
 {
+	uint32_t flags;
+	cli_and_save(flags);	
+
 	//get_arg( (char*)buf, nbytes );
 	buf = args;
 	//cout("GETARGS!\n");
 	//cout("%s", args);
+	restore_flags(flags);
 	return 0;
 }
 
-int32_t vidmap(uint8_t** screen_start) 
+/* vidmap
+ *	 DESCRIPTION: map the video memory to the desired location
+ *		  INPUTS: screen_start - memory location
+ *		 OUTPUTS: none
+ *	RETURN VALUE: -1 - failure
+ *				   0 - success
+ *	SIDE EFFECTS: none */
+int32_t
+vidmap(uint8_t** screen_start)
 {
-	cout("LOLIDK!\n");
-	return 0;
-}
+	// uint32_t flags;
+	// cli_and_save(flags);
+	
+	// if(screen_start == NULL) {
+	// 	restore_flags(flags);
+	// 	return FAILURE;
+	// }
 
+	// uint32_t lower_bound, upper_bound;
+	// lower_bound = MB_TO_B(EXE_VIR_START);
+	// upper_bound = MB_TO_B(VGA_VIR_START);
+
+	// /* check if the mem location is inside the range */
+	// if(screen_start < (uint8_t**)lower_bound || screen_start >= (uint8_t**)upper_bound) {
+	// 	restore_flags(flags);
+	// 	return FAILURE;
+	// }
+
+	// /* set the value to the vga virtual memory */
+	// *screen_start = (uint8_t*)(VGA_MEM_VIR + VGA_MEM_START_ADDR(term.executing_terminal));
+	// flush_tlb();
+	
+	// restore_flags(flags);
+	// return SUCCESS;
+}
 
 void stdin(uint32_t fd)
 {

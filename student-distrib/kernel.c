@@ -162,21 +162,32 @@ entry (unsigned long magic, unsigned long addr)
 		tss.esp0 = 0x800000;
 		ltr(KERNEL_TSS);
 	}
+	
+
+	//clear the screen
 	reset_scr();
+
+	//set the IDT	
+	set_idt();
+	lidt(idt_desc_ptr);
+	
 	/* Init the PIC */
 	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
-	lidt(idt_desc_ptr);
-	set_idt();
-
+	//init paging
 	init_paging();
 			
-	init_keyboard();
-	init_rtc();
+	//init filesystem
 	init_filesys(filesystem_address);
+	
+	//init keyboard
+	init_keyboard();
+
+	//init the rtc
+	init_rtc();
 
 	//node* buffer = pass_buff();
 
@@ -190,16 +201,6 @@ entry (unsigned long magic, unsigned long addr)
 
 	sti();
 	//printf("test");
-
-	// rtc_open();
-	// rtc_read();
-
-	// test_rtc();
-	//reset_scr();
-
-
-	//node* buf = pass_buff();
-	//test_read_write(buf);
 
 	/* Execute the first program (`shell') ... */
 	uint8_t fname[33] = "shell";

@@ -48,6 +48,8 @@ typedef struct pcb{
 	uint32_t k_sp;					//keep track of parent prcoess' stack pointer
 	PDE_t* PD_ptr;
 	uint8_t process_id;
+	uint32_t esp0;
+	uint32_t ss0;
 	//uint32_t parent_process_id;
 	uint32_t child_flag;
 	struct pcb* parent_process;
