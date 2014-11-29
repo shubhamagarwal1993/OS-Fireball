@@ -1,23 +1,17 @@
 #include "filesys.h"
 #include "lib.h"
 #include "keyboard.h"
+#include "systemcalls.h"
 
 bootblock_t* boot_block;
 inode_t* index_nodes;
 data_block_t* data_blocks;
-
-static uint32_t file_position;
-static uint32_t directory_position;
-
 
 void init_filesys(const uint8_t *bootblockptr)
 {
 	boot_block = (bootblock_t*)bootblockptr;
 	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);
 	data_blocks = (data_block_t*)(bootblockptr + (BLOCKSIZE * (boot_block->num_inodes + 1))); 
-
-	file_position = 0;
-	directory_position = 0;
 
 	//test_filesys();
 
@@ -197,6 +191,146 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 	return copied;
 }
 
+int32_t file_open(file_t* file, const uint8_t* filename)
+{
+	dentry_t dentry;
+	read_dentry_by_name(filename, &dentry);
+
+	if(dentry.inode_num >= boot_block->num_inodes)
+		return -1;
+
+	file->file_op = &file_jt;
+	file->inode_ptr = (uint32_t) &(index_nodes[dentry.inode_num]);
+	file->file_pos = 0;
+	file->flags = 1;
+	return 0;
+}
+
+// Writes length bytes of file content to buffer
+/* uint32_t file_read(uint8_t* buf, uint32_t length)
+ *		Description: Reads up to length bytes of file content into buf
+ *		Inputs:	buf - Holds a pointer to the file array entry for this file.
+ *				length - The number of bytes to read from the file
+ *		Outputs: buf - The file content read
+ * 		Return value: Number of bytes read into buf
+ */
+int32_t file_read(file_t* file, uint8_t* buf, int32_t nbytes)
+{
+/*	
+	dentry_t dentry;
+	read_dentry_by_name(fname, &dentry);
+
+	if(dentry.file_type != 2)
+	{
+		printf("Can only read regular file types.\n");
+		return -1;
+	}
+	uint32_t file_len = (index_nodes[dentry.inode_num]).length;
+
+	if(file_len <= file_position)
+		return 0;
+
+	int bytes_read = read_data((dentry.inode_num), file_position, buf, length);
+
+	file_position += bytes_read;
+
+	return bytes_read;
+*/
+
+	uint32_t inode_num = ((inode_t*) file->inode_ptr) - index_nodes;
+
+	uint32_t bytes_read = read_data(inode_num, file->file_pos, buf, nbytes);
+
+	file->file_pos += bytes_read;
+
+	return bytes_read;
+}
+
+int32_t file_write(file_t* file, const uint8_t* buf, int32_t nbytes)
+{
+	return -1;
+}
+
+int32_t file_close(file_t* file)
+{
+	file->file_op = NULL;
+	file->inode_ptr = NULL;
+	file->file_pos = 0;
+	file->flags = 0;
+
+	return 0;
+}
+
+
+int32_t dir_open(file_t* file, const uint8_t* filename)
+{
+	file->file_op = &directory_jt;
+	file->inode_ptr = NULL;
+	file->file_pos = 0;
+	file->flags = 1;
+
+	return 0;
+}
+
+// Writes directory names in order to buffer one at a time
+int32_t dir_read(file_t* file, uint8_t* buf, int32_t nbytes)
+{
+	dentry_t dentry;
+
+	if(file->file_pos >= boot_block->num_dir_entries)
+		return 0;
+
+	if(-1 == read_dentry_by_index(file->file_pos, &dentry))
+		return -1;
+
+	uint32_t name_len = (nbytes > 32) ? 32 : nbytes;
+
+	strncpy((int8_t*)buf, (int8_t*)dentry.file_name, name_len);
+
+	file->file_pos++;
+
+	return name_len;
+}
+
+int32_t dir_write(file_t* file, const uint8_t* buf, int32_t nbytes)
+{
+	return -1;
+}
+
+int32_t dir_close(file_t* file)
+{
+	file->file_op = NULL;
+	file->inode_ptr = NULL;
+	file->file_pos = 0;
+	file->flags = 0;
+
+	return 0;
+}
+
+int32_t program_load(const uint8_t* fname, uint32_t addr)
+{
+	uint32_t offset = 0;
+	uint8_t* buf = (uint8_t*)addr;
+	uint32_t len = BLOCKSIZE;
+	uint32_t ret;
+	dentry_t dentry;
+
+	if(-1 == read_dentry_by_name(fname, &dentry))
+		return -1;
+
+	if(dentry.file_type != 2)
+		return -1;
+
+	while(0 != (ret = read_data(dentry.inode_num, offset, buf, len))) 
+	{
+		if(ret == -1)
+			return -1;
+
+		offset += ret;
+		buf += ret;
+	}
+	return 0;
+}
 
 /*
  *	For the handin, you must have some test/wrapper code that given a filename, a buffer, and a
@@ -326,101 +460,4 @@ void test_filesys()
 		printf("%c", buf[j]);
 	printf("\n");
 	*/
-}
-
-
-uint32_t file_open()
-{
-	file_position = 0;
-	return 0;
-}
-
-// Writes length bytes of file content to buffer
-uint32_t file_read(uint8_t* buf, uint32_t length, const uint8_t* fname)
-{
-	dentry_t dentry;
-	read_dentry_by_name(fname, &dentry);
-
-	if(dentry.file_type != 2)
-	{
-		printf("Can only read regular file types.\n");
-		return -1;
-	}
-
-	uint32_t file_len = (index_nodes[dentry.inode_num]).length;
-
-	if(file_len <= file_position)
-		return 0;
-
-	int bytes_read = read_data((dentry.inode_num), file_position, buf, length);
-
-	file_position += bytes_read;
-
-	return bytes_read;
-}
-
-uint32_t file_write()
-{
-	return -1;
-}
-
-uint32_t file_close()
-{
-	return 0;
-}
-
-
-uint32_t dir_open()
-{
-	directory_position = 0;
-	return 0;
-}
-
-// Writes directory names in order to buffer one at a time
-uint32_t dir_read(uint8_t* buf, uint32_t length)
-{
-	dentry_t dentry;
-
-	if(directory_position >= boot_block->num_dir_entries)
-		return 0;
-
-	if(-1 == read_dentry_by_index(directory_position, &dentry))
-		return -1;
-
-	uint32_t name_len = (length > 32) ? 32 : length;
-
-	strncpy((int8_t*)buf, (int8_t*)dentry.file_name, name_len);
-
-	directory_position++;
-
-	return name_len;
-}
-
-uint32_t dir_write()
-{
-	return -1;
-}
-
-uint32_t dir_close()
-{
-	return 0;
-}
-
-
-uint32_t program_load(const uint8_t* fname, uint32_t addr)
-{
-	file_position = 0;
-
-	uint8_t* buf = (uint8_t*)addr;
-	uint32_t len = 0x1000;
-	uint32_t ret;
-
-	while(0 != (ret = file_read(buf, len, fname))) 
-	{
-		if(ret == -1)
-			return -1;
-
-		buf += ret;
-	}
-	return 0;
 }

@@ -43,7 +43,7 @@ test_rtc()												*
 void test_rtc()
 {
 	if(interrupt_number > 20)
-		rtc_write(NULL, 64);
+		rtc_write(NULL, NULL, 64);
 	if(test_flag!=0)
 		printf("%d", interrupt_number);
 }
@@ -53,12 +53,16 @@ void disable_rtc_test()
 	test_flag = 0;
 }
 
-int32_t rtc_open()
+int32_t rtc_open(file_t* file, const uint8_t* filename)
 {//	printf("inside rtc_open\n");
+	file->file_op = &rtc_jt;
+	file->inode_ptr = NULL;
+	file->file_pos = 0;
+	file->flags = 1;
 	return 0;
 }
 
-int32_t rtc_read(char* buf, int count)
+int32_t rtc_read(file_t* file, uint8_t* buf, int32_t count)
 {	//printf("inside rtc_read\n");
 	//For RTC, this call should always return 0, but only after an interrupt has occurred.
 	//set a flag and wait until the interrupt handler clears it then return 0
@@ -76,7 +80,7 @@ int32_t rtc_read(char* buf, int count)
 demonstrate that you can change the clock frequency
 Probably make a function call in kernel to show that frequency can be changed
 *************************************************/
-int32_t rtc_write(char* buf, int32_t frequency)
+int32_t rtc_write(file_t* file, const uint8_t* buf, int32_t frequency)
 {	//printf("inside rtc_write\n");
 //In the case of the RTC, the system call should always accept only a 4-byte
 // 		integer specifying the interrupt rate in Hz, and should set the rate of periodic interrupts accordingly.
@@ -102,7 +106,7 @@ int32_t rtc_write(char* buf, int32_t frequency)
 	return 0;
 }
 
-int32_t rtc_close()
+int32_t rtc_close(file_t* file)
 {	//printf("inside rtc_close\n");
 // The close system call closes the specified file descriptor and makes it available for return from later calls to open.
 	return 0;

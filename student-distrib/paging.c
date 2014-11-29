@@ -5,11 +5,13 @@
 #include "paging.h"
 #include "lib.h"
 
-static uint32_t task_count = 0;
+// static PDE_t PD[NUM_PDE] __attribute__((aligned (0x1000)));
+// static PDE_t PD0[NUM_PDE] __attribute__((aligned (0x1000)));
+// static PDE_t PD1[NUM_PDE] __attribute__((aligned (0x1000)));
 
-static PDE_t PD[NUM_PDE] __attribute__((aligned (0x1000)));
-static PDE_t PD0[NUM_PDE] __attribute__((aligned (0x1000)));
-static PDE_t PD1[NUM_PDE] __attribute__((aligned (0x1000)));
+static PDE_t PD[NUM_PD][NUM_PDE] __attribute__((aligned (0x1000)));
+static uint32_t PGRM_PAGE[7];
+
 static PTE_t VIDEO_PT[NUM_PTE] __attribute__((aligned (0x1000)));
 
 static PDE_t PDE_default;
@@ -19,6 +21,13 @@ static PDE_t* cur_PD = NULL;
 
 void init_paging()
 {
+	// Set up program page (physical) address array
+	uint32_t i;
+	for(i = 0; i < NUM_PD; i++)
+	{
+		PGRM_PAGE[i] = PAGE1 + i * PAGE_SIZE;
+	}
+
 	// Initialize the Page directory
 	init_PD();
 
@@ -62,12 +71,12 @@ void init_PD()
 	int i;
 	for(i = 0; i < NUM_PDE; i++)
 	{
-		PD[i] = PDE_default;
+		PD[0][i] = PDE_default;
 		//PD0[i] = PDE_default;
 		//PD1[i] = PDE_default;
 	}
 
- 	cur_PD = PD;
+ 	cur_PD = PD[0];
 
 	// Set up video memory PDE
 	int video_offset;
@@ -76,7 +85,7 @@ void init_PD()
 	PDE_t PDE_video;
 	PDE_video = PDE_default;
 	SET_PDE_4KB_PT(PDE_video, VIDEO_PT);
-	PD[video_offset] = PDE_video;
+	cur_PD[video_offset] = PDE_video;
 
 	// Set up kernel memory PDE
 	int kernel_offset;
@@ -86,17 +95,19 @@ void init_PD()
 	PDE_kernel = PDE_default;
 	PDE_kernel.global = 1;
 	SET_PDE_4MB_PAGE(PDE_kernel, KERNEL_MEM);
-	PD[kernel_offset] = PDE_kernel;
+	cur_PD[kernel_offset] = PDE_kernel;
 
 	// Pass the address of the page directory into the PBDR
- 	set_PDBR(PD);
+ 	set_PDBR(cur_PD);
 
- 	// Temporarily copy all of PD into PD0 and PD1
- 	int j;
-	for(j = 0; j < NUM_PDE; j++)
-	{
-		PD0[j] = PD[j];
-		PD1[j] = PD[j];
+ 	// Temporarily copy all of PD[0] into all other PDs
+ 	int j, k;
+ 	for(j = 1; j < NUM_PD; j++)
+ 	{
+		for(k = 0; k < NUM_PDE; k++)
+		{
+			PD[j][k] = PD[0][k];
+		}
 	}
 
 }
@@ -154,34 +165,46 @@ uint32_t get_Page_offset(uint32_t addr)
 }
 
 // Returns parent process PD or -1 on fail
-uint32_t task_mem_init()
+PDE_t* task_mem_init(uint32_t PID)
 {
-	uint32_t prev_PD = (uint32_t)cur_PD;
+	// uint32_t prev_PD = (uint32_t)cur_PD;
 
-	if(task_count == 0)
-	{
-		cur_PD = PD0;
-		map_4MB_page(PGRM_IMG, PAGE1, 1, 1);
-		set_PDBR(PD0);
-	}
+	// if(task_count == 0)
+	// {
+	// 	cur_PD = PD0;
+	// 	map_4MB_page(PGRM_IMG, PAGE1, 1, 1);
+	// 	set_PDBR(PD0);
+	// }
 
-	else if(task_count == 1)
-	{
-		cur_PD = PD1;
-		map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
-		set_PDBR(PD1);
-	}
-	else if(task_count == 2)
-	{
-		cur_PD = PD1;
-		map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
-		set_PDBR(PD1);
-	}
-	else return -1;
+	// else if(task_count == 1)
+	// {
+	// 	cur_PD = PD1;
+	// 	map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
+	// 	set_PDBR(PD1);
+	// }
+	// else if(task_count == 2)
+	// {
+	// 	cur_PD = PD1;
+	// 	map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
+	// 	set_PDBR(PD1);
+	// }
+	// else return -1;
 
-	task_count++;
+	// task_count++;
 
-	return prev_PD;
+	// return prev_PD;
+
+	PID--;
+
+	if(PID < 0 || PID > 6)
+		return NULL;
+
+	cur_PD = PD[PID];
+	map_4MB_page(PGRM_IMG, PGRM_PAGE[PID], 1, 1);
+	set_PDBR(cur_PD);
+
+	return cur_PD;
+
 }
 
 void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, 

@@ -44,7 +44,7 @@ rtc_wrapper:
 jump_to_userspace:
 	
  	cli
-    movl 40(%esp), %ebx					#have to change to eax since ebx is used in leave and ret 			also see if the constant 40 is fine or not
+    movl 4(%esp), %ebx		#have to change to eax since ebx is used in leave and ret 
     mov $0x2B, %ax
     mov %ax, %ds	
                    		
@@ -84,6 +84,8 @@ jump_to_userspace_again:
 syscall_handler:
 	cmpl $1, %eax
 	jl call_fail
+	cmpl $10, %eax
+	jg call_fail
 	pushl %esi
 	pushl %edi
 	pushl %edx

@@ -4,13 +4,16 @@
 
 #include "wrapper.h"
 #include "types.h"
+#include "systemcalls.h"
 
 extern void rtc_int_handler();
 
-int32_t rtc_open();
-int32_t rtc_read(char* buf, int32_t count);
-int32_t rtc_write(char* buf, int32_t frequency);
-int32_t rtc_close();
+int32_t rtc_open(file_t* file, const uint8_t* filename);
+int32_t rtc_read(file_t* file, uint8_t* buf, int32_t count);
+int32_t rtc_write(file_t* file, const uint8_t* buf, int32_t frequency);
+int32_t rtc_close(file_t* file);
+
+extern driver_jt_t rtc_jt;
 
 extern void test_rtc();
 extern void disable_rtc_test();

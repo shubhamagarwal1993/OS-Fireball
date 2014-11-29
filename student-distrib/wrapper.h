@@ -11,7 +11,7 @@ void rtc_wrapper();
 
 void syscall_handler();
 
-void jump_to_userspace();
+void jump_to_userspace(uint32_t entry_addr);
 
 void jump_to_userspace_again(uint32_t entry_addr);
 

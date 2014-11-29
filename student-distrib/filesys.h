@@ -2,6 +2,7 @@
 #define _FILESYS_H
 
 #include "types.h"
+#include "systemcalls.h"
 
 #define BLOCKSIZE 4096
 
@@ -20,10 +21,10 @@ typedef struct{
 	dentry_t dir_entries[63];
 }bootblock_t;
 
-typedef struct{
+typedef struct inode_t {
 	uint32_t length;
 	uint32_t data_block_nums[1023];
-}inode_t;
+} inode_t;
 
 typedef struct{
 	uint8_t data[4096];
@@ -34,7 +35,6 @@ extern bootblock_t* boot_block;
 extern inode_t* index_nodes;
 extern data_block_t* data_blocks;
 
-
 extern void init_filesys(const uint8_t *bootblockptr);
 
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
@@ -43,16 +43,20 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 
 extern void test_filesys();
 
-uint32_t file_open();
-uint32_t file_read(uint8_t* buf, uint32_t length, const uint8_t* fname);
-uint32_t file_write();
-uint32_t file_close();
+int32_t file_open(file_t* file, const uint8_t* filename);
+int32_t file_read(file_t* file, uint8_t* buf, int32_t nbytes);
+int32_t file_write(file_t* file, const uint8_t* buf, int32_t nbytes);
+int32_t file_close(file_t* file);
 
-uint32_t dir_open();
-uint32_t dir_read(uint8_t* buf, uint32_t length);
-uint32_t dir_write();
-uint32_t dir_close();
+extern driver_jt_t file_jt;
 
-uint32_t program_load(const uint8_t* fname, uint32_t addr);
+int32_t dir_open(file_t* file, const uint8_t* filename);
+int32_t dir_read(file_t* file, uint8_t* buf, int32_t nbytes);
+int32_t dir_write(file_t* file, const uint8_t* buf, int32_t nbytes);
+int32_t dir_close(file_t* file);
+
+extern driver_jt_t directory_jt;
+ 
+int32_t program_load(const uint8_t* fname, uint32_t addr);
 
 #endif

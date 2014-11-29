@@ -31,7 +31,7 @@ node buffer[NUM_COLS*NUM_ROWS];
  *   RETURN VALUE: --
  *   SIDE EFFECTS:
  */
-node* terminal_open()
+node* terminal_open(file_t* file, const uint8_t* filename)
 {
 	curr_buff = buffer;
 	screens[screen_num] = curr_buff;
@@ -48,13 +48,13 @@ node* terminal_open()
  *   RETURN VALUE: string
  *   SIDE EFFECTS: --
  */
-uint32_t terminal_read(uint8_t* buf, int counter)
+int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 {
 	sti();
 	//screen_x = buf_x;
 	//screen_y = buf_y;
 	int i = 0;
-	for (i = 0; i < strlen(buf); ++i)
+	for (i = 0; i < strlen((int8_t*)buf); ++i)
 	{
 		buf[i] = '\0';
 	}
@@ -128,7 +128,7 @@ uint32_t terminal_read(uint8_t* buf, int counter)
  *   RETURN VALUE: int32_t
  *   SIDE EFFECTS: --
  */
-int32_t terminal_write(uint8_t* buf, int counter)
+int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter)
 {
 	//to_print = inb(0x60);
 	//kbd_int_handler();
@@ -172,7 +172,7 @@ int32_t terminal_write(uint8_t* buf, int counter)
  *   RETURN VALUE: int
  *   SIDE EFFECTS: --
  */
-int terminal_close()
+int32_t terminal_close(file_t* file)
 {
 	screen_num--;
 	screens[screen_num] = 0;

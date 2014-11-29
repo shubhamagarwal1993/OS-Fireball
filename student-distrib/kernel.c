@@ -178,10 +178,9 @@ entry (unsigned long magic, unsigned long addr)
 	init_rtc();
 	init_filesys(filesystem_address);
 
-	uint8_t fname[33] = "shell";
 	//node* buffer = pass_buff();
 
-	node* buffer = terminal_open();
+	node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -191,7 +190,6 @@ entry (unsigned long magic, unsigned long addr)
 
 	sti();
 	//printf("test");
-	execute(fname);
 
 	// rtc_open();
 	// rtc_read();
@@ -202,7 +200,13 @@ entry (unsigned long magic, unsigned long addr)
 
 	//node* buf = pass_buff();
 	//test_read_write(buf);
+
 	/* Execute the first program (`shell') ... */
+	uint8_t fname[33] = "shell";
+	execute(fname);
+
+	/* We should never get to this point */
+	printf("Initial shell halted.");
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

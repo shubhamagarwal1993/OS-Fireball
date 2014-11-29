@@ -1,10 +1,8 @@
 #ifndef _SYSTEMCALLS_H
 #define _SYSTEMCALLS_H
 
-#ifndef ASM
-
 #include "types.h"
-#include "filesys.h"
+#include "paging.h"
 
 #define _8MB	0x00800000
 #define _8KB	0x2000
@@ -28,29 +26,45 @@ void get_arg(char* input, int nbytes);
 int32_t empty(void);
 void stdin(uint32_t fd);
 void stdout(uint32_t fd);
+
 /***********************************************************************/
 /*	PROCESS CONTROL BLOCK	*/
 /***********************************************************************/
 //each cell of PCB
-typedef struct file_array{
-	uint32_t* file_op;		 			//pointer to file operations table pointer
-	inode_t* file_inode;				//inode pointer to inode number of file in file system
+
+typedef struct jump_table driver_jt_t;
+typedef struct file{
+	driver_jt_t* file_op;		 			//pointer to file operations jump table
+	uint32_t inode_ptr;					//pointer to the inode of file in file system
 	uint32_t file_pos;					//keeps position of where we are in the file
-	uint32_t flags;						//this flag tells us which fds are available
-}file_array_t;
+	uint32_t flags;						//this flag tells us if this fd is in use
+}file_t;
 
 //PCB structure 
 typedef struct pcb{
-	file_array_t file_fds[8];			//array of open files are represented with a file array defined above
+	file_t file_fds[8];			//array of open files are represented with a file array defined above
 	//uint32_t fd;						//integer index into this array is called a file descriptor and this integer is how user-level programs identify the open file
 	uint32_t k_bp;					//keep track of parent process' base pointer
 	uint32_t k_sp;					//keep track of parent prcoess' stack pointer
-	uint32_t parent_PD;
+	PDE_t* PD_ptr;
 	uint8_t process_id;
 	//uint32_t parent_process_id;
 	uint32_t child_flag;
 	struct pcb* parent_process;
 }pcb_t;
+
+// Device driver jump table
+typedef int32_t (*open_fp_t)(file_t*, const uint8_t*);
+typedef int32_t (*read_fp_t)(file_t*, uint8_t*, int32_t);
+typedef int32_t (*write_fp_t)(file_t*, const uint8_t*, int32_t);
+typedef int32_t (*close_fp_t)(file_t*);
+struct jump_table {
+	open_fp_t open;
+	read_fp_t read;
+	write_fp_t write;
+	close_fp_t close;
+}; // driver_jt_t
+
 
 /* Puts a pointer to parent esp in ESP register 
  * Outputs: None
@@ -77,6 +91,5 @@ do {                                   			\
 				 );       						\
 } while(0)
 
-#endif /* ASM */
 #endif /* _SYSTEMCALLS_H */
 
