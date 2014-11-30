@@ -199,7 +199,7 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 
 	sti();
-	//test_rtc_read();
+
 	/* Execute the first program (`shell') ... */
 	uint8_t fname[33] = "shell";
 	execute(fname);

@@ -19,7 +19,6 @@ int process_id = 0;
 pcb_t* curr_process;
 uint32_t retval;
 
-
 // struct f_ops
 // {
 // 	uint32_t (*open)(void);
@@ -54,7 +53,6 @@ int32_t execute(const uint8_t* command)
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
 	get_arg(command, strlen(cmd));
-	//cout("%s", args);
 
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
@@ -250,6 +248,7 @@ int32_t open(const uint8_t* filename)
 {
 	uint32_t flags;
 	cli_and_save(flags);
+	
 	/* Get the current process */
 	pcb_t* cur_PCB = curr_process;
 
@@ -426,7 +425,11 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	cli_and_save(flags);	
 
 	//get_arg( (char*)buf, nbytes );
-	buf = args;
+	uint32_t length;
+	length = strlen(args);
+	memset(buf, 0, nbytes);
+	memcpy(buf, args, length);
+	//buf = args;
 	//cout("GETARGS!\n");
 	//cout("%s", args);
 	restore_flags(flags);

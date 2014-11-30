@@ -54,6 +54,7 @@ typedef struct pcb{
 	uint32_t ss0;
 	//uint32_t parent_process_id;
 	uint32_t child_flag;
+	//uint8_t* arguments;
 	struct pcb* parent_process;
 }pcb_t;
 

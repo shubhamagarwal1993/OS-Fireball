@@ -134,14 +134,6 @@ void kbd_int_handler()
 
 		disable_rtc_test();
 
-		// int a = 13;
-		// cout("%d test\n", a);
-		//  char* mofo = " Halwai fuckshubham.txt";
-		// cout("%s\n", mofo);
-		// char* output = parse(mofo);
-		// get_arg(index, mofo);
-		
-
 		// if(output == "-1")
 		// 	cout("Fail");
 		// else cout("%s", output);

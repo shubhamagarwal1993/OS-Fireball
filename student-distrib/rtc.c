@@ -48,13 +48,10 @@ rtc_int_handler()										*
 ********************************************************/
 void rtc_int_handler()
 {
-	// disable_irq(8);
-	//cout("RTC INTERRUPT HANDLER");
 	//test_interrupts();									//calls function that writes video memory to screen.
 	//test_rtc();
 	outb(0x0C, 0x70);									// select register C
 	inb(0x71);											// just throw away contents
-	// enable_irq(8);
 	interrupt_number++;
 	send_eoi(8);
 }
