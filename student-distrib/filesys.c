@@ -289,7 +289,7 @@ int32_t dir_read(file_t* file, uint8_t* buf, int32_t nbytes)
 
 	file->file_pos++;
 
-	return name_len;
+	return strlen(buf);
 }
 
 int32_t dir_write(file_t* file, const uint8_t* buf, int32_t nbytes)
