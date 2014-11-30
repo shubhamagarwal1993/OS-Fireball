@@ -110,7 +110,7 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 	{
 		buf[yudodis] = output[yudodis];
 	}
-	buf[yudodis-1] = '\n';
+	buf[yudodis-1] = '\0';
 	if(counter > 128)
 		return 128;
 	else return counter;
@@ -132,7 +132,11 @@ int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter)
 	char* print_this = (char*)buf;
 
 	for(i = 0; i < strlen(print_this); i++)
+	{
+		// if(print_this[i] == '\n')
+		// 	new_line(pass_buff());
 		put_cout(print_this[i]);
+	}
 	printb(pass_buff());
 	return counter;
 

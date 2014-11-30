@@ -26,6 +26,7 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void clear_blue(void);
+void set_colour();
 void clear_line();
 void reset_scr();
 void print_helper(char input, int x, int y);

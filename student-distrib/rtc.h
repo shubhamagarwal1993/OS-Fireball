@@ -16,7 +16,7 @@ int32_t rtc_close(file_t* file);
 extern driver_jt_t rtc_jt;
 extern volatile int32_t interrupt_number;
 
-extern void test_rtc();
+extern int32_t test_rtc_read();
 extern void disable_rtc_test();
 
 //#endif	/* ASM */

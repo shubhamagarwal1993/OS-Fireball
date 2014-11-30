@@ -35,15 +35,38 @@ kbd_wrapper:
 	; call kbd_int_handler
 	; popal
 	; iret
+	
 rtc_wrapper:
-	pushal
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+	pushl %esp
+	pushl %ebp
+	pushl %esi
+	pushl %edi
+	pushw %ds
+	pushw %es
+	pushw %fs
+	pushw %gs
 	call rtc_int_handler
-	popal
+	popw %gs
+	popw %fs
+	popw %es
+	popw %ds
+	popl %edi
+	popl %esi
+	popl %ebp
+	popl %esp
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
 	iret
 	
 jump_to_userspace:
 	
- 	cli
+ 	
     movl 4(%esp), %ebx		#have to change to eax since ebx is used in leave and ret 
     mov $0x2B, %ax
     mov %ax, %ds	
@@ -58,7 +81,7 @@ jump_to_userspace:
     pushl %eax
     pushl $0x23
     pushl %ebx 	
-    
+    sti
     iret
 
 jump_to_userspace_again:
@@ -82,15 +105,15 @@ jump_to_userspace_again:
     iret	
 
 syscall_handler:
-	cmpl $1, %eax
-	jl call_fail
-	cmpl $10, %eax
-	jg call_fail
 	pushl %esi
 	pushl %edi
 	pushl %edx
 	pushl %ecx
 	pushl %ebx
+	cmpl $1, %eax
+	jl call_fail
+	cmpl $10, %eax
+	jg call_fail
 	call *jump_table(, %eax, 4)
 	jmp end_call
 call_fail:

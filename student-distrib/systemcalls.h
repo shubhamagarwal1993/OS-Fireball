@@ -4,7 +4,9 @@
 #include "types.h"
 #include "paging.h"
 
+#define _128MB	0x12800000
 #define _8MB	0x00800000
+#define _4MB	0x00400000
 #define _8KB	0x2000
 #define MASK	0x80
 

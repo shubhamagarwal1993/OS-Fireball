@@ -54,7 +54,7 @@ int32_t execute(const uint8_t* command)
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
 	get_arg(command, strlen(cmd));
-	cout("%s", args);
+	//cout("%s", args);
 
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
@@ -405,14 +405,15 @@ int32_t close(int32_t fd)
 	uint32_t flags;
 	cli_and_save(flags);
 
-	if((fd < 0)||(fd > 7))
+	pcb_t* cur_PCB = curr_process;
+
+	file_t* farray = cur_PCB->file_fds;
+
+	if((fd < 2)||(fd > 7)||(farray[fd].flags == 0))
 	{
 		return -1;
 	} 
 
-	pcb_t* cur_PCB = curr_process;
-
-	file_t* farray = cur_PCB->file_fds;
 
 	farray[fd].flags = 0;
 	restore_flags(flags);
@@ -442,30 +443,30 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 int32_t
 vidmap(uint8_t** screen_start)
 {
-	// uint32_t flags;
-	// cli_and_save(flags);
+	uint32_t flags;
+	cli_and_save(flags);
 	
-	// if(screen_start == NULL) {
-	// 	restore_flags(flags);
-	// 	return FAILURE;
-	// }
-
-	// uint32_t lower_bound, upper_bound;
-	// lower_bound = MB_TO_B(EXE_VIR_START);
-	// upper_bound = MB_TO_B(VGA_VIR_START);
-
-	// /* check if the mem location is inside the range */
-	// if(screen_start < (uint8_t**)lower_bound || screen_start >= (uint8_t**)upper_bound) {
-	// 	restore_flags(flags);
-	// 	return FAILURE;
-	// }
+	if((screen_start == NULL)||((uint32_t) screen_start < _128MB)||((uint32_t) screen_start > ( _128MB + _4MB)))
+	{
+		restore_flags(flags);
+		return -1;
+	}
 
 	// /* set the value to the vga virtual memory */
-	// *screen_start = (uint8_t*)(VGA_MEM_VIR + VGA_MEM_START_ADDR(term.executing_terminal));
-	// flush_tlb();
-	
-	// restore_flags(flags);
-	// return SUCCESS;
+	//VGA_MEM_VIR = _4MB*33 + 0xB8000
+	//VGA_MEM_START_ADDR(terminal)	(terminal * (TERM_BYTES + NUM_COLS * 2))
+	// *screen_start = (uint8_t*)(_4MB*33 + 0xB8000 + VGA_MEM_START_ADDR(term.executing_terminal));
+	*screen_start = pass_buff();
+	asm volatile("	movl %%cr3, %%eax 	\n\
+					movl %%eax, %%cr3 	\n\
+					"
+					:
+					:
+					:"%eax"
+				);
+
+	restore_flags(flags);
+	return 0;
 }
 
 void stdin(uint32_t fd)

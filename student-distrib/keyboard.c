@@ -108,6 +108,7 @@ int limit = 0;
 int line_count = 0;
 volatile int enter_press = 0;
 
+
 // char* args;
 // int space_seen = 0;
 // int index = 0;
@@ -152,7 +153,6 @@ void kbd_int_handler()
 		//printf("%s test\n", a);
 	}
 	reset_flag = 1;
-
 	int to_print;										//disable line so we can complete this before handling some other interrupt 	
 	to_print = inb(0x60);
 	kbd_logic(to_print, buffer);

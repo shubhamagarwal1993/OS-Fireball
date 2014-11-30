@@ -11,6 +11,7 @@
 #define NUM_ROWS 25
 #define ATTRIB 0x7
 #define ATTRIB_BLUE 0x17
+#define ATTRIB_COLOUR 0x33
  
 static int screen_x;
 static int screen_y;
@@ -63,6 +64,23 @@ clear_blue(void)
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_BLUE;
     }
 }
+
+/*
+* void clear_blue(void);
+*   Inputs: void
+*   Return Value: none
+*	Function: Clears video memory to blue screen
+*/
+void
+set_colour(void)
+{
+    int32_t i;
+    for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_COLOUR;
+    }
+}
+
 
 void
 reset_scr()

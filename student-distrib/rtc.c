@@ -30,9 +30,6 @@ init_rtc(void)
 	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
 	interrupt_number = 0;
 	enable_irq(8);									//the offset of the RTC is IRQ1
-
-//	#define KEYBOARD_PORT 0x60
-//	#define KEYBOARD_STATUS_PORT 0x64
                                                                                                                                              
 	return;
 }
@@ -71,12 +68,18 @@ test_rtc()												*
 *	Return Value:	void								*
 *	Function: Should execute test_interrupts handler	*
 ********************************************************/
-void test_rtc()
+int32_t test_rtc_read()
 {
-	if(interrupt_number > 20)
-		rtc_write(NULL, NULL, 64);
-	if(test_flag!=0)
-		printf("%d", interrupt_number);
+	file_t* file;
+	uint8_t* buf = "INTERRUPT";
+	int32_t count;
+	rtc_write(file, buf, 4);
+	while(interrupt_number < 20)
+	{
+		terminal_write(file, buf, 15);
+		rtc_read(file, buf, count);
+	}
+	return 0;
 }
 
 void disable_rtc_test()
@@ -85,14 +88,13 @@ void disable_rtc_test()
 }
 
 int32_t rtc_open(file_t* file, const uint8_t* filename)
-{//	printf("inside rtc_open\n");
+{
 	file->file_op = &rtc_jt;
 	file->inode_ptr = NULL;
 	file->file_pos = 0;
 	file->flags = 1;
 	init_rtc();
-	printf("AJSKAJFGKADJFGAKDJAGHKDJFGAKDFJAGHDKFJGHDAFKJH\n");
-	//cout("HELLO WORLD!!!");
+
 	return 0;
 }
 
@@ -107,6 +109,7 @@ int32_t rtc_read(file_t* file, uint8_t* buf, int32_t count)
 	//} 
 	//interrupt_number = 0;
 	//interrupt_number++;
+	sti();
 	uint32_t temp = interrupt_number;
 	//temp = 0;
 	while(temp == interrupt_number);
@@ -128,9 +131,8 @@ int32_t rtc_write(file_t* file, const uint8_t* buf, int32_t frequency)
 	{
 		rate++;
 	}
-//	printf(" Rate is %d", rate);
  	rate--;
-	// disable_irq(8);
+
 	outb(0x8A, 0x70);								// set index to register A, disable NMI
 	char prev = inb(0x71);							// get initial value of register A
 	outb(0x8A, 0x70);								// reset index to A
@@ -140,14 +142,14 @@ int32_t rtc_write(file_t* file, const uint8_t* buf, int32_t frequency)
 	prev = inb(0x71);								// read the current value of register B
 	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
 	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
-	// enable_irq(8);									//the offset of the RTC is IRQ1
-//	printf("finished rtc_write\n");
+								//the offset of the RTC is IRQ1
+	sti();
 	restore_flags(flags);
 	return 0;
 }
 
 int32_t rtc_close(file_t* file)
-{	//printf("inside rtc_close\n");
+{	
 // The close system call closes the specified file descriptor and makes it available for return from later calls to open.
 	return 0;
 }

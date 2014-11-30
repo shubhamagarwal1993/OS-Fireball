@@ -160,33 +160,3 @@ init_keyboard(void)
 	return;
 }
 
-// /****************************************
-// void									*
-// init_rtc(void)							*	
-// *	Inputs:			void				*
-// *	Outputs:		initialize RTC 		*
-// *	Return Value:	void				*
-// *	Function: Initialize the RTC 	 	*
-// ****************************************/ 
-// void
-// init_rtc(void)		
-// {
-
-// 	int rate = 0x0E;								// rate must be above 2 and not over 15
-// 	outb(0x8A, 0x70);								// set index to register A, disable NMI
-// 	char prev = inb(0x71);							// get initial value of register A
-// 	outb(0x8A, 0x70);								// reset index to A
-// 	outb((prev & 0xF0) | rate, 0x71); 				//write only our rate to A. Note, rate is the bottom 4 bits.
-
-// 	outb(0x8B, 0x70);								// select register B, and disable NMI
-// 	prev = inb(0x71);								// read the current value of register B
-// 	outb(0x8B, 0x70);								// set the index again (a read will reset the index to register D)
-// 	outb(prev | 0x40, 0x71);						// write the previous value ORed with 0x40. This turns on bit 6 of register B
-// 	interrupt_number = 0;
-// 	enable_irq(8);									//the offset of the RTC is IRQ1
-
-// //	#define KEYBOARD_PORT 0x60
-// //	#define KEYBOARD_STATUS_PORT 0x64
-                                                                                                                                             
-// 	return;
-// }

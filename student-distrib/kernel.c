@@ -197,11 +197,9 @@ entry (unsigned long magic, unsigned long addr)
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	//printf("Enabling Interrupts\n");
 
 	sti();
-	//printf("test");
-
+	//test_rtc_read();
 	/* Execute the first program (`shell') ... */
 	uint8_t fname[33] = "shell";
 	execute(fname);
