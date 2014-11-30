@@ -54,7 +54,7 @@ int32_t execute(const uint8_t* command)
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
 	get_arg(command, strlen(cmd));
-
+	cout("%s", args);
 
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
@@ -139,14 +139,11 @@ int32_t execute(const uint8_t* command)
 	
 	if(open_processes == MASK)
 	{
-		//curr_process->parent_process_id = 0;
 		curr_process->parent_process = curr_process;
 		curr_process->child_flag = 0;
 	}
 	else
 	{
-		//pcb_t* parent_process = (pcb_t *) (curr_process->parent_sp & 0xFFFFE000);
-		//curr_process->parent_process_id = parent_process->process_id;
 		curr_process->parent_process = parent_pcb;
 		curr_process->parent_process->child_flag = 1;
 	}
@@ -169,12 +166,8 @@ int32_t execute(const uint8_t* command)
 	curr_process->esp0 = tss.esp0;
 	curr_process->ss0 = tss.ss0;
 	tss.esp0 = _8MB - _8KB*(process_id - 1) - 4;
-	//tss.esp0 = curr_process->k_sp;
 	tss.ss0 = KERNEL_DS;
-	//k_sp = tss.esp0;
 
-
-	//open stdin and stdout
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
@@ -203,26 +196,12 @@ int32_t halt(uint8_t status)
 
 	if(curr_process == curr_process->parent_process)
 	{
-		/*dentry_t dentry_temp;
-		if(-1 == read_dentry_by_name((uint8_t*)"shell", &dentry_temp))
-		return -1;
-		uint32_t inode_num_temp = dentry_temp.inode_num;
-		uint8_t buf_temp[4];
-		//if the current process is the parent process
-		int ret_val = read_data(inode_num_temp, 24, buf_temp, 4);
-		if(-1 == ret_val)
-			return -1;
-		int k = 0;
-		for(k = 0; k < 4; k++)
-			entry_addr |= (buf_temp[k] << 8*k);
-
-		jump_to_userspace_again(entry_addr);*/
+		
 		printf("NOT ALLOWED");
 		return -1;
 		
 	}
 	
-	//else if(curr_process->child_flag == 1)
 	else
 	{
 		retval = (uint32_t)status;
@@ -240,19 +219,14 @@ int32_t halt(uint8_t status)
 
 
 		//load the page directory of the parent
-
-		//set the k_sp and tss to point back to parent process' k_sp and tss
 		tss.esp0 = curr_process->esp0;
 		tss.ss0 = curr_process->ss0;
-		// k_sp = tss.esp0;
 
 		//set kernel stack pointer and kernel base pointer
 		//back to the parent's base pointer and stack pointer
 		//respectively.
 		uint32_t p_sp = curr_process->/*parent_process->*/k_sp;
 		uint32_t p_bp = curr_process->/*parent_process->*/k_bp;
-		// set_ESP(p_sp);
-		// set_EBP(p_bp);
 
 		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
 		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
@@ -261,8 +235,6 @@ int32_t halt(uint8_t status)
 
 		curr_process = curr_process->parent_process;
 		//go back to parent's instruction pointer
-		//asm volatile("leave");
-		//asm volatile("ret");
 		asm volatile("jmp ret_halt");	
 	}
 	restore_flags(flags);
@@ -530,7 +502,7 @@ char* parse(char* input)
 		int i = 0;
 		for(i = 0; i < len; i++)
 		{
-			if(input[i] == ' ')
+			if(input[i] == ' ' || input[i] == '\n')
 			{ 
 				space_seen = 1;
 				break;

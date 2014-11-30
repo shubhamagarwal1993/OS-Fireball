@@ -50,49 +50,45 @@ node* terminal_open(file_t* file, const uint8_t* filename)
  */
 int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 {
+	//enable interrupts
 	sti();
-	//screen_x = buf_x;
-	//screen_y = buf_y;
+	
+	//clear the buffer
 	int i = 0;
-	for (i = 0; i < strlen((int8_t*)buf); ++i)
+	for (i = 0; i < 20; i++)
 	{
 		buf[i] = '\0';
 	}
+
 	node* buffer = curr_buff;
 	to_print = inb(0x60);
 	char* output;
 	char out[counter];
-	//char * fault = "Invalid read";
-	//int line_count;
 	int temp_buf_x = buf_x;
 	int typed = line_count;
 
+	//clear out
 	for (i = 0; i < counter; ++i)
 	{
 		out[i] = '\0';
 	}
+
+	//wait for enter to get hit
 	while(1)
 	{
 		if((length == 127)||(enter_press == 1))
-		{	
-			
 			break;
-		}
 		else typed = buf_x;
-		//	else line_count = pass_count();
 	}
 	
 	enter_press = 0;
 	int y = pass_y();
-	// int test_count = pass_count();
 	int index = 0;
 	if(line_count >= 80)
 		index = (y-2)*80;
 	else index = (y-1)*80;
 	if(enter_flag == 1)
 		index = (y-1)*80;
-	//if( (counter > 0) && (counter <= 128) )
-	//{
 	int j = 0;
 	for(i = index + temp_buf_x; i < index + typed; i++, j++)
 	{
@@ -114,7 +110,7 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 	{
 		buf[yudodis] = output[yudodis];
 	}
-	buf[yudodis+1] = '\n';
+	buf[yudodis-1] = '\n';
 	if(counter > 128)
 		return 128;
 	else return counter;
