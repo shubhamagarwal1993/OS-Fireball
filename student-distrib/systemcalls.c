@@ -10,7 +10,7 @@
 #include "lib.h"
 
 /*	global variables for parse 	*/
-volatile char * args;
+char * args;
 int space_seen = 0;
 int index = 0;
 uint8_t open_processes = 0;
@@ -52,7 +52,7 @@ int32_t execute(const uint8_t* command)
 
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
-	get_arg(command, strlen(cmd));
+	get_arg((char *)command, (int)strlen(cmd));
 
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
@@ -458,8 +458,13 @@ vidmap(uint8_t** screen_start)
 	// /* set the value to the vga virtual memory */
 	//VGA_MEM_VIR = _4MB*33 + 0xB8000
 	//VGA_MEM_START_ADDR(terminal)	(terminal * (TERM_BYTES + NUM_COLS * 2))
-	// *screen_start = (uint8_t*)(_4MB*33 + 0xB8000 + VGA_MEM_START_ADDR(term.executing_terminal));
-	*screen_start = pass_buff();
+//	*screen_start = (uint8_t*)(_4MB*33 +  );
+
+//	*screen_start = (uint8_t*)(SET_PDE_4KB_PT(_4MB*33, 0xB8000));
+
+	//VGA_MEM_START_ADDR(terminal)	terminal*(TERM_BYTES + NUM_COLS*2)
+	//TERM_BYTES = NUM_COLS*NUM_ROWS
+	//*screen_start = 0x01000;
 	asm volatile("	movl %%cr3, %%eax 	\n\
 					movl %%eax, %%cr3 	\n\
 					"
