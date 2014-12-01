@@ -68,7 +68,6 @@ int32_t execute(const uint8_t* command)
 			process_mask = process_mask >> (i-1);
 			open_processes |= process_mask;
 			process_id = i - 1;
-			num_processes ++;
 			break;
 		}
 			
@@ -179,7 +178,7 @@ int32_t execute(const uint8_t* command)
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
-
+	num_processes ++;
 	jump_to_userspace(entry_addr);
 	
 
@@ -211,7 +210,6 @@ int32_t halt(uint8_t status)
 		num_processes = 0;
 		curr_process->process_id = 0;
 		execute(fexec);
-		
 		sti();	
 		return -1;
 		
