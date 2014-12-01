@@ -27,6 +27,7 @@ void reset_buf(node* buf)
 		buf[i].x_coord = x;
 		buf[i].y_coord = y;
 		buf[i].mo = ' ';
+		buf[i].printed = 0;
 
 		if(x != (NUM_COLS-1))
 			x++;
@@ -78,6 +79,7 @@ void setb(node* buf, char input)
 {
 	int index = NUM_COLS*(buf_y) + buf_x;
 	buf[index].mo = input;
+	buf[index].printed = 0;
 	//buf[index+1].mo = '_';
 	if(buf_x == (NUM_COLS-1) )
 	{
@@ -155,9 +157,9 @@ void clear_buf_line(node* buf)
  */
 void backspace(node* buf, int line_count)
 {
-	if(line_count>0)
+	int index = NUM_COLS*(buf_y) + buf_x;
+	if(line_count > 0 && buf[index-1].printed == 0)
 	{
-		int index = NUM_COLS*(buf_y) + buf_x;
 		buf[index-1].mo = ' ';
 		// Updating the current position
 		buf_x--;

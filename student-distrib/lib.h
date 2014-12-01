@@ -12,6 +12,7 @@
  	int x_coord;
  	int y_coord;
  	char mo;
+ 	int printed;
  }node;
 
 int32_t cout(int8_t *format, ...);

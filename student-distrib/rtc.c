@@ -109,7 +109,11 @@ int32_t rtc_read(file_t* file, uint8_t* buf, int32_t count)
 	sti();
 	uint32_t temp = interrupt_number;
 	//temp = 0;
-	while(temp == interrupt_number);
+	while(temp == interrupt_number)
+	{
+		if(inb(0x60) == 96) cout("tilde");
+		break;
+	}
 	return 0;
 }
 

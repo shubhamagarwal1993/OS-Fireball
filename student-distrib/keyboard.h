@@ -10,6 +10,7 @@
 #define NUM_ROWS 25
 
 extern int line_count;
+extern int limit;
 extern node buffer[NUM_COLS*NUM_ROWS];
 extern volatile int enter_press;
 
