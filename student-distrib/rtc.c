@@ -118,10 +118,15 @@ int32_t rtc_read(file_t* file, uint8_t* buf, int32_t count)
 rtc_write - change the clock frequency
 Probably make a function call in kernel to show that frequency can be changed
 *************************************************/
-int32_t rtc_write(file_t* file, const uint8_t* buf, int32_t frequency)
+int32_t rtc_write(file_t* file, const uint8_t* buf, int32_t nbytes)
 {	
+	if(nbytes != 4)
+		return -1;
+
 	uint32_t flags;
 	cli_and_save(flags);
+
+	uint32_t frequency = *(uint32_t*)buf;
 
 	if((frequency > 1024)||(frequency < 2))
 	{

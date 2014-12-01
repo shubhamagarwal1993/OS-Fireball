@@ -10,9 +10,11 @@
 // static PDE_t PD1[NUM_PDE] __attribute__((aligned (0x1000)));
 
 static PDE_t PD[NUM_PD][NUM_PDE] __attribute__((aligned (0x1000)));
+static PTE_t PT[NUM_PT][NUM_PTE] __attribute__((aligned (0x1000)));
+
 static uint32_t PGRM_PAGE[7];
 
-static PTE_t VIDEO_PT[NUM_PTE] __attribute__((aligned (0x1000)));
+// static PTE_t VIDEO_PT[NUM_PTE] __attribute__((aligned (0x1000)));
 
 static PDE_t PDE_default;
 static PTE_t PTE_default;
@@ -72,8 +74,6 @@ void init_PD()
 	for(i = 0; i < NUM_PDE; i++)
 	{
 		PD[0][i] = PDE_default;
-		//PD0[i] = PDE_default;
-		//PD1[i] = PDE_default;
 	}
 
  	cur_PD = PD[0];
@@ -84,7 +84,8 @@ void init_PD()
 
 	PDE_t PDE_video;
 	PDE_video = PDE_default;
-	SET_PDE_4KB_PT(PDE_video, VIDEO_PT);
+	//SET_PDE_4KB_PT(PDE_video, VIDEO_PT);
+	SET_PDE_4KB_PT(PDE_video, PT[0]);
 	cur_PD[video_offset] = PDE_video;
 
 	// Set up kernel memory PDE
@@ -114,7 +115,7 @@ void init_PD()
 
 /*
  * void init_VIDEO_PT()
- * 	Description: Sets all entries in the video page table
+ * 	Description: Sets all entries in the video page tables
  *   Inputs: none
  *   Return Value: none
  */
@@ -133,10 +134,13 @@ void init_VIDEO_PT()
 	PTE_default.avail = 0;
 	PTE_default.page_base = 0;
 
-	int i;
-	for(i = 0; i < NUM_PTE; i++)
+	int i, j;
+	for(i = 0; i < NUM_PT; i++)
 	{
-		VIDEO_PT[i] = PTE_default;
+		for(j = 0; j < NUM_PTE; j++)
+		{
+			PT[i][j] = PTE_default;
+		}
 	}
 
 	// Set up the video PTE
@@ -146,7 +150,7 @@ void init_VIDEO_PT()
 	PTE_video = PTE_default;
 	PTE_video.global = 1;
 	SET_PTE(PTE_video, VIDEO_MEM);
-	VIDEO_PT[offset] = PTE_video;
+	PT[0][offset] = PTE_video;
 }
 
 uint32_t get_PDE_offset(uint32_t addr)
@@ -167,35 +171,6 @@ uint32_t get_Page_offset(uint32_t addr)
 // Returns parent process PD or -1 on fail
 PDE_t* task_mem_init(uint32_t PID)
 {
-	// uint32_t prev_PD = (uint32_t)cur_PD;
-
-	// if(task_count == 0)
-	// {
-	// 	cur_PD = PD0;
-	// 	map_4MB_page(PGRM_IMG, PAGE1, 1, 1);
-	// 	set_PDBR(PD0);
-	// }
-
-	// else if(task_count == 1)
-	// {
-	// 	cur_PD = PD1;
-	// 	map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
-	// 	set_PDBR(PD1);
-	// }
-	// else if(task_count == 2)
-	// {
-	// 	cur_PD = PD1;
-	// 	map_4MB_page(PGRM_IMG, PAGE2, 1, 1);
-	// 	set_PDBR(PD1);
-	// }
-	// else return -1;
-
-	// task_count++;
-
-	// return prev_PD;
-
-	PID--;
-
 	if(PID < 0 || PID > 6)
 		return NULL;
 
@@ -204,7 +179,41 @@ PDE_t* task_mem_init(uint32_t PID)
 	set_PDBR(cur_PD);
 
 	return cur_PD;
+}
 
+uint8_t* user_vidmap()
+{
+	// Set up PTE if necessary
+	uint32_t PT_index = get_PTE_offset(USER_VID);
+
+	if(PT[1][PT_index].present == 0)
+	{
+		PTE_t PTE_video;
+		PTE_video = PTE_default;
+		PTE_video.user_super = 1;
+		PTE_video.read_write = 1;
+
+		SET_PTE(PTE_video, VIDEO_MEM);
+		PT[1][PT_index] = PTE_video;
+	}
+
+	// Set up PDE if necessary
+	uint32_t PD_index = get_PDE_offset(USER_VID);
+
+	if(cur_PD[PD_index].present == 0)
+	{
+		PDE_t PDE_video;
+		PDE_video = PDE_default;
+		PDE_video.user_super = 1;
+		PDE_video.read_write = 1;
+
+		SET_PDE_4KB_PT(PDE_video, PT[1]);
+		cur_PD[PD_index] = PDE_video;
+	}
+
+	INVLPG(USER_VID);
+
+	return (uint8_t*)USER_VID;
 }
 
 void map_4MB_page(uint32_t vir_addr, uint32_t phys_addr, 

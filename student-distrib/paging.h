@@ -10,18 +10,19 @@
 
 #define VIDEO_MEM 	0xB8000
 #define KERNEL_MEM 	0x400000
+#define	USER_VID 	0x07CB8000
 
 #define PD_align	0x400000
 #define PT_align	0x1000
 
 /* Number of pages in the Page directory */
 #define NUM_PD 	7 
+#define NUM_PT 	7
 #define NUM_PDE 1024
 #define NUM_PTE 1024
 
 #define PGRM_IMG	0x08048000
 #define PAGE1		0x800000
-#define PAGE2		0xC00000
 #define PAGE_SIZE 	0x400000
 
 #ifndef ASM
@@ -163,6 +164,7 @@ do{															\
 extern void init_paging();
 extern void test_paging();
 extern PDE_t* task_mem_init(uint32_t PID);
+extern uint8_t* user_vidmap();
 
 /* Local functions */
 

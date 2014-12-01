@@ -66,7 +66,7 @@ int32_t execute(const uint8_t* command)
 		{
 			process_mask = process_mask >> (i-1);
 			open_processes |= process_mask;
-			process_id = i;
+			process_id = i - 1;
 			break;
 		}
 			
@@ -130,7 +130,7 @@ int32_t execute(const uint8_t* command)
 		return -1;
 	}
 
-	k_bp = _8MB - (_8KB)*(process_id - 1) - 4;
+	k_bp = _8MB - (_8KB)*(process_id) - 4;
 	curr_process = (pcb_t *) (k_bp & 0xFFFFE000);
 	curr_process->process_id = process_id;
 	curr_process->PD_ptr = PD_ptr;
@@ -163,7 +163,7 @@ int32_t execute(const uint8_t* command)
 
 	curr_process->esp0 = tss.esp0;
 	curr_process->ss0 = tss.ss0;
-	tss.esp0 = _8MB - _8KB*(process_id - 1) - 4;
+	tss.esp0 = _8MB - _8KB*(process_id) - 4;
 	tss.ss0 = KERNEL_DS;
 
 	stdin(0);									//kernel should automatically open stdin and stdout
@@ -194,7 +194,7 @@ int32_t halt(uint8_t status)
 
 	if(curr_process == curr_process->parent_process)
 	{
-		
+		// We need to actually handle this case
 		printf("NOT ALLOWED");
 		return -1;
 		
@@ -206,7 +206,7 @@ int32_t halt(uint8_t status)
 		//modify open_processes to indicate that current process is not running anymore
 		int i = 0;
 		uint8_t process_mask = MASK;
-		for(i = 0; i < (curr_process->process_id)-1; i++)
+		for(i = 0; i < (curr_process->process_id); i++)
 		{
 			process_mask = process_mask >> 1;
 		}
@@ -413,7 +413,6 @@ int32_t close(int32_t fd)
 		return -1;
 	} 
 
-
 	farray[fd].flags = 0;
 	restore_flags(flags);
 	return 0;
@@ -446,35 +445,45 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 int32_t
 vidmap(uint8_t** screen_start)
 {
-	uint32_t flags;
-	cli_and_save(flags);
-	
-	if((screen_start == NULL)||((uint32_t) screen_start < _128MB)||((uint32_t) screen_start > ( _128MB + _4MB)))
-	{
-		restore_flags(flags);
+	if( (uint32_t)screen_start < _128MB || (uint32_t)screen_start >= (_128MB + _4MB) )
 		return -1;
-	}
 
-	// /* set the value to the vga virtual memory */
-	//VGA_MEM_VIR = _4MB*33 + 0xB8000
-	//VGA_MEM_START_ADDR(terminal)	(terminal * (TERM_BYTES + NUM_COLS * 2))
-//	*screen_start = (uint8_t*)(_4MB*33 +  );
+	*screen_start = user_vidmap();
 
-//	*screen_start = (uint8_t*)(SET_PDE_4KB_PT(_4MB*33, 0xB8000));
-
-	//VGA_MEM_START_ADDR(terminal)	terminal*(TERM_BYTES + NUM_COLS*2)
-	//TERM_BYTES = NUM_COLS*NUM_ROWS
-	//*screen_start = 0x01000;
-	asm volatile("	movl %%cr3, %%eax 	\n\
-					movl %%eax, %%cr3 	\n\
-					"
-					:
-					:
-					:"%eax"
-				);
-
-	restore_flags(flags);
 	return 0;
+
+
+	
+// 	uint32_t flags;
+// 	cli_and_save(flags);
+	
+// 	if((screen_start == NULL)||((uint32_t) screen_start < _128MB)||((uint32_t) screen_start > ( _128MB + _4MB)))
+// 	{
+// 		restore_flags(flags);
+// 		return -1;
+// 	}
+
+// 	// set the value to the vga virtual memory
+// 	//VGA_MEM_VIR = _4MB*33 + 0xB8000
+// 	//VGA_MEM_START_ADDR(terminal)	(terminal * (TERM_BYTES + NUM_COLS * 2))
+// //	*screen_start = (uint8_t*)(_4MB*33 +  );
+
+// //	*screen_start = (uint8_t*)(SET_PDE_4KB_PT(_4MB*33, 0xB8000));
+
+// 	//VGA_MEM_START_ADDR(terminal)	terminal*(TERM_BYTES + NUM_COLS*2)
+// 	//TERM_BYTES = NUM_COLS*NUM_ROWS
+// 	//*screen_start = 0x01000;
+// 	asm volatile("	movl %%cr3, %%eax 	\n\
+// 					movl %%eax, %%cr3 	\n\
+// 					"
+// 					:
+// 					:
+// 					:"%eax"
+// 				);
+
+// 	restore_flags(flags);
+// 	return 0;
+
 }
 
 void stdin(uint32_t fd)
