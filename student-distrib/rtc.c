@@ -67,15 +67,15 @@ test_rtc()												*
 ********************************************************/
 int32_t test_rtc_read()
 {
-	file_t* file;
-	uint8_t* buf = "INTERRUPT";
-	int32_t count;
-	rtc_write(file, buf, 4);
-	while(interrupt_number < 20)
-	{
-		terminal_write(file, buf, 15);
-		rtc_read(file, buf, count);
-	}
+	// file_t* file;
+	// uint8_t* buf = "INTERRUPT";
+	// int32_t count;
+	// rtc_write(file, buf, 4);
+	// while(interrupt_number < 20)
+	// {
+	// 	terminal_write(file, buf, 15);
+	// 	rtc_read(file, buf, count);
+	// }
 	return 0;
 }
 
@@ -109,11 +109,7 @@ int32_t rtc_read(file_t* file, uint8_t* buf, int32_t count)
 	sti();
 	uint32_t temp = interrupt_number;
 	//temp = 0;
-	while(temp == interrupt_number)
-	{
-		if(inb(0x60) == 96) cout("tilde");
-		break;
-	}
+	while(temp == interrupt_number);
 	return 0;
 }
 
