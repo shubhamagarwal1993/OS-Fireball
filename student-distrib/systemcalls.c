@@ -207,8 +207,12 @@ int32_t halt(uint8_t status)
 		// We need to actually handle this case
 		printf("YOU CAN CHECK OUT, BUT YOU CAN NEVER LEAVE...\n");
 		while(1);
-		sti();
-		asm volatile("jmp ret_halt");	
+		uint8_t fexec[33] = "shell";
+		num_processes = 0;
+		curr_process->process_id = 0;
+		execute(fexec);
+		
+		sti();	
 		return -1;
 		
 	}

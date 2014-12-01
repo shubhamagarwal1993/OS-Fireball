@@ -47,7 +47,7 @@ typedef struct pcb{
 	file_t file_fds[8];			//array of open files are represented with a file array defined above
 	//uint32_t fd;						//integer index into this array is called a file descriptor and this integer is how user-level programs identify the open file
 	uint32_t k_bp;					//keep track of parent process' base pointer
-	uint32_t k_sp;					//keep track of parent prcoess' stack pointer
+	uint32_t k_sp;					//keep track of parent process' stack pointer
 	PDE_t* PD_ptr;
 	uint8_t process_id;
 	uint32_t esp0;
