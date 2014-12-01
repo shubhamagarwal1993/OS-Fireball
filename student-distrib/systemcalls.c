@@ -18,6 +18,7 @@ uint32_t k_bp = 0;
 int process_id = 0;
 pcb_t* curr_process;
 uint32_t retval;
+uint32_t num_processes = 0;
 
 // struct f_ops
 // {
@@ -67,10 +68,19 @@ int32_t execute(const uint8_t* command)
 			process_mask = process_mask >> (i-1);
 			open_processes |= process_mask;
 			process_id = i - 1;
+			num_processes ++;
 			break;
 		}
 			
 		temp = temp << 1;
+	}
+
+	if(num_processes > 2)
+	{
+		cout("PROCESS LIMIT EXCEEDED. NOT ALLOWED TO EXECUTE\n");
+		num_processes--;
+		sti();
+		asm volatile("jmp ret_halt");	
 	}
 
 /*
@@ -178,12 +188,12 @@ int32_t execute(const uint8_t* command)
 	return retval;
 }
 
-//making a file operations jump table
-uint32_t stdin_jmp_table[4] = {0, (uint32_t)terminal_read, 0, 0};													//
-uint32_t stdout_jmp_table[4] = {0, 0, (uint32_t)terminal_write, 0};															//
-uint32_t rtc_jmp_table[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)rtc_write, (uint32_t)rtc_close};			//
-uint32_t file_jmp_table[4] = {(uint32_t)file_open, (uint32_t)file_read, (uint32_t)file_write, (uint32_t)file_close};	//
-uint32_t dir_jmp_table[4] = {(uint32_t)dir_open, (uint32_t)dir_read, (uint32_t)dir_write, (uint32_t)dir_close};			//
+// //making a file operations jump table
+// uint32_t stdin_jmp_table[4] = {0, (uint32_t)terminal_read, 0, 0};													//
+// uint32_t stdout_jmp_table[4] = {0, 0, (uint32_t)terminal_write, 0};															//
+// uint32_t rtc_jmp_table[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)rtc_write, (uint32_t)rtc_close};			//
+// uint32_t file_jmp_table[4] = {(uint32_t)file_open, (uint32_t)file_read, (uint32_t)file_write, (uint32_t)file_close};	//
+// uint32_t dir_jmp_table[4] = {(uint32_t)dir_open, (uint32_t)dir_read, (uint32_t)dir_write, (uint32_t)dir_close};			//
 
 int32_t halt(uint8_t status)
 {
@@ -195,7 +205,10 @@ int32_t halt(uint8_t status)
 	if(curr_process == curr_process->parent_process)
 	{
 		// We need to actually handle this case
-		printf("NOT ALLOWED");
+		printf("YOU CAN CHECK OUT, BUT YOU CAN NEVER LEAVE...\n");
+		while(1);
+		sti();
+		asm volatile("jmp ret_halt");	
 		return -1;
 		
 	}
@@ -211,6 +224,7 @@ int32_t halt(uint8_t status)
 			process_mask = process_mask >> 1;
 		}
 		open_processes = open_processes ^ process_mask;
+		num_processes--;
 
 		//clear parent process' child flag
 		parent_process->child_flag = 0;
@@ -472,18 +486,21 @@ vidmap(uint8_t** screen_start)
 
 // 	//VGA_MEM_START_ADDR(terminal)	terminal*(TERM_BYTES + NUM_COLS*2)
 // 	//TERM_BYTES = NUM_COLS*NUM_ROWS
-// 	//*screen_start = 0x01000;
-// 	asm volatile("	movl %%cr3, %%eax 	\n\
-// 					movl %%eax, %%cr3 	\n\
-// 					"
-// 					:
-// 					:
-// 					:"%eax"
-// 				);
+// 	  *screen_start = 0x01000;
 
 // 	restore_flags(flags);
 // 	return 0;
 
+}
+
+int32_t set_handler(int32_t signum, void* handler_address)
+{
+	return -1;
+}
+
+int32_t sigreturn(void)
+{
+	return -1;
 }
 
 void stdin(uint32_t fd)

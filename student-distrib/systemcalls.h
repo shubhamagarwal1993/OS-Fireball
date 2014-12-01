@@ -18,8 +18,8 @@ int32_t open(const uint8_t* filename);
 int32_t close(int32_t fd);
 int32_t getargs(uint8_t* buf, int32_t nbytes);
 int32_t vidmap(uint8_t** screen_start);
-//int32_t set_handler(int32_t signum, void* handler_address);
-//int32_t sigreturn(void);
+int32_t set_handler(int32_t signum, void* handler_address);
+int32_t sigreturn(void);
 
 /*	Helper functions for execute(const uint8_t* command)	*/
 char* parse(char* input);
