@@ -68,19 +68,21 @@ int32_t execute(const uint8_t* command)
 			process_mask = process_mask >> (i-1);
 			open_processes |= process_mask;
 			process_id = i - 1;
+
 			break;
 		}
 			
 		temp = temp << 1;
 	}
 
-	if(num_processes > 2)
+	if(num_processes + 1 > 2)
 	{
 		cout("PROCESS LIMIT EXCEEDED. NOT ALLOWED TO EXECUTE\n");
-		num_processes--;
+		//num_processes--;
 		sti();
 		asm volatile("jmp ret_halt");	
 	}
+
 
 /*
 	curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
@@ -178,7 +180,7 @@ int32_t execute(const uint8_t* command)
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
-	num_processes ++;
+	num_processes++;
 	jump_to_userspace(entry_addr);
 	
 
