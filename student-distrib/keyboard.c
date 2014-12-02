@@ -127,36 +127,18 @@ void kbd_int_handler()
 {
 	
 	node* buffer = pass_buff();
+	
 	if(reset_flag == 0)
-	{
-		//reset_scr();
-		//reset_buf(buffer);
-
 		disable_rtc_test();
 
-		// if(output == "-1")
-		// 	cout("Fail");
-		// else cout("%s", output);
-		// cout("\n");
-		// if(args == "-1")
-		// 	cout("Fail");
-		// else cout("%s", args);
-		// cout("\n");
-		//printf("%s test\n", a);
-	}
 	reset_flag = 1;
 	int to_print;										//disable line so we can complete this before handling some other interrupt 	
 	to_print = inb(0x60);
 	kbd_logic(to_print, buffer);
-	//printb(buffer);
-	//init_terminal();
 	if(to_print == 0x1C)
 		enter_press = 1;
 	else enter_press = 0;
 	printb(buffer);
-	//terminal_write(buffer, 1);
-	//terminal_open(to_print);
-	//test_read_write(buffer, to_print);
 	
 	send_eoi(1);
 }
@@ -342,85 +324,6 @@ int pass_count()
 {
 	return line_count;
 }
-
-// char* parse(char* input)
-// {
-// 	int len = strlen(input);
-// 	char* output = "random str1";
-	
-// 	if(len == 0)
-// 	{
-// 		output = "-1";
-// 		return output;
-// 	}
-// 	else if(input[0] == ' ')
-// 	{
-// 		output = "-1";
-// 		return output;
-// 	}
-// 	else
-// 	{
-// 		int i = 0;
-// 		for(i = 0; i < len; i++)
-// 		{
-// 			if(input[i] == ' ')
-// 			{ 
-// 				space_seen = 1;
-// 				break;
-// 			}
-// 			output[i] = input[i];
-// 		}
-// 		output[i] = '\0';
-// 		index = i;
-// 	}
-// 	return output;
-// }
-
-// void get_arg(int i, char* input)
-// {
-// 		args = "random str2";
-		
-// 		if(input[0] == ' ')
-// 		{
-// 			args = "-1";
-// 			return;
-// 		}
-
-// 		int j = 0;
-// 		int arg_length = 0;
-// 		int len = strlen(input);
-// 		for(j = i + 1; j < len; j++)
-// 		{
-// 			args[j - i - 1] = input[j];
-// 			arg_length++;
-// 		}
-// 		args[arg_length] = '\0';
-// }
-
-/* 
- * cout()
- *   DESCRIPTION: Custom print function
- *   INPUTS: character string to be printed 
- *   OUTPUTS: --
- *   RETURN VALUE: --
- *   SIDE EFFECTS: prints required characters to the screen
- */
- /*
-void cout(char *input)
-{
-	int len = strlen(input);
-	int i = 0;
-	new_line(buffer);
-	for(i = 0; i < len; i++)
-	{
-		setb(buffer, input[i]);
-		if(input[i] == '\n')
-			new_line(buffer);
-	}
-	new_line(buffer);
-	limit = 0;
-	line_count = 0;
-}*/
 
 /* 
  * dummy_int_handler()

@@ -14,7 +14,8 @@
 #include "paging.h"
 #include "terminal.h"
 #include "filesys.h"
-#include "systemcalls.h" 
+#include "systemcalls.h"
+#include "bootscreen.h" 
  
 #define PIC1			0x20		/*IO base address for master PIC*/
 #define PIC2			0xA0		/*IO base address for slave PIC */
@@ -162,10 +163,15 @@ entry (unsigned long magic, unsigned long addr)
 		tss.esp0 = 0x800000;
 		ltr(KERNEL_TSS);
 	}
-	
+	printf("booting now");
+	reset_scr();
+	boot_screen();
+	int z = 0;
+	while(z < 1000000000)
+		z++;
 
 	//clear the screen
-	reset_scr();
+	//reset_scr();
 
 	//set the IDT	
 	set_idt();
@@ -191,6 +197,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	//node* buffer = pass_buff();
 
+	reset_scr();
 	node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
 	/* Enable interrupts */

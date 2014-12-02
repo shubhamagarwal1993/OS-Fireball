@@ -1,6 +1,8 @@
 boot.o: boot.S multiboot.h x86_desc.h types.h
 wrapper.o: wrapper.S wrapper.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
+bootscreen.o: bootscreen.c terminal.h types.h keyboard.h lib.h wrapper.h \
+  rtc.h systemcalls.h paging.h buffer.h filesys.h
 buffer.o: buffer.c buffer.h lib.h types.h keyboard.h wrapper.h rtc.h \
   systemcalls.h paging.h i8259.h
 filesys.o: filesys.c filesys.h types.h systemcalls.h paging.h lib.h \
@@ -10,7 +12,7 @@ int_handler.o: int_handler.c multiboot.h types.h x86_desc.h lib.h i8259.h \
   debug.h int_handler.h wrapper.h keyboard.h rtc.h systemcalls.h paging.h
 kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
   rtc.h wrapper.h systemcalls.h paging.h int_handler.h terminal.h \
-  keyboard.h buffer.h filesys.h
+  keyboard.h buffer.h filesys.h bootscreen.h
 keyboard.o: keyboard.c keyboard.h lib.h types.h wrapper.h rtc.h \
   systemcalls.h paging.h i8259.h buffer.h terminal.h
 lib.o: lib.c lib.h types.h buffer.h keyboard.h wrapper.h rtc.h \
