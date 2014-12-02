@@ -163,15 +163,14 @@ entry (unsigned long magic, unsigned long addr)
 		tss.esp0 = 0x800000;
 		ltr(KERNEL_TSS);
 	}
-	printf("booting now");
+	
+	//bootscreen - Fireball OS----------------
 	reset_scr();
 	boot_screen();
 	int z = 0;
 	while(z < 1000000000)
 		z++;
-
-	//clear the screen
-	//reset_scr();
+	//----------------------------------------
 
 	//set the IDT	
 	set_idt();
@@ -195,16 +194,16 @@ entry (unsigned long magic, unsigned long addr)
 	//init the rtc
 	init_rtc();
 
-	//node* buffer = pass_buff();
-
+	//clear the screen
+	//reset_scr();
 	reset_scr();
 	node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
+	
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-
 	sti();
 
 	/* Execute the first program (`shell') ... */

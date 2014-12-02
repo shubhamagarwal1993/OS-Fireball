@@ -7,6 +7,9 @@
 
 #include "types.h"
 
+extern int screen_x;
+extern int screen_y;
+
  typedef struct node
  {
  	int x_coord;
