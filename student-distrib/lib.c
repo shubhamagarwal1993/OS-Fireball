@@ -8,7 +8,7 @@
 #include "terminal.h"
 #define VIDEO 0xB8000
 #define NUM_COLS 80
-#define NUM_ROWS 25
+#define NUM_ROWS 24
 #define ATTRIB 0x7
 #define ATTRIB_BLUE 0x17
 #define ATTRIB_COLOUR 0x33
@@ -28,7 +28,7 @@ void
 clear(void)
 {
     int32_t i;
-    for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
+    for(i=0; i<(NUM_ROWS)*NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }

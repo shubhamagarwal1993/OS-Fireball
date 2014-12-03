@@ -30,6 +30,7 @@ extern int32_t terminal_close(file_t* file);
 extern node* pass_buff();
 extern void terminal_switch(int new_screen, int old_screen);
 int32_t screen_assign(int index);
+extern void status_bar();
 
 extern driver_jt_t stdin_jt;
 extern driver_jt_t stdout_jt;

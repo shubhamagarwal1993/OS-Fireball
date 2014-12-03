@@ -168,8 +168,8 @@ entry (unsigned long magic, unsigned long addr)
 	reset_scr();
 	boot_screen();
 	int z = 0;
-	while(z < 1000000000)
-		z++;
+	//while(z < 1000000000)
+	//	z++;
 	//----------------------------------------
 
 	//set the IDT	
@@ -202,7 +202,7 @@ entry (unsigned long magic, unsigned long addr)
 	node* buffer = screens[0];
 	//node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
-	
+	status_bar();
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close

@@ -4,12 +4,16 @@
 #include "buffer.h"
 #include "i8259.h"
 
+#define VIDEO 0xB8000
+#define ATTRIB  0xE4
 
 volatile int enter_flag = 0;
 volatile int length = 0;
 volatile int to_print;
 node* screens[3] = {0,0,0};
 int screen_num = 0;
+
+static char* video_mem = (char *)VIDEO;
 
 node buff_1[NUM_COLS*NUM_ROWS];
 node buff_2[NUM_COLS*NUM_ROWS];
@@ -196,6 +200,7 @@ int32_t screen_assign(int index)
 		components[index].curr_limit = 0;
 		components[index].curr_x = 0;
 		components[index].curr_y = 0;
+		return 1;
 	}
 	else if(index == 1)
 	{
@@ -205,6 +210,7 @@ int32_t screen_assign(int index)
 		components[index].curr_limit = 0;
 		components[index].curr_x = 0;
 		components[index].curr_y = 0;
+		return 1;
 	}
 	else if(index == 2)
 	{
@@ -214,6 +220,18 @@ int32_t screen_assign(int index)
 		components[index].curr_limit = 0;
 		components[index].curr_x = 0;
 		components[index].curr_y = 0;
+		return 1;
 	}
 	else return -1;
+}
+
+void status_bar()
+{
+	int32_t i;
+	int32_t j = 0;
+	char* status = " terminal1 terminal2 terminal3                                                  ";
+    for(i=(NUM_ROWS-1)*NUM_COLS; i<(NUM_ROWS)*NUM_COLS; i++, j++) {
+        *(uint8_t *)(video_mem + (i << 1)) = status[j];
+        //*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
 }

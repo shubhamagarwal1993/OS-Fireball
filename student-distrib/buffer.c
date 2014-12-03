@@ -4,7 +4,7 @@
 #include "i8259.h"
 
 #define NUM_COLS 80
-#define NUM_ROWS 25
+#define NUM_ROWS 24
 int buf_x;
 int buf_y;
 static int backspace_flag;
@@ -22,7 +22,7 @@ void reset_buf(node* buf)
 	int i = 0;
 	int x = 0;
 	int y = 0;
-	for(i = 0; i < NUM_ROWS*NUM_COLS; i++)
+	for(i = 0; i < (NUM_ROWS+1)*NUM_COLS; i++)
 	{
 		buf[i].x_coord = x;
 		buf[i].y_coord = y;

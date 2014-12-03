@@ -137,6 +137,7 @@ void kbd_int_handler()
 	to_print = inb(0x60);
 	kbd_logic(to_print, buffer);
 	buffer = pass_buff();
+	status_bar();
 	if(to_print == 0x1C)
 		enter_press = 1;
 	else enter_press = 0;
