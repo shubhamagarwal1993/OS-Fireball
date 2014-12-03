@@ -10,14 +10,26 @@
 #define NUM_COLS 80
 #define NUM_ROWS 25
 
-extern node buffer[NUM_COLS*NUM_ROWS];
+typedef struct buff_attr
+ {
+ 	int curr_line;
+ 	int curr_limit;
+ 	int curr_x;
+ 	int curr_y;
+ }buff_attr;
 
+extern node buffer[NUM_COLS*NUM_ROWS];
+extern node* screens[3];
+extern int screen_num;
+
+extern void terminal_init();
 extern node* terminal_open(file_t* file, const uint8_t* filename);
 extern int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter);
 extern int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter);
 extern int32_t terminal_close(file_t* file);
-extern void test_read_write(node* buf, int key);
 extern node* pass_buff();
+extern void terminal_switch(int new_screen, int old_screen);
+int32_t screen_assign(int index);
 
 extern driver_jt_t stdin_jt;
 extern driver_jt_t stdout_jt;

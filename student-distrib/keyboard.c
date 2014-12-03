@@ -100,6 +100,7 @@ int reset_flag = 0;						//checks whether the screen/buffer needs to be cleared
 int caps_count = 0;						//checks whether the caps lock is on
 int shift = 0;							//checks whether the shift key has been pressed
 int ctrl = 0;							//checks whether the ctrl key has been pressed
+int alt = 0;							//checks whether the alt key has been pressed
 
 //flags and counters used to determine the position of character output on the screen
 int offset = 0;
@@ -135,6 +136,7 @@ void kbd_int_handler()
 	int to_print;										//disable line so we can complete this before handling some other interrupt 	
 	to_print = inb(0x60);
 	kbd_logic(to_print, buffer);
+	buffer = pass_buff();
 	if(to_print == 0x1C)
 		enter_press = 1;
 	else enter_press = 0;
@@ -181,6 +183,14 @@ void kbd_logic(int to_print, node* buffer)
 	if(to_print == 0x9D)		
 		ctrl = 0;
 
+	//alt enable - sets flag if ctrl is currently pressed.
+	if(to_print == 0x38)
+		alt = 1;
+
+	//alt disabled - clears flag if ctrl has been released.
+	if(to_print == 0xB8)		
+		alt = 0;
+
 	//ctrl + L - reset screen if ctrl + L is hit
 	if(ctrl && (to_print == 0x26))
 	{
@@ -188,6 +198,19 @@ void kbd_logic(int to_print, node* buffer)
 		limit = 0;
 		line_count = 0;
 		goto done;
+	}
+
+	if(alt && (to_print == 0x02 || to_print == 0x03 || to_print == 0x04))
+	{
+		int prev_screen_num = screen_num;
+		if(to_print == 0x03)
+			screen_num = 1;
+		else if(to_print == 0x04)
+			screen_num = 2;
+		else screen_num = 0;
+		terminal_switch(screen_num, prev_screen_num);
+		buffer = pass_buff();
+		asm volatile("jmp done_typing");
 	}
 
 	//disable typing if a command has hit the 128 character limit
@@ -305,7 +328,7 @@ void kbd_logic(int to_print, node* buffer)
 		clear_buf_line(buffer);
 		limit = 0;
 	}
-
+	asm volatile("done_typing:\n\t");
 	done:
 		return;
 }

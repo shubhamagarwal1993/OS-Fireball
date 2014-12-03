@@ -8,20 +8,23 @@
 volatile int enter_flag = 0;
 volatile int length = 0;
 volatile int to_print;
-node* curr_buff;
 node* screens[3] = {0,0,0};
 int screen_num = 0;
-int buf_x;
-node buffer[NUM_COLS*NUM_ROWS];
 
-// void init_terminal()
-// {
-// 	node buffer[NUM_COLS*NUM_ROWS];
-// 	curr_buff = buffer;
-// 	screens[screen_num] = curr_buff;
-// 	screen_num++;
-// 	//return curr_buff;
-// }
+node buff_1[NUM_COLS*NUM_ROWS];
+node buff_2[NUM_COLS*NUM_ROWS];
+node buff_3[NUM_COLS*NUM_ROWS];
+buff_attr components[3];
+
+void terminal_init()
+{
+	//screens[screen_num] = buffer;
+	if(screen_num < 2 && screen_num > -1)
+		screen_num++;
+	else screen_num = 0;
+	screen_assign(screen_num);
+	return;
+}
 
 /* 
  * terminal_open()
@@ -33,10 +36,7 @@ node buffer[NUM_COLS*NUM_ROWS];
  */
 node* terminal_open(file_t* file, const uint8_t* filename)
 {
-	curr_buff = buffer;
-	screens[screen_num] = curr_buff;
-	screen_num++;
-	return curr_buff;
+	return screens[screen_num];
 	//terminal_write(buffer, 1);
 }
 
@@ -60,7 +60,7 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 		buf[i] = '\0';
 	}
 
-	node* buffer = curr_buff;
+	node* buffer = screens[screen_num];
 	to_print = inb(0x60);
 	char* output;
 	char out[counter];
@@ -140,28 +140,6 @@ int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter)
 	printb(pass_buff());
 	return counter;
 
-	//previous code below:
-
-	//int test_count = pass_count();
-	//char* test = "lol, yiss!";
-	//if(test_count == 50) cout(test);
-	//if( (test_count % counter == 0) || (to_print == 0x1C) || (to_print == 0x0E))
-	//	printb(buf);
-	/*char* data;
-	char* output;
-	data = terminal_read(buf, 128);
-	
-	if(data[0] == '\n')
-		return -1;
-
-	int i = 0;
-	while( (i < 128) || (data[i] == '\n') )
-	{
-		output[i] = data[i];
-		i++;
-	}
-	printf("%s", output);
-	return i/2;*/
 }
 
 /* 
@@ -180,56 +158,6 @@ int32_t terminal_close(file_t* file)
 }
 
 /* 
- * test_read_write()
- *   DESCRIPTION: Custom test case that is designed to test read and write functions
- *   INPUTS: the buffer, the required counter, the integer signal received from the keyboard interrupt.
- *   OUTPUTS: number of bytes written to the screen.
- *   RETURN VALUE: int32_t
- *   SIDE EFFECTS: --
- */
-void test_read_write(node* buf, int key)
-{
-	//printf(" Hi");
-	// int test_count = pass_count();
-	// if((test_count != 127)&&(key != 0x1C))
-	// 	terminal_write(buf, test_count);
-	// //	printb(buf);
-	// else
-	// {
-	// 	if(key == 0x1C)
-	// 		enter_flag = 1;
-	// 	disable_irq(1);
-	// 	int count = 127;
-	// 	char* halwai = terminal_read(buf, 127);
-	// 	//reset_buf(buf);
-	// 	if(enter_flag)
-	// 		count = length;
-	// 	int i = 0;
-		
-	// 	while((i < 127) || (halwai[i] != '\n'))
-	// 	{
-	// 		if (i == 0)
-	// 			new_line(buf);
-	// 		setb(buf, halwai[i]);
-	// 		if (i == 79)
-	// 			new_line(buf);
-	// 		i++;
-	// 	}
-	// 	for(i = 0; i < count; i++)
-	// 	{
-	// 		if (i == 0)
-	// 			new_line(buf);
-	// 		setb(buf, halwai[i]);
-	// 		if (i == 79)
-	// 			new_line(buf);
-	// 	}
-	// 	// new_line(buf);
-	// 	printb(buf);
-	// }
-	// test_count++;
-}
-
-/* 
  * pass_buff()
  *   DESCRIPTION: Helper function. Used to provide other functions
  * 				  an access to the buffer.
@@ -240,5 +168,52 @@ void test_read_write(node* buf, int key)
  */
 node* pass_buff()
 {
-	return curr_buff;
+	return screens[screen_num];
+}
+
+void terminal_switch(int new_screen, int old_screen)
+{
+	components[old_screen].curr_line = line_count;
+	components[old_screen].curr_limit = limit;
+	components[old_screen].curr_x = buf_x;
+	components[old_screen].curr_y = buf_y;
+
+	line_count  = components[new_screen].curr_line;
+	limit  = components[new_screen].curr_limit;
+	buf_x  = components[new_screen].curr_x;
+	buf_y  = components[new_screen].curr_y;
+	clear();
+	printb(screens[new_screen]);
+}
+
+int32_t screen_assign(int index)
+{
+	if(index == 0)
+	{
+		screens[index] = buff_1;
+		reset_buf(buff_1);
+		components[index].curr_line = 0;
+		components[index].curr_limit = 0;
+		components[index].curr_x = 0;
+		components[index].curr_y = 0;
+	}
+	else if(index == 1)
+	{
+		screens[index] = buff_2;
+		reset_buf(buff_2);
+		components[index].curr_line = 0;
+		components[index].curr_limit = 0;
+		components[index].curr_x = 0;
+		components[index].curr_y = 0;
+	}
+	else if(index == 2)
+	{
+		screens[index] = buff_3;
+		reset_buf(buff_3);
+		components[index].curr_line = 0;
+		components[index].curr_limit = 0;
+		components[index].curr_x = 0;
+		components[index].curr_y = 0;
+	}
+	else return -1;
 }

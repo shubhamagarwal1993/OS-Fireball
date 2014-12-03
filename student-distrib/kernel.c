@@ -197,7 +197,10 @@ entry (unsigned long magic, unsigned long addr)
 	//clear the screen
 	//reset_scr();
 	reset_scr();
-	node* buffer = terminal_open(NULL, NULL);
+	for(z = 0; z < 3; z++)
+		terminal_init();
+	node* buffer = screens[0];
+	//node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
 	
 	/* Enable interrupts */
