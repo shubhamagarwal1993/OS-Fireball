@@ -31,6 +31,8 @@ extern node* pass_buff();
 extern void terminal_switch(int new_screen, int old_screen);
 int32_t screen_assign(int index);
 extern void status_bar();
+void switch_status();
+char* embed_time(char* status);
 
 extern driver_jt_t stdin_jt;
 extern driver_jt_t stdout_jt;

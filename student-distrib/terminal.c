@@ -175,6 +175,19 @@ node* pass_buff()
 	return screens[screen_num];
 }
 
+//----------------------------TERMINAL SWITCHING (3.5)-------------------------------
+
+/* 
+ * terminal_switch()
+ *   DESCRIPTION: When switching between terminals, saves display buffer paramets for
+ *				  previous terminal. Also updates system's display parameters according
+ *				  to the newly opened terminal.
+ *   INPUTS: screen_num for the terminal that is being closed and the terminal that is
+ *			 now being open.
+ *   OUTPUTS: -
+ *   RETURN VALUE: -
+ *   SIDE EFFECTS: -
+ */
 void terminal_switch(int new_screen, int old_screen)
 {
 	components[old_screen].curr_line = line_count;
@@ -190,6 +203,14 @@ void terminal_switch(int new_screen, int old_screen)
 	printb(screens[new_screen]);
 }
 
+/* 
+ * screen_assign()
+ *   DESCRIPTION: Depending on screen_num determines which terminal is currently running.
+ *   INPUTS: index (screen_num)
+ *   OUTPUTS: 1 on success, -1 on failure
+ *   RETURN VALUE: int32_t
+ *   SIDE EFFECTS: -
+ */
 int32_t screen_assign(int index)
 {
 	if(index == 0)
@@ -225,13 +246,79 @@ int32_t screen_assign(int index)
 	else return -1;
 }
 
+//----------------------------STATUS BAR (EXTRA CREDIT)-------------------------------
+
+/* 
+ * status_bar()
+ *   DESCRIPTION: Physically sets up the status bar using video memory
+ *   INPUTS: - 
+ *   OUTPUTS: -
+ *   RETURN VALUE: -
+ *   SIDE EFFECTS: Modifies color on the entire status bar
+ */
 void status_bar()
 {
 	int32_t i;
 	int32_t j = 0;
 	char* status = " terminal1 terminal2 terminal3                                                  ";
+	status = embed_time(status);
     for(i=(NUM_ROWS-1)*NUM_COLS; i<(NUM_ROWS)*NUM_COLS; i++, j++) {
+        *(uint8_t *)(video_mem + (i << 1) + 1) = 0x90;
         *(uint8_t *)(video_mem + (i << 1)) = status[j];
-        //*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+	switch_status();
+}
+
+/* 
+ * switch_status()
+ *   DESCRIPTION: Handles the coloring of the individual terminal keys on the status bar
+ *   INPUTS: - 
+ *   OUTPUTS: -
+ *   RETURN VALUE: -
+ *   SIDE EFFECTS: Modifies color on status bar in sync with currently open terminal
+ */
+void switch_status()
+{
+	int j = (NUM_ROWS-1)*NUM_COLS;
+	int i = 0;
+	if(screen_num == 0)
+	{
+		for(i=j; i<(NUM_ROWS-1)*NUM_COLS+11; i++, j++) 
+        	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
+	}
+
+	else if(screen_num == 1)
+	{
+		for(i=j+10; i<(NUM_ROWS-1)*NUM_COLS+21; i++, j++) 
+        	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
+	}
+	else if(screen_num == 2)
+	{
+		for(i=j+20; i<(NUM_ROWS-1)*NUM_COLS+31; i++, j++) 
+        	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
+	}
+}
+
+/* 
+ * embed_time()
+ *   DESCRIPTION: Given the status bar string, obtains and embeds system time as hh:mm format
+ * 				  at the appropriate location.
+ *   INPUTS: the status message 
+ *   OUTPUTS: the new status message with time embedded into it
+ *   RETURN VALUE: char*
+ *   SIDE EFFECTS: to avoid page fault, make sure time obtained is specifically in "hh:mm" format only.
+ *	 NOTE: Name your function get_system_time to return time in "hh:mm" format to this function
+ */
+char* embed_time(char* status)
+{
+	int i = 0;
+
+	int j = 4;
+	char* sys_time = "11:03";
+	//char* time = get_system_time();
+	for(i = strlen(status) - 2; i > strlen(status) - 7; i--, j--)
+	{
+		status[i] = sys_time[j];
+	}
+	return status;
 }
