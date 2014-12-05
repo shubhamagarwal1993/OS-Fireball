@@ -168,8 +168,8 @@ entry (unsigned long magic, unsigned long addr)
 	reset_scr();
 	boot_screen();
 	int z = 0;
-	while(z < 1000000000)
-		z++;
+	//while(z < 1000000000)
+	//	z++;
 	//----------------------------------------
 
 	//set the IDT	

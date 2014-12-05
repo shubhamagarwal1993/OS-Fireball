@@ -12,6 +12,7 @@ volatile int length = 0;
 volatile int to_print;
 node* screens[3] = {0,0,0};
 int screen_num = 0;
+int process_buf = 0;
 
 static char* video_mem = (char *)VIDEO;
 
@@ -63,13 +64,13 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 	{
 		buf[i] = '\0';
 	}
-
 	node* buffer = screens[screen_num];
 	to_print = inb(0x60);
+	
 	char* output;
 	char out[counter];
-	int temp_buf_x = buf_x;
-	int typed = line_count;
+	int cmd_start = buf_x;
+	int cmd_end = line_count;
 
 	//clear out
 	for (i = 0; i < counter; ++i)
@@ -82,26 +83,29 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 	{
 		if((length == 127)||(enter_press == 1))
 			break;
-		else typed = buf_x;
+		else cmd_end = buf_x;
 	}
 	
 	enter_press = 0;
-	int y = pass_y();
 	int index = 0;
+	
+	//determining index on screen to read from
+	//if second line
 	if(line_count >= 80)
-		index = (y-2)*80;
-	else index = (y-1)*80;
-	if(enter_flag == 1)
-		index = (y-1)*80;
+		index = (buf_y-2)*80;
+	//if first line
+	else index = (buf_y-1)*80;
+	
+	//copying the data from terminal into output
 	int j = 0;
-	for(i = index + temp_buf_x; i < index + typed; i++, j++)
+	for(i = index + cmd_start; i < index + cmd_end; i++, j++)
 	{
 		length++; 
 		out[j] = buffer[i].mo;
 		if(buffer[i+1].mo == '\n')
 		{
-			index = y - 1;
-			out[i - index - temp_buf_x] = '\n';
+			index = buf_y - 1;
+			out[i - index - cmd_start] = '\n';
 			output = out;
 			break;
 		}
@@ -109,12 +113,15 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 	}
 	output = out;
 	
+	//insert a /0 at the end of the interrupt
 	int yudodis;
 	for(yudodis = 0; yudodis <= strlen(output); yudodis++)
 	{
 		buf[yudodis] = output[yudodis];
 	}
 	buf[yudodis-1] = '\0';
+	
+	//return appropriate number
 	if(counter > 128)
 		return 128;
 	else return counter;
@@ -135,12 +142,13 @@ int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter)
 	int i;
 	char* print_this = (char*)buf;
 
+	process_buf = file->file_pos;
+
 	for(i = 0; i < strlen(print_this); i++)
 	{
-		// if(print_this[i] == '\n')
-		// 	new_line(pass_buff());
-		put_cout(print_this[i]);
+		put_cout(print_this[i], screens[process_buf]);
 	}
+	
 	printb(pass_buff());
 	return counter;
 
@@ -260,7 +268,7 @@ void status_bar()
 {
 	int32_t i;
 	int32_t j = 0;
-	char* status = " terminal1 terminal2 terminal3                                                  ";
+	char* status = " terminal1  terminal2  terminal3                                                ";
 	status = embed_time(status);
     for(i=(NUM_ROWS-1)*NUM_COLS; i<(NUM_ROWS)*NUM_COLS; i++, j++) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = 0x90;
@@ -289,12 +297,12 @@ void switch_status()
 
 	else if(screen_num == 1)
 	{
-		for(i=j+10; i<(NUM_ROWS-1)*NUM_COLS+21; i++, j++) 
+		for(i=j+11; i<(NUM_ROWS-1)*NUM_COLS+22; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 	else if(screen_num == 2)
 	{
-		for(i=j+20; i<(NUM_ROWS-1)*NUM_COLS+31; i++, j++) 
+		for(i=j+22; i<(NUM_ROWS-1)*NUM_COLS+33; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 }
@@ -312,7 +320,6 @@ void switch_status()
 char* embed_time(char* status)
 {
 	int i = 0;
-
 	int j = 4;
 	char* sys_time = "11:03";
 	//char* time = get_system_time();
@@ -320,5 +327,14 @@ char* embed_time(char* status)
 	{
 		status[i] = sys_time[j];
 	}
+	
+	char* message = "Time Elapsed";
+	i = 0;
+	j = 11;
+	for(i = strlen(status) - 8; i > strlen(status) - 20; i--, j--)
+	{
+		status[i] = message[j];
+	}
+
 	return status;
 }

@@ -9,6 +9,8 @@ void kbd_wrapper();
 
 void rtc_wrapper();
 
+void pit_handler();
+
 void syscall_handler();
 
 void jump_to_userspace(uint32_t entry_addr);

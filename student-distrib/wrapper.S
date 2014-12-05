@@ -63,7 +63,7 @@ rtc_wrapper:
 	popl %ebx
 	popl %eax
 	iret
-	
+
 jump_to_userspace:
 	
  	

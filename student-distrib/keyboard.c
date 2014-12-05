@@ -200,13 +200,13 @@ void kbd_logic(int to_print, node* buffer)
 		line_count = 0;
 		goto done;
 	}
-
-	if(alt && (to_print == 0x02 || to_print == 0x03 || to_print == 0x04))
+	
+	if(alt && (to_print == 0x3B || to_print == 0x3C || to_print == 0x3D))
 	{
 		int prev_screen_num = screen_num;
-		if(to_print == 0x03)
+		if(to_print == 0x3C)
 			screen_num = 1;
-		else if(to_print == 0x04)
+		else if(to_print == 0x3D)
 			screen_num = 2;
 		else screen_num = 0;
 		terminal_switch(screen_num, prev_screen_num);

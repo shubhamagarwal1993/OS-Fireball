@@ -20,25 +20,6 @@ pcb_t* curr_process;
 uint32_t retval;
 uint32_t num_processes = 0;
 
-// struct f_ops
-// {
-// 	uint32_t (*open)(void);
-// 	uint32_t (*read_file)(uint8_t* buf, uint32_t length, const uint8_t* fname);
-// 	uint32_t (*read_dir)(uint8_t* buf, uint32_t length);
-// 	uint32_t (*read_rtc)(char* buf, int count);
-// 	uint32_t (*read_terminal)(uint8_t* buf, int counter);
-// 	uint32_t (*write_file)(void);
-// 	uint32_t (*write_dir)(void);
-// 	uint32_t (*write_rtc)(char* buf, int32_t frequency);
-// 	uint32_t (*write_terminal)(uint8_t* buf, uint32_t length, const uint8_t* fname);
-// };
-
-// f_ops rtc_ops = {rtc_open, NULL, NULL, rtc_read, NULL, NULL, NULL, rtc_write, NULL};
-// f_ops file_ops = {file_open, file_read, NULL, NULL, NULL, file_write, NULL, NULL, NULL};
-// f_ops dir_ops = {dir_open, NULL, dir_read, NULL, NULL, NULL, dir_write, NULL, NULL};
-// f_ops
-
-
 driver_jt_t file_jt = {file_open, file_read, file_write, file_close};
 driver_jt_t directory_jt = {dir_open, dir_read, dir_write, dir_close};
 driver_jt_t rtc_jt = {rtc_open, rtc_read, rtc_write, rtc_close};
@@ -54,7 +35,7 @@ int32_t execute(const uint8_t* command)
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
 	get_arg((char *)command, (int)strlen(cmd));
-
+	//cout("%s", cmd);
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
 	//int i;
@@ -83,13 +64,6 @@ int32_t execute(const uint8_t* command)
 		asm volatile("jmp ret_halt");	
 	}
 
-
-/*
-	curr_process = (pcb_t *)(0x00800000 - (0x2000)*process_id);
-	curr_process->k_sp = curr_process->k_bp = parent_pcb - 4;
-	curr_process->parent_process = parent_pcb;
-	curr_process->process_id = process_id;
-*/
 
 	/* Executable check */
 	uint8_t elf_check[4];
@@ -189,18 +163,10 @@ int32_t execute(const uint8_t* command)
 	return retval;
 }
 
-// //making a file operations jump table
-// uint32_t stdin_jmp_table[4] = {0, (uint32_t)terminal_read, 0, 0};													//
-// uint32_t stdout_jmp_table[4] = {0, 0, (uint32_t)terminal_write, 0};															//
-// uint32_t rtc_jmp_table[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)rtc_write, (uint32_t)rtc_close};			//
-// uint32_t file_jmp_table[4] = {(uint32_t)file_open, (uint32_t)file_read, (uint32_t)file_write, (uint32_t)file_close};	//
-// uint32_t dir_jmp_table[4] = {(uint32_t)dir_open, (uint32_t)dir_read, (uint32_t)dir_write, (uint32_t)dir_close};			//
-
 int32_t halt(uint8_t status)
 {
 	uint32_t flags;
 	cli_and_save(flags);
-	//pcb_t* parent_process = (pcb_t *)(0x00800000 - (0x2000)*(curr_process->parent_parent_process_id));
 	pcb_t* parent_process = curr_process->parent_process;
 
 	if(curr_process == curr_process->parent_process)
@@ -233,22 +199,16 @@ int32_t halt(uint8_t status)
 		//clear parent process' child flag
 		parent_process->child_flag = 0;
 
-
-		//load the page directory of the parent
 		tss.esp0 = curr_process->esp0;
 		tss.ss0 = curr_process->ss0;
 
-		//set kernel stack pointer and kernel base pointer
-		//back to the parent's base pointer and stack pointer
-		//respectively.
 		uint32_t p_sp = curr_process->/*parent_process->*/k_sp;
 		uint32_t p_bp = curr_process->/*parent_process->*/k_bp;
 
 		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
 		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
 		set_PDBR(curr_process->parent_process->PD_ptr);
-		//return this status back to parent process
-
+		
 		curr_process = curr_process->parent_process;
 		//go back to parent's instruction pointer
 		asm volatile("jmp ret_halt");	
@@ -327,53 +287,6 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 
 	restore_flags(flags);
 	return file->file_op->read(file, buf, nbytes);
-
-	// uint8_t fname;
-	// uint32_t temp_inode_no = curr_process->file_fds[fd].inode_ptr;
-	// printf("inode num = %d\n", temp_inode_no);
-
-
-	// for(i = 0; i < boot_block->num_dir_entries; i++)
-	// {
-	// 	if(boot_block.num_inodes == temp_inode_no)
-	// 	{
-	// 		fname = boot_block.dir_entries[i].file_name;
-	// 	}
-	// }	
-
-	// // asm volatile("pushl %0"
-	// // 			 "pushl %1"
-	// // 			 "pushl %2"
-	// // 			 "call *%4":"g"(&fname), "g"(nbytes), "g"(buf), "g"(curr_process->file_fds[fd].file_op[1]));
-
-// ---------------------TERMINAL READ ONLY------------------------------
-	// // TBI - pass other arguments inside buf
-	//  int32_t num_bytes_read;
-	//  num_bytes_read = terminal_read(buf, nbytes);
-//---------------------------------------------------------------------
-	// pcb_t* cur_PCB = curr_process;
-	// int32_t num_bytes_read;
-
-	// uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
-	// fptr = cur_PCB->file_fds[fd].file_op[1];
-
-
-	// num_bytes_read = fptr(buf, nbytes);
-
-	// asm volatile("pushl %%esi\n\t"	
-	// 	 "call *fptr\n\t"
-	// 	: 
-	// 	: "r" (fptr), "r" (buf), "r" (nbytes) 
-	// 	: 
-	// 	);
-
-	// 	/* Store the return value from the read function. */
-	// asm volatile("movl %%eax, %0":"=g"(num_bytes_read));
-	// asm volatile("addl $16, %esp    ;");
-	
-	// /* Update the current file's fileposition. */
-	
-	// return num_bytes_read;
 }
 
 // ------------------------------- WRITE -------------------------------------------------------------
@@ -393,26 +306,6 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 
 	restore_flags(flags);
 	return file->file_op->write(file, buf, nbytes);
-
-	// if((fd < 0)||(fd > 7)||buf == NULL)
-	// {
-	// 	return -1;
-	// } 	
-	// //int32_t num_bytes_written;
-	// 
-	//terminal_write((void*)buf, nbytes);
-	// return 0/*num_bytes_written*/;
-
-
-	// pcb_t* cur_PCB = curr_process;
-	// int32_t num_bytes_written;
-
-	// uint32_t (*fptr)(char* buf, int32_t frequency) = NULL;
-	// fptr = cur_PCB->file_fds[fd].file_op[2];
-
-	// num_bytes_written = fptr(buf, nbytes);
-
-	// return num_bytes_written;
 }
 
 // ------------------------------- CLOSE ----------------------------------------------------------------
@@ -446,9 +339,6 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	length = strlen(args);
 	memset(buf, 0, nbytes);
 	memcpy(buf, args, length);
-	//buf = args;
-	//cout("GETARGS!\n");
-	//cout("%s", args);
 	restore_flags(flags);
 	return 0;
 }
@@ -469,32 +359,6 @@ vidmap(uint8_t** screen_start)
 	*screen_start = user_vidmap();
 
 	return 0;
-
-
-	
-// 	uint32_t flags;
-// 	cli_and_save(flags);
-	
-// 	if((screen_start == NULL)||((uint32_t) screen_start < _128MB)||((uint32_t) screen_start > ( _128MB + _4MB)))
-// 	{
-// 		restore_flags(flags);
-// 		return -1;
-// 	}
-
-// 	// set the value to the vga virtual memory
-// 	//VGA_MEM_VIR = _4MB*33 + 0xB8000
-// 	//VGA_MEM_START_ADDR(terminal)	(terminal * (TERM_BYTES + NUM_COLS * 2))
-// //	*screen_start = (uint8_t*)(_4MB*33 +  );
-
-// //	*screen_start = (uint8_t*)(SET_PDE_4KB_PT(_4MB*33, 0xB8000));
-
-// 	//VGA_MEM_START_ADDR(terminal)	terminal*(TERM_BYTES + NUM_COLS*2)
-// 	//TERM_BYTES = NUM_COLS*NUM_ROWS
-// 	  *screen_start = 0x01000;
-
-// 	restore_flags(flags);
-// 	return 0;
-
 }
 
 int32_t set_handler(int32_t signum, void* handler_address)
@@ -517,6 +381,7 @@ void stdout(uint32_t fd)
 {
 	curr_process->file_fds[fd].file_op = &stdout_jt;		
 	curr_process->file_fds[fd].flags = 1;
+	curr_process->file_fds[fd].file_pos = screen_num;
 	//cout("stdout comp\n");
 }
 
@@ -566,7 +431,6 @@ void get_arg(char* input, int nbytes)
 
 		int j = 0;
 		int arg_length = 0;
-		//int len = strlen(input);
 		for(j = index + 1; j < nbytes; j++)
 		{
 			args[j - index - 1] = input[j];
@@ -574,4 +438,3 @@ void get_arg(char* input, int nbytes)
 		}
 		args[arg_length] = '\0';
 }
-

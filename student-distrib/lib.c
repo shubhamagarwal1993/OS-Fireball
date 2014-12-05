@@ -648,6 +648,7 @@ cout(int8_t *format, ...)
 
 	/* Pointer to the format string */
 	int8_t* buf = format;
+	node* buffer = screens[process_buf];
 
 	/* Stack pointer for the other parameters */
 	int32_t* esp = (void *)&format;
@@ -665,7 +666,7 @@ format_char_switch:
 					switch(*buf) {
 						/* Print a literal '%' character */
 						case '%':
-							put_cout('%');
+							put_cout('%', buffer);
 							break;
 
 						/* Use alternate formatting */
@@ -727,7 +728,7 @@ format_char_switch:
 
 						/* Print a single character */
 						case 'c':
-							put_cout( (uint8_t) *((int32_t *)esp) );
+							put_cout( (uint8_t) *((int32_t *)esp), buffer );
 							esp++;
 							break;
 
@@ -745,7 +746,7 @@ format_char_switch:
 				break;
 
 			default:
-				put_cout(*buf);
+				put_cout(*buf, buffer);
 				break;
 		}
 		buf++;
@@ -766,9 +767,10 @@ format_char_switch:
 int32_t
 puts_cout(int8_t* s)
 {
+	node* buffer = screens[process_buf];
 	register int32_t index = 0;
 	while(s[index] != '\0') {
-		put_cout(s[index]);
+		put_cout(s[index], buffer);
 		index++;
 	}
 
@@ -783,9 +785,9 @@ puts_cout(int8_t* s)
 */
 
 void
-put_cout(uint8_t c)
+put_cout(uint8_t c, node* buffer)
 {
-    node* buffer = pass_buff();
+    //node* buffer = pass_buff();
     if(c == '\n' || c == '\r') {
         buffer[NUM_COLS*buf_y + buf_x].mo = '\n';
         buf_x = 0;
