@@ -21,6 +21,12 @@ static PTE_t PTE_default;
 
 static PDE_t* cur_PD = NULL;
 
+/*
+ * void init_paging()
+ * 	 Description: Initializes page directories, tables and control registers
+ *   Inputs: none
+ *   Return Value: none
+ */
 void init_paging()
 {
 	// Set up program page (physical) address array
@@ -51,7 +57,7 @@ void init_paging()
 
 /*
  * void init_PD()
- * 	Description: Sets all entries in the page directory
+ * 	 Description: Sets all entries in the page directory
  *   Inputs: none
  *   Return Value: none
  */
@@ -115,7 +121,7 @@ void init_PD()
 
 /*
  * void init_VIDEO_PT()
- * 	Description: Sets all entries in the video page tables
+ * 	 Description: Sets up video memory mapping for kernel
  *   Inputs: none
  *   Return Value: none
  */
@@ -143,7 +149,7 @@ void init_VIDEO_PT()
 		}
 	}
 
-	// Set up the video PTE
+	// Set up the kernel video PTE
 	int offset = get_PTE_offset(VIDEO_MEM);
 
 	PTE_t PTE_video;
@@ -153,21 +159,45 @@ void init_VIDEO_PT()
 	PT[0][offset] = PTE_video;
 }
 
+/*
+ * uint32_t get_PDE_offset(uint32_t addr)
+ * 	 Description: Finds the PDE which a virtual address belongs to
+ *   Inputs: addr - A virtual address
+ *   Return Value: The index of the PDE for this address
+ */
 uint32_t get_PDE_offset(uint32_t addr)
 {
 	return (addr & 0xFFC00000) >> 22;
 }
 
+/*
+ * uint32_t get_PTE_offset(uint32_t addr)
+ * 	 Description: Finds the PTE which a virtual address belongs to
+ *   Inputs: addr - A virtual address
+ *   Return Value: The index of the PTE for this address
+ */
 uint32_t get_PTE_offset(uint32_t addr)
 {
 	return (addr & 0x003FF000) >> 12;
 }
 
+/*
+ * uint32_t get_Page_offset(uint32_t addr)
+ * 	 Description: Finds the offset of an address within its 4KB page
+ *   Inputs: addr - A virtual address
+ *   Return Value: The offset of the address
+ */
 uint32_t get_Page_offset(uint32_t addr)
 {
 	return (addr & 0x00000FFF);
 }
 
+/*
+ * uint32_t get_Page_offset(uint32_t addr)
+ * 	 Description: Finds the offset of an address within its 4KB page
+ *   Inputs: addr - A virtual address
+ *   Return Value: The offset of the address
+ */
 // Returns parent process PD or -1 on fail
 PDE_t* task_mem_init(uint32_t PID)
 {

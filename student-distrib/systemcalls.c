@@ -18,7 +18,6 @@ uint32_t k_bp = 0;
 int process_id = 0;
 pcb_t* curr_process;
 uint32_t retval;
-uint32_t num_processes = 0;
 
 driver_jt_t file_jt = {file_open, file_read, file_write, file_close};
 driver_jt_t directory_jt = {dir_open, dir_read, dir_write, dir_close};
@@ -39,31 +38,26 @@ int32_t execute(const uint8_t* command)
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
 	//int i;
-	uint8_t temp = open_processes;
+	//uint8_t temp = open_processes;
 	int i = 0;
-	for(i = 1; i <= 8; i++)
+	for(i = 0; i < 7; i++)
 	{
-		temp = temp & MASK;
-		if(temp == 0)
+		if((process_mask & open_processes) == 0)
 		{
-			process_mask = process_mask >> (i-1);
 			open_processes |= process_mask;
-			process_id = i - 1;
-
+			process_id = i;
 			break;
 		}
-			
-		temp = temp << 1;
+		else
+			process_mask >>= 1;
 	}
 
-	if(num_processes + 1 > 2)
+	if(i == 7)
 	{
-		cout("PROCESS LIMIT EXCEEDED. NOT ALLOWED TO EXECUTE\n");
-		//num_processes--;
-		sti();
-		asm volatile("jmp ret_halt");	
+		restore_flags(flags);
+		printf("Too many processes!\n");
+		return 1;
 	}
-
 
 	/* Executable check */
 	uint8_t elf_check[4];
@@ -106,7 +100,8 @@ int32_t execute(const uint8_t* command)
 	if(PD_ptr == NULL)
 	{
 		restore_flags(flags);
-		return -1;
+		printf("Too many processes!\n");
+		return 1;
 	}
 
 	if(-1 == program_load(fname, PGRM_IMG))
@@ -154,7 +149,7 @@ int32_t execute(const uint8_t* command)
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
-	num_processes++;
+	
 	jump_to_userspace(entry_addr);
 	
 
@@ -173,28 +168,20 @@ int32_t halt(uint8_t status)
 	{
 		// We need to actually handle this case
 		printf("YOU CAN CHECK OUT, BUT YOU CAN NEVER LEAVE...\n");
-		while(1);
+		while(1); 
 		uint8_t fexec[33] = "shell";
-		num_processes = 0;
 		curr_process->process_id = 0;
 		execute(fexec);
 		sti();	
 		return -1;
-		
 	}
 	
 	else
 	{
 		retval = (uint32_t)status;
+
 		//modify open_processes to indicate that current process is not running anymore
-		int i = 0;
-		uint8_t process_mask = MASK;
-		for(i = 0; i < (curr_process->process_id); i++)
-		{
-			process_mask = process_mask >> 1;
-		}
-		open_processes = open_processes ^ process_mask;
-		num_processes--;
+		open_processes ^= (MASK >> curr_process->process_id);
 
 		//clear parent process' child flag
 		parent_process->child_flag = 0;
@@ -202,8 +189,8 @@ int32_t halt(uint8_t status)
 		tss.esp0 = curr_process->esp0;
 		tss.ss0 = curr_process->ss0;
 
-		uint32_t p_sp = curr_process->/*parent_process->*/k_sp;
-		uint32_t p_bp = curr_process->/*parent_process->*/k_bp;
+		uint32_t p_sp = curr_process->k_sp;
+		uint32_t p_bp = curr_process->k_bp;
 
 		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
 		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
@@ -334,11 +321,11 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	uint32_t flags;
 	cli_and_save(flags);	
 
-	//get_arg( (char*)buf, nbytes );
 	uint32_t length;
 	length = strlen(args);
 	memset(buf, 0, nbytes);
 	memcpy(buf, args, length);
+
 	restore_flags(flags);
 	return 0;
 }
@@ -375,8 +362,9 @@ void stdin(uint32_t fd)
 {
 	curr_process->file_fds[fd].file_op = &stdin_jt;
 	curr_process->file_fds[fd].flags = 1;
-	//cout("just read terminal\n");
+
 }
+
 void stdout(uint32_t fd)
 {
 	curr_process->file_fds[fd].file_op = &stdout_jt;		
@@ -431,6 +419,7 @@ void get_arg(char* input, int nbytes)
 
 		int j = 0;
 		int arg_length = 0;
+
 		for(j = index + 1; j < nbytes; j++)
 		{
 			args[j - index - 1] = input[j];
