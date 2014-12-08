@@ -283,3 +283,8 @@ void test_paging()
 	// uint8_t* c = (uint8_t*) 0x000B8000;
 	// printf("\n%x\n", *c);
 }
+
+PDE_t* get_curr_PD()
+{
+	return cur_PD;
+}

@@ -20,12 +20,22 @@ node buff_1[NUM_COLS*NUM_ROWS];
 node buff_2[NUM_COLS*NUM_ROWS];
 node buff_3[NUM_COLS*NUM_ROWS];
 buff_attr components[3];
+char* status = " terminal1  terminal2  terminal3                                                ";
+char sys_time[5] = {0x30, 0x30, 0x3A, 0x30, 0x30};
 
 void terminal_init()
 {
 	//screens[screen_num] = buffer;
 	if(screen_num < 2 && screen_num > -1)
+	{
+		/* Execute the first program (`shell') ... */
+		// if(screen_num > 0)
+		// {
+		// 	uint8_t fname[33] = "shell";
+		// 	execute(fname);
+		// }
 		screen_num++;
+	}
 	else screen_num = 0;
 	screen_assign(screen_num);
 	return;
@@ -207,8 +217,10 @@ void terminal_switch(int new_screen, int old_screen)
 	limit  = components[new_screen].curr_limit;
 	buf_x  = components[new_screen].curr_x;
 	buf_y  = components[new_screen].curr_y;
+	//context_switch(new_screen);
 	clear();
 	printb(screens[new_screen]);
+	screen_num = new_screen;
 }
 
 /* 
@@ -268,7 +280,7 @@ void status_bar()
 {
 	int32_t i;
 	int32_t j = 0;
-	char* status = " terminal1  terminal2  terminal3                                                ";
+	
 	status = embed_time(status);
     for(i=(NUM_ROWS-1)*NUM_COLS; i<(NUM_ROWS)*NUM_COLS; i++, j++) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = 0x90;
@@ -321,8 +333,8 @@ char* embed_time(char* status)
 {
 	int i = 0;
 	int j = 4;
-	char* sys_time = "11:03";
-	//char* time = get_system_time();
+	//char* sys_time = "11:03";
+	get_system_time();
 	for(i = strlen(status) - 2; i > strlen(status) - 7; i--, j--)
 	{
 		status[i] = sys_time[j];
@@ -337,4 +349,55 @@ char* embed_time(char* status)
 	}
 
 	return status;
+}
+
+void get_system_time()
+{
+	int sec1_flag = 0;
+	int sec2_flag = 0;
+	int min1_flag = 0;
+
+	int i;
+
+	sys_time[4] = sys_time[4]+1;
+	if(sys_time[4] > 0x39)
+	{
+		sys_time[4] = 0x30;
+		sec1_flag = 1;
+	}	
+
+	if(sec1_flag == 1)
+	{
+		sys_time[3] = sys_time[3]+1;
+		if(sys_time[3] > 0x35)
+		{
+			sys_time[3] = 0x30;
+			sec2_flag = 1;
+		}
+		sec1_flag = 0;
+	}
+
+	if(sec2_flag == 1)
+	{
+		sys_time[1] = sys_time[1]+1;
+		if(sys_time[1] > 0x39)
+		{
+			sys_time[1] = 0x30;
+			min1_flag = 1;
+		}	
+		sec2_flag = 0;
+	}
+
+	if(min1_flag == 1)
+	{
+		sys_time[0] = sys_time[0] + 1;
+		if (sys_time[0] > 0x35)
+		{
+			sys_time[0] = 0x30;
+			sys_time[1] = 0x30;
+			sys_time[3] = 0x30;
+			sys_time[4] = 0x30;	
+		}
+		min1_flag = 0;
+	}	
 }

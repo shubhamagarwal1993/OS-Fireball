@@ -11,24 +11,18 @@
 #define NUM_ROWS 25
 
 typedef struct buff_attr
- {
+{
  	//display attributes
  	int curr_line;
  	int curr_limit;
  	int curr_x;
  	int curr_y;
-
- 	//functioning attributes
- 	int ebp;
- 	int esp;
- 	int tss_esp0;
- 	int tss_ss0;
- 	int cr3;
- }buff_attr;
+}buff_attr;
 
 //extern node buffer[NUM_COLS*NUM_ROWS];
 extern node* screens[3];
 extern int screen_num;
+extern char* status;
 int process_buf;
 
 //base functions (3.1 - 3.4)
@@ -49,6 +43,7 @@ int32_t screen_assign(int index);
 extern void status_bar();
 void switch_status();
 char* embed_time(char* status);
+void get_system_time();
 
 extern driver_jt_t stdin_jt;
 extern driver_jt_t stdout_jt;

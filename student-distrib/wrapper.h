@@ -9,13 +9,13 @@ void kbd_wrapper();
 
 void rtc_wrapper();
 
-void pit_handler();
+void pit_wrapper();
 
 void syscall_handler();
 
 void jump_to_userspace(uint32_t entry_addr);
 
-void jump_to_userspace_again(uint32_t entry_addr);
+void switch_linkage(uint32_t ss0, uint32_t esp0);
 
 #endif /* ASM */
 

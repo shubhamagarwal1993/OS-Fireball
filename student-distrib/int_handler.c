@@ -68,8 +68,10 @@ void set_interrupt()
 		idt_entry.reserved3 = 0;
 		idt[33] = idt_entry; 
 		idt[40] = idt_entry; 
+		idt[32] = idt_entry;
 		SET_IDT_ENTRY(idt[40], &rtc_wrapper);
 		SET_IDT_ENTRY(idt[33], &kbd_wrapper);		
+		SET_IDT_ENTRY(idt[32], &pit_wrapper);		
 }
 
 
@@ -190,7 +192,8 @@ void stack_segment_fault()
 void general_protection()
 {
 	disable_irq(1);
-	clear_blue();
+	//clear_blue();
+	//error_screen();
 	printf("General Protection");
 	while(1){}
 }
@@ -198,7 +201,9 @@ void general_protection()
 void page_fault()
 {
 	disable_irq(1);
+	disable_irq(0);
 //	clear_blue();
+	//error_screen();
 	printf("Page Fault!");
 	while(1){}
 }
@@ -234,3 +239,4 @@ void floating_point_exception()
 	printf("Floating Point Exception");
 	while(1){}
 }
+

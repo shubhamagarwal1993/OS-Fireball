@@ -8,7 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 
-
+#include "pit.h"
 #include "rtc.h"
 #include "int_handler.h"
 #include "paging.h"
@@ -166,10 +166,11 @@ entry (unsigned long magic, unsigned long addr)
 	
 	//bootscreen - Fireball OS----------------
 	reset_scr();
-	boot_screen();
+	//boot_screen();
+	//error_screen();
 	int z = 0;
-	while(z < 1000000000)
-		z++;
+	//while(z < 1000000000)
+	//	z++;
 	//----------------------------------------
 
 	//set the IDT	
@@ -194,11 +195,15 @@ entry (unsigned long magic, unsigned long addr)
 	//init the rtc
 	init_rtc();
 
+	//init the pit
+	init_pit(0, 100);
 	//clear the screen
 	//reset_scr();
 	reset_scr();
 	for(z = 0; z < 3; z++)
+	{
 		terminal_init();
+	}
 	node* buffer = screens[0];
 	//node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
@@ -208,7 +213,6 @@ entry (unsigned long magic, unsigned long addr)
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
 	sti();
-
 	/* Execute the first program (`shell') ... */
 	uint8_t fname[33] = "shell";
 	execute(fname);

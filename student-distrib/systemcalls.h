@@ -10,6 +10,20 @@
 #define _8KB	0x2000
 #define MASK	0x80
 
+typedef struct process_attr
+{
+ 	//functioning attributes
+ 	int active;
+ 	int p_id;
+ 	int ebp;
+ 	int esp;
+ 	int tss_esp0;
+ 	int tss_ss0;
+ 	PDE_t* cr3;
+ 	int process_screen;
+ 	int has_child;
+}process_attr;
+
 int32_t halt(uint8_t status);
 int32_t execute(const uint8_t* command);
 int32_t read(int32_t fd, void* buf, int32_t nbytes);
@@ -28,6 +42,9 @@ void get_arg(char* input, int nbytes);
 int32_t empty(void);
 void stdin(uint32_t fd);
 void stdout(uint32_t fd);
+
+extern void scheduling();
+extern void context_switch(int new_pid);
 
 /***********************************************************************/
 /*	PROCESS CONTROL BLOCK	*/

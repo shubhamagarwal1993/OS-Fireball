@@ -101,6 +101,8 @@ int caps_count = 0;						//checks whether the caps lock is on
 int shift = 0;							//checks whether the shift key has been pressed
 int ctrl = 0;							//checks whether the ctrl key has been pressed
 int alt = 0;							//checks whether the alt key has been pressed
+int term2 = 1;
+int term3 = 1;
 
 //flags and counters used to determine the position of character output on the screen
 int offset = 0;
@@ -200,16 +202,44 @@ void kbd_logic(int to_print, node* buffer)
 		line_count = 0;
 		goto done;
 	}
+
+	if(alt && to_print == 0x3E)
+		context_switch(1);
 	
 	if(alt && (to_print == 0x3B || to_print == 0x3C || to_print == 0x3D))
 	{
 		int prev_screen_num = screen_num;
 		if(to_print == 0x3C)
+		{
 			screen_num = 1;
+			send_eoi(1);
+			terminal_switch(screen_num, prev_screen_num);
+			if(term2)
+			{
+				term2 = 0;
+				uint8_t fname[33] = "shell";
+				execute(fname);
+			}
+		}
 		else if(to_print == 0x3D)
+		{
 			screen_num = 2;
-		else screen_num = 0;
-		terminal_switch(screen_num, prev_screen_num);
+			send_eoi(1);
+			terminal_switch(screen_num, prev_screen_num);
+			if(term3)
+			{
+				term3 = 0;
+				uint8_t fname[33] = "shell";
+				execute(fname);
+			}
+		}
+		else
+		{
+			screen_num = 0;
+			send_eoi(1);
+			terminal_switch(screen_num, prev_screen_num);
+		}
+		//terminal_switch(screen_num, prev_screen_num);
 		buffer = pass_buff();
 		asm volatile("jmp done_typing");
 	}

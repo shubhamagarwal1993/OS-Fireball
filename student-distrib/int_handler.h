@@ -56,4 +56,6 @@ void floating_point_exception();
 
 void set_syscall_exception();
 
+extern void error_screen();
+
 #endif

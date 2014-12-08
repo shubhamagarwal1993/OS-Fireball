@@ -3,7 +3,7 @@ kernel_ds:
 	.long 0x0018
 #include "wrapper.h"
 .text
-.globl kbd_wrapper, rtc_wrapper, jump_to_userspace, jump_to_userspace_again, syscall_handler, jump_table, ret_halt
+.globl kbd_wrapper, rtc_wrapper, pit_wrapper, jump_to_userspace, context_switch, syscall_handler, jump_table, ret_halt
 kbd_wrapper:
 	pushl %eax
 	pushl %ebx
@@ -64,6 +64,34 @@ rtc_wrapper:
 	popl %eax
 	iret
 
+pit_wrapper:
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+	pushl %esp
+	pushl %ebp
+	pushl %esi
+	pushl %edi
+	pushw %ds
+	pushw %es
+	pushw %fs
+	pushw %gs
+	call pit_int_handler
+	popw %gs
+	popw %fs
+	popw %es
+	popw %ds
+	popl %edi
+	popl %esi
+	popl %ebp
+	popl %esp
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
+	iret
+
 jump_to_userspace:
 	
  	
@@ -84,15 +112,14 @@ jump_to_userspace:
     sti
     iret
 
-jump_to_userspace_again:
+switch_linkage:
 	
  	cli
-    popl %ebx
+    movl 4(%esp), %eax	# ss0
+    movl 8(%esp), %ebx	# esp0
     mov $0x2B, %ax
     mov %ax, %ds	
                    		
-    movl %esp, %eax
-    
 	pushl $0x2B
     pushl $0x083FFFFC		
     pushf
@@ -105,6 +132,7 @@ jump_to_userspace_again:
     iret	
 
 syscall_handler:
+	sti
 	pushl %esi
 	pushl %edi
 	pushl %edx
