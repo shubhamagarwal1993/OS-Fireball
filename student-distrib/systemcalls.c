@@ -37,19 +37,18 @@ driver_jt_t stdout_jt = {NULL, NULL, terminal_write, NULL};
 int32_t execute(const uint8_t* command)
 {
 
-	// uint32_t flags;
-	// cli_and_save(flags);
 	pcb_t* previous_pcb = curr_process;
 
 
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
 	get_arg((char *)command, (int)strlen(cmd));
-	//cout("%s", cmd);
+	
 	/*	Looking for processes	*/
 	uint8_t process_mask = MASK;
-	//int i;
-	//uint8_t temp = open_processes;
+
+	// Calculating the process mask, which keeps track of open processes. Here we search for a 0 in the mask
+	// and set it to 1, giving the index in the bitmap to process_id
 	int i = 0;
 	for(i = 0; i < 7; i++)
 	{
@@ -70,6 +69,8 @@ int32_t execute(const uint8_t* command)
 	// 	sti();
 	// 	asm volatile("jmp ret_halt");	
 	// }
+
+	// Check
 	if(i == 7)
 	{
 
@@ -83,19 +84,19 @@ int32_t execute(const uint8_t* command)
 	dentry_t dentry_temp;
 	if(-1 == read_dentry_by_name(fname, &dentry_temp))
 	{
-		//restore_flags(flags);
+		 
 		return -1;
 	}
 
 	if(-1 == read_data(dentry_temp.inode_num, 0, elf_check, 4))
 	{
-		//restore_flags(flags);
+		 
 		return -1;
 	}
 
 	if(!(elf_check[0] == 0x7f && elf_check[1] == 0x45 && elf_check[2] == 0x4c && elf_check[3] == 0x46))
 	{
-		//restore_flags(flags);
+		 
 		return -1;
 	}
 
@@ -104,7 +105,7 @@ int32_t execute(const uint8_t* command)
 
 	if(-1 == read_data(dentry_temp.inode_num, 24, buf_temp, 4))
 	{
-		//restore_flags(flags);
+		 
 		return -1;
 	}
 	int k = 0;
@@ -117,14 +118,15 @@ int32_t execute(const uint8_t* command)
 	PDE_t* PD_ptr = task_mem_init(process_id);
 	if(PD_ptr == NULL)
 	{
-		//restore_flags(flags);
+		 
 		printf("Too many processes!\n");
 		return 1;
 	}
 
+	// Load program image into memory
 	if(-1 == program_load(fname, PGRM_IMG))
 	{
-		//restore_flags(flags);	
+		 	
 		return -1;
 	}
 
@@ -137,7 +139,7 @@ int32_t execute(const uint8_t* command)
 	curr_process->k_bp = k_bp;
 	curr_process->k_sp = k_bp;
 	
-	//if(open_processes == MASK)
+	// If initial shell, case should be handeled by making parent process the same shell
 	if(initial_shell)
 	{
 		curr_process->parent_process = curr_process;
@@ -150,6 +152,7 @@ int32_t execute(const uint8_t* command)
 		curr_process->parent_process->child_flag = 1;
 	}
 	
+	// Initialize file descriptors
 	for(i = 0; i < 8; i++)
 	{
 		curr_process->file_fds[i].file_op = NULL;
@@ -164,20 +167,12 @@ int32_t execute(const uint8_t* command)
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
-	// uint32_t ksp_temp;
-	// uint32_t kbp_temp;
-	// asm volatile("movl %%esp, %0":"=g"(ksp_temp));
-	// asm volatile("movl %%ebp, %0":"=g"(kbp_temp));
-	// curr_process->k_sp = ksp_temp;
-	// curr_process->k_bp = kbp_temp;
 
-	//context_switch(curr_process->process_id);
-	// curr_process->esp0 = tss.esp0;
-	// curr_process->ss0 = tss.ss0;
 	
 	task_queue[next_available] = process_id;
 	next_available = (next_available + 1) % 7;
 	
+	// Setting TSS
 	tss.esp0 = curr_process->k_sp; 		// This is good code
 	tss.ss0 = KERNEL_DS;
 
@@ -187,11 +182,12 @@ int32_t execute(const uint8_t* command)
 		asm volatile("movl %%ebp, %0":"=g"(previous_pcb->k_bp));
 	}
 
-	// Run the scheduled process instead?
+	// Jump to program and being executions
 	jump_to_userspace(entry_addr);
 
+	// Halt jumps here for finishing execute
 	asm volatile("ret_halt:\n\t");				
-	//restore_flags(flags);
+	 
 	return retval;
 }
 
@@ -218,7 +214,7 @@ int32_t halt(uint8_t status)
 	
 	else
 	{
-		/*
+		// saving return value
 		retval = (uint32_t)status;
 
 		//modify open_processes to indicate that current process is not running anymore
@@ -228,39 +224,11 @@ int32_t halt(uint8_t status)
 		//clear parent process' child flag
 		parent_process->child_flag = 0;
 
-		tss.esp0 = curr_process->esp0;
-		tss.ss0 = curr_process->ss0;
-
-		uint32_t p_sp = curr_process->k_sp;
-		uint32_t p_bp = curr_process->k_bp;
-
-		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
-		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
-		set_PDBR(curr_process->parent_process->PD_ptr);
-		
-		task_queue[next_task] = -1;
-		next_task = (next_task + 1) % 7;
-		context_switch(task_queue[next_task]);
-		
-		curr_process = curr_process->parent_process;
-		//go back to parent's instruction pointer
-		asm volatile("jmp ret_halt");
-*/
-
-		// ------------------------------------------------------------- //
-
-		retval = (uint32_t)status;
-
-		//modify open_processes to indicate that current process is not running anymore
-
-		open_processes ^= (MASK >> curr_process->process_id);
-
-		//clear parent process' child flag
-		parent_process->child_flag = 0;
-
+		// restore TSS
 		tss.esp0 = parent_process->k_sp;
 		//tss.ss0 = curr_process->ss0;
 
+		//restore paging
 		set_PDBR(parent_process->PD_ptr);
 
 		uint32_t p_sp = parent_process->k_sp;
@@ -280,7 +248,7 @@ int32_t halt(uint8_t status)
 		asm volatile("jmp ret_halt");	
 		
 	}
-	//restore_flags(flags);
+	 
 	return 183;
 }
 //------------------------SCHED & CONTEXT SWITCH-----------------------------------------
@@ -370,7 +338,7 @@ void context_switch(int new_pid)
 //---------------------------------------------------------------------------------------
 
 /* int32_t open(const uint8_t* filename)
- *	
+ *	calls open jump table
  *
  *
  */
@@ -418,11 +386,16 @@ int32_t open(const uint8_t* filename)
 			return -1;
 	}
 
-	//restore_flags(flags);
+	 
 	return fd;
 }
 
 // ------------------------------- READ ----------------------------------------------------------------
+/* int32_t read(const uint8_t* filename)
+ *	calls read jump table
+ *
+ *
+ */
 int32_t read(int32_t fd, void* buf, int32_t nbytes)
 {
 	// int i = 0;	
@@ -437,11 +410,16 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes)
 	if(file->flags == 0 || file->file_op->read == NULL)
 		return -1;
 
-	//restore_flags(flags);
+	 
 	return file->file_op->read(file, buf, nbytes);
 }
 
 // ------------------------------- WRITE -------------------------------------------------------------
+/* int32_t write(const uint8_t* filename)
+ *	calls write jump table
+ *
+ *
+ */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 {
 	
@@ -456,11 +434,16 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes)
 	if(file->flags == 0 || file->file_op->write == NULL)
 		return -1;
 
-	//restore_flags(flags);
+	 
 	return file->file_op->write(file, buf, nbytes);
 }
 
 // ------------------------------- CLOSE ----------------------------------------------------------------
+/* int32_t close(const uint8_t* filename)
+ *	calls close jump table
+ *
+ *
+ */
 int32_t close(int32_t fd)
 {
 	
@@ -477,7 +460,7 @@ int32_t close(int32_t fd)
 	} 
 
 	farray[fd].flags = 0;
-	//restore_flags(flags);
+	 
 	return 0;
 }
 
@@ -491,7 +474,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes)
 	memset(buf, 0, nbytes);
 	memcpy(buf, args, length);
 
-	//restore_flags(flags);
+	 
 	return 0;
 }
 
@@ -572,6 +555,8 @@ char* parse(char* input)
 	return output;
 }
 
+
+// Get_arg - saves the arguments in global buffer
 void get_arg(char* input, int nbytes)
 {
 		args = "random str2";

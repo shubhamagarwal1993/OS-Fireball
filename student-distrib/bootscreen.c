@@ -3,10 +3,11 @@
 #include "filesys.h"
 #include "lib.h"
 
-#define VIDEO  0xB8000  
+#define VIDEO 			 	0xB8000  												//this is the start of video memory
 static char* video_mem = (char *)VIDEO;
-#define ATTRIB_COLOUR_2  0xE4
-#define ATTRIB_COLOUR  0x4E
+#define ATTRIB_COLOUR_2  	0xE4													//color scheme
+#define ATTRIB_COLOUR  		0x4E													//color scheme
+#define MAX_TERMINAL_WIDTH	80	
 
 void boot_screen(){
 
@@ -17,18 +18,18 @@ void boot_screen(){
 	int i = 0;
 	for(i = 0; i < strlen(bit_map); i++)
 	{
-	//	buf[i].mo = bit_map[i];
-		//printf("%c", bit_map[i]);
-		if(i%80 == 0)
+	//	buf[i].mo = bit_map[i];														//This is just another way to show on screen -> commented out as this can also be used
+		//printf("%c", bit_map[i]);													//This places the charaters in position
+		if(i%MAX_TERMINAL_WIDTH == 0)
 		{
-        	screen_y++;
-        	screen_x = 0;
+        	screen_y++;																//go to the next line
+        	screen_x = 0;															//go back to start of new line
     	}
-		//*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_BLUE;
-		if(bit_map[i] == '|')
-    		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_COLOUR_2;
+		//*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_BLUE;						//This is a different color scheme -> commented out as this can also be used
+		if(bit_map[i] == '|')														//Made "Fireball" with this symbol
+    		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_COLOUR_2;				//This keeps the letters in place
     	else
-    		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_COLOUR;
+    		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_COLOUR;					//This lets the other color stay
 	}
 }
 

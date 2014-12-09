@@ -1,3 +1,10 @@
+/************************************************/
+/*Created by Siddharth Murali, Aabhas Sharma,	*/	
+/*			 James Lang, Shubham Agarwal		*/
+/*	9th Dec, 2014								*/
+/*												*/
+/************************************************/
+
 #ifndef _WRAPPER_H
 #define _WRAPPER_H
 

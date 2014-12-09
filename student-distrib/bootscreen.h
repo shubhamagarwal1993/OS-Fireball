@@ -1,3 +1,9 @@
+/************************************************/
+/*Created by Siddharth Murali, Aabhas Sharma,	*/	
+/*			 James Lang, Shubham Agarwal		*/
+/*	9th Dec, 2014								*/
+/*												*/
+/************************************************/	
 #ifndef _BOOTSCREEN_H
 #define _BOOTSCREEN_H
 

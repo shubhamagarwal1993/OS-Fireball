@@ -1,3 +1,10 @@
+/************************************************/
+/*Created by Siddharth Murali, Aabhas Sharma,	*/	
+/*			 James Lang, Shubham Agarwal		*/
+/*	9th Dec, 2014								*/
+/*												*/
+/************************************************/
+
 #ifndef _PIT_H
 #define _PIT_H
 

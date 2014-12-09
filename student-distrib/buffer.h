@@ -1,3 +1,9 @@
+/************************************************/
+/*Created by Siddharth Murali, Aabhas Sharma,	*/	
+/*			 James Lang, Shubham Agarwal		*/
+/*	9th Dec, 2014								*/
+/*												*/
+/************************************************/
 #ifndef _BUFFER_H
 #define _BUFFER_H
 
@@ -5,8 +11,6 @@
 
 extern int buf_x;
 extern int buf_y;
-
-//extern void set_buffer(node* buffer);
 
 extern void reset_buf(node* buf);
 

@@ -5,6 +5,9 @@
 #include "paging.h"
 #include "lib.h"
 
+#define RET_SUCCESS			0
+#define RET_FAILURE			-1
+
 // static PDE_t PD[NUM_PDE] __attribute__((aligned (0x1000)));
 // static PDE_t PD0[NUM_PDE] __attribute__((aligned (0x1000)));
 // static PDE_t PD1[NUM_PDE] __attribute__((aligned (0x1000)));

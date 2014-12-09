@@ -1,3 +1,10 @@
+/************************************************/
+/*Created by Siddharth Murali, Aabhas Sharma,	*/	
+/*			 James Lang, Shubham Agarwal		*/
+/*	9th Dec, 2014								*/
+/*												*/
+/************************************************/
+
 /* lib.h - Defines for useful library functions
  * vim:ts=4 noexpandtab
  */

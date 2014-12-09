@@ -5,20 +5,21 @@
 #include "i8259.h"
 #include "lib.h"
 
-#define PIC1			0x20						//IO base address for master PIC
-#define PIC2			0xA0						//IO base address for slave PIC 
-#define PIC1_COMMAND	PIC1 		
-#define PIC1_DATA		(PIC1+1) 					//This is basically port 0x21	
-#define PIC2_COMMAND	PIC2
-#define PIC2_DATA		(PIC2+1) 					//This is basically port 0xA1	
-#define PIC_EOI			0x20 						//End-of-interrupt command code	
+#define PIC1				0x20					//IO base address for master PIC
+#define PIC2				0xA0					//IO base address for slave PIC 
+#define PIC1_COMMAND		PIC1 		
+#define PIC1_DATA			(PIC1+1) 				//This is basically port 0x21	
+#define PIC2_COMMAND		PIC2
+#define PIC2_DATA			(PIC2+1) 				//This is basically port 0xA1	
+#define PIC_EOI				0x20 					//End-of-interrupt command code	
 
 
-#define ICW1_INIT	0x10							//Initialization - required! 
-#define ICW1_ICW4	0x01							//ICW4 (not) needed 
-#define ICW4_8086	0x01							//8086/88 (MCS-80/85) mode 
+#define ICW1_INIT			0x10					//Initialization - required! 
+#define ICW1_ICW4			0x01					//ICW4 (not) needed 
+#define ICW4_8086			0x01					//8086/88 (MCS-80/85) mode 
 
-
+#define KEYBOARD_IRO_NO		1
+#define GREATEST_IRQ		8
 /* Interrupt masks to determine which interrupts
  * are enabled and disabled */
 uint8_t master_mask; /* IRQs 0-7 */
@@ -74,16 +75,16 @@ enable_irq(uint32_t irq_num)
 	uint16_t port;
     uint8_t value;
  
-    if(irq_num < 8)									//if IRQ is less than 8 then we have to go to master PIC
-    	port = PIC1_DATA;							//MASTER PIC
+    if(irq_num < GREATEST_IRQ)							//if IRQ is less than 8 then we have to go to master PIC
+    	port = PIC1_DATA;								//MASTER PIC
     else
     {
-        port = PIC2_DATA;							//if IRQ is greater than 8 and less than equal to 15 then go to slave PIC
-        irq_num -= 8;								//SLAVE PIC
+        port = PIC2_DATA;								//if IRQ is greater than 8 and less than equal to 15 then go to slave PIC
+        irq_num -= GREATEST_IRQ;						//SLAVE PIC
     }
 
-    value = inb(port) & ~(1 << irq_num);			//get bit to change and 'AND' with old mask so only bit that we need to change is set to 0 
-    outb(value, port);     							//sends info packet about that device to particular port
+    value = inb(port) & ~(1 << irq_num);				//get bit to change and 'AND' with old mask so only bit that we need to change is set to 0 
+    outb(value, port);     								//sends info packet about that device to particular port
 }
 
 
@@ -101,16 +102,16 @@ disable_irq(uint32_t irq_num)
 	uint16_t port;
     uint8_t value;
  
-    if(irq_num < 8)									//if IRQ is less than 8 then we have to go to master PIC
-    	port = PIC1_DATA;							//MASTER PIC
+    if(irq_num < GREATEST_IRQ)							//if IRQ is less than 8 then we have to go to master PIC
+    	port = PIC1_DATA;								//MASTER PIC
     else
     {
-        port = PIC2_DATA;							//if IRQ is greater than 8 and less than equal to 15 then go to slave PIC
-        irq_num -= 8;								//SLAVE PIC
+        port = PIC2_DATA;								//if IRQ is greater than 8 and less than equal to 15 then go to slave PIC
+        irq_num -= GREATEST_IRQ;						//SLAVE PIC
     }
 
-    value = inb(port) | (1 << irq_num);				//get bit to change and 'AND' with old mask so only bit that we need to change is set to 1
-    outb(value, port);        						//sends info packet about that device to particular port
+    value = inb(port) | (1 << irq_num);					//get bit to change and 'AND' with old mask so only bit that we need to change is set to 1
+    outb(value, port);        							//sends info packet about that device to particular port
 }	
 
 /********************************************************************
@@ -124,19 +125,19 @@ send_eoi(uint32_t irq_num)											*
 void
 send_eoi(uint32_t irq_num)
 {
-		if(irq_num >= 8)							//if IRQ is more than 8 then we have to go to SLAVE PIC
+		if(irq_num >= GREATEST_IRQ)							//if IRQ is more than 8 then we have to go to SLAVE PIC
 	{
-		uint32_t temp_irq_num = irq_num - 8;		//this will be the IRQ number on the SLAVE PIC	
+		uint32_t temp_irq_num = irq_num - GREATEST_IRQ;		//this will be the IRQ number on the SLAVE PIC	
 /* EOI byte OR'd with irq_num to get interrupt number and sent out to the PIC to declare the interrupt finished */
 		unsigned char temp_eoi = EOI | temp_irq_num; 
-		outb(temp_eoi, PIC2);						//write to SLAVE PIC
- 		outb(EOI | 2, PIC1);						//inform MASTER PIC also
+		outb(temp_eoi, PIC2);								//write to SLAVE PIC
+ 		outb(EOI | 2, PIC1);								//inform MASTER PIC also
 	}	
-	else											//if IRQ is less than 8 then we have to go to master PIC
+	else													//if IRQ is less than 8 then we have to go to master PIC
 	{
 /* EOI byte OR'd with irq_num to get interrupt number and sent out to the PIC to declare the interrupt finished */
 		unsigned char temp_eoi = EOI | irq_num;		
-		outb(temp_eoi, PIC1);						//write to MASTER PIC
+		outb(temp_eoi, PIC1);								//write to MASTER PIC
 	}	
 }
 
@@ -152,11 +153,7 @@ init_keyboard(void)						*
 void
 init_keyboard(void)		
 {
-	enable_irq(1);									//the offset of the keyboard is IRQ1
-	//	enable_irq(0x21);
-	//	printf(" reached init keyboard ");
-	//	#define KEYBOARD_PORT 0x60
-	//	#define KEYBOARD_STATUS_PORT 0x64                                                                                                                                            
+	enable_irq(KEYBOARD_IRO_NO);									//the offset of the keyboard is IRQ1                                                                                                                                           
 	return;
 }
 

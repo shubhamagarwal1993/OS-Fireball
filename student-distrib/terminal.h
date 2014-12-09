@@ -1,3 +1,10 @@
+/************************************************/
+/*Created by Siddharth Murali, Aabhas Sharma,	*/	
+/*			 James Lang, Shubham Agarwal		*/
+/*	9th Dec, 2014								*/
+/*												*/
+/************************************************/
+
 #ifndef _TERMINAL_H
 #define _TERMINAL_H
 
@@ -8,7 +15,7 @@
 #include "systemcalls.h"
 
 #define NUM_COLS 80
-#define NUM_ROWS 25
+#define TERM_ROWS 25
 
 typedef struct buff_attr
 {

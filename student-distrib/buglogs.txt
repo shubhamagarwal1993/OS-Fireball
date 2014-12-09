@@ -1,0 +1,104 @@
+
+															/******************************/
+																	BUG LOG - Fireball
+															/******************************/
+
+This is a log of many of the bugs we had to correct as we went about with mp3 
+
+There is an approximate date with each bug.
+Questions for each bug -> "When was it?", "What was the bug?", "How long did it take to fix it?", and "How did you fix it?"
+
+
+
+						|||||||||||||||||||||||||||					CHECKPOINT 1 			||||||||||||||||||||||||||||||||
+																Monday, 27 Oct, 6PM
+
+
+BUG 1: 	PAGING DOES NOT WORK
+		detected on Sunday, 26th Oct, 2014.
+		Took 1 full day to detect and correct the error.
+		A '$' sign was missing in one of the numbers and was actually being read as a memory address. After GDBing through the point, we realized that the number which was being pushed in a register actually did not change the register value.
+
+
+
+
+						|||||||||||||||||||||||||||					CHECKPOINT 2 			||||||||||||||||||||||||||||||||
+																Monday, 3 Nov, 6PM 
+
+BUG 2:	Keyboard presses seemed slower.  
+		detected on Friday, 31st Oct, 2014. 
+		Took almost 2 days to realize and correct the mistake
+		We had too many switch cases and the design of the keyboard driver was not good. After getting some advice from a TA, we changed the design completely by using a ?????????? instead of the switch cases. 
+
+BUG 3:	RTC frequency would not change
+		deteted on Saturday, 1st Nov, 2014.
+		Took about 3 hours to realize and fix the error becasue most of the RTC already worked.
+		cli() and sti() functions were in wrong positions which caused interrupts to be masked.  
+
+BUG 4:	Filesystem -> read_dentry_by_index() function was giving an error.
+		detected on Saturday, 1st Nov, 2014.
+		Took about 8 to 10 hours to fix it along with a little bit in each of the other filesystem functions.
+		Conceptually we were doing something completely different from what was intended by the documentation. Not a very big deal to correct it.	
+
+BUG 5:	Filesystem -> filename not showing up properly and was cutting abruptly 
+		detected on Saturday, 1st Nov, 2014.
+		Took about 2 hours to realize and fix the error becasue of insufficient documentation.
+		A piazza post confirmed the file name length and line end characters.  
+
+BUG 6:	Keyboard strokes not showing up properly
+		detected on Friday, 31st Oct, 2014.
+		About 2 days to fix errors like backspaces and special characters.
+		We were aware of scheduling for the last checkpoint. So we created a buffer where we store keystrokes and print the buffer. This way we rely on altering video memory the least. We ran into problems like not bring able to implement backspace and other characters as all the changes had to eventually reflect in the buffer. Had to use many flags to get the keyboard and buffer mapped correctly.
+
+
+						|||||||||||||||||||||||||||					CHECKPOINT 3 			||||||||||||||||||||||||||||||||
+																Monday, 17 Nov, 6PM 
+
+BUG 7:	Jumptable in wrapper was not jumping properly
+		detected Friday, 14 Nov, 2014
+		about 2 hours to fix
+		An 'iret' was missing at the end of the assembly function.	
+
+BUG 8:	IDT was not switching properly
+		detected Friday, 14 Nov, 2014
+		About 3 hours to fix
+		The jumptable had one memory address which was shifting improperly. This shift was however, always constant. So we hardcoded the shift and the error was fixed.
+
+
+
+						|||||||||||||||||||||||||||					CHECKPOINT 4 			||||||||||||||||||||||||||||||||
+																Monday, 1 Dec, 6PM 
+
+
+BUG 9:	Halt system call
+		detected on 3rd Dec, 2014
+		About 2 days to fix
+		There was a change in the stack pointer when a program halts. This was causing a page fault.
+		We were saving values in the execute function but not recovering them properly in halt.  
+
+BUG 10:	Multiple shells dont work and the second one faults when a program executes
+		detected on 5th Dec, 2014
+		Paging was not set up for handling those many processes and was running out of memory. Changed paging to accomodate seven processes and multiple shells started working.
+
+BUG 11:	'exit' call in shell was page faulting
+		detected on 1st December.
+		Fixed as soon as we fixed minor errors in execute, halt, and paging. 
+
+
+						|||||||||||||||||||||||||||					CHECKPOINT 5 			||||||||||||||||||||||||||||||||
+																Tuesday, 9 Dec, 6PM 
+
+BUG 12:	Terminal was not reading commands in one go.	
+		detected on 1st Dec, 2014
+		About 1 hour to fix
+		Wrong placing of cli() and sti() functions which were causing the enter button to interrupt in between and causing an error in terminal read function.	
+
+BUG 13:	After switching to shell 2, and running a process, could not switch back to 1st terminal
+		detected Sunday, 7th Dec, 2014.
+		About 6 hours to fix
+		Paging was relying on caching and global pages which were being flushed. We reloaded the pages and could then switch between terminal.
+
+BUG 14:	After running a process in shell 1 and switching to shell 2, the process in terminal 1 stopped working.
+		detected on Monday 8th Dec, 2014.
+		Still correcting.
+		The main error was that execute and halt still had some minor issues which were causing the stack to change. After fixing them, we seem to hit some sort of a race condition which stops the running process in terminal 1. This should be the last error for sccheduling and context switching to run properly.		

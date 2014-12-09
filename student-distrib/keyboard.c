@@ -5,11 +5,14 @@
 #include "systemcalls.h"
 #include "wrapper.h"
 
+#define RET_SUCCESS			0
+#define RET_FAILURE			-1
+#define NUM_CHARS			128
 /* 
  * KBDUS means US Keyboard Layout. This is the basic scancode table
  * used to layout a standard US keyboard. 
 */
-unsigned char kbdus[128] =
+unsigned char kbdus[NUM_CHARS] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
   '9', '0', '-', '=', '\b',	/* Backspace */
@@ -53,7 +56,7 @@ unsigned char kbdus[128] =
  * KBDUS means US Keyboard Layout. This is the special character
  * scancode table used to layout a standard US keyboard. 
 */
-unsigned char kbdus_shift[128] =
+unsigned char kbdus_shift[NUM_CHARS] =
 {
     0,  27, '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
   '(', ')', '_', '+', '\b',	/* Backspace */
@@ -97,70 +100,70 @@ unsigned char kbdus_shift[128] =
  * Declaration of buffer and global variables to be used by the functions following.
 */
 
-int reset_flag = 0;						//checks whether the screen/buffer needs to be cleared
+int reset_flag = 0;										//checks whether the screen/buffer needs to be cleared
 
-int caps_count = 0;						//checks whether the caps lock is on
-int shift = 0;							//checks whether the shift key has been pressed
-int ctrl = 0;							//checks whether the ctrl key has been pressed
-int alt = 0;							//checks whether the alt key has been pressed
+int caps_count = 0;										//checks whether the caps lock is on
+int shift = 0;											//checks whether the shift key has been pressed
+int ctrl = 0;											//checks whether the ctrl key has been pressed
+int alt = 0;											//checks whether the alt key has been pressed
 int term2 = 1;
 int term3 = 1;
 
 //flags and counters used to determine the position of character output on the screen
-int offset = 0;
-int line_flag = 1;
-int limit = 0;
-int line_count = 0;
-volatile int enter_press = 0;
+int offset = 0;											//
+int line_flag = 1;										//	
+int limit = 0;											//
+int line_count = 0;										//
+volatile int enter_press = 0;							//
 
 
 // char* args;
 // int space_seen = 0;
 // int index = 0;
 
-/* 
- * kbd_int_handler()
- *   DESCRIPTION: This function is called when a keyboard interrupt is generated.
- *				  It is responsible to call out the required functions with the
- *				  necessary inputs.
- *   INPUTS: -- 
- *   OUTPUTS: --
- *   RETURN VALUE: none
- *   SIDE EFFECTS: none
- */
+/************************************************************************************/ 
+/* kbd_int_handler()																*/
+/*   DESCRIPTION: This function is called when a keyboard interrupt is generated.	*/
+/*				  It is responsible to call out the required functions with the		*/
+/*				  necessary inputs.													*/
+/*   INPUTS: -- 																	*/
+/*   OUTPUTS: --																	*/	
+/*   RETURN VALUE: none																*/
+/*   SIDE EFFECTS: none																*/
+/************************************************************************************/
 void kbd_int_handler()
 {
 	
 	node* buffer = pass_buff();
 	
 	if(reset_flag == 0)
-		disable_rtc_test();
+		disable_rtc_test();								//					
 
 	reset_flag = 1;
 	int to_print;										//disable line so we can complete this before handling some other interrupt 	
-	to_print = inb(0x60);
-	kbd_logic(to_print, buffer);
-	buffer = pass_buff();
-	status_bar();
-	if(to_print == 0x1C)
-		enter_press = 1;
+	to_print = inb(0x60);								//
+	kbd_logic(to_print, buffer);						//	
+	buffer = pass_buff();								//
+	status_bar();										//
+	if(to_print == 0x1C)								//
+		enter_press = 1;								
 	else enter_press = 0;
-	printb(buffer);
+	printb(buffer);										//
 	
-	send_eoi(1);
+	send_eoi(1);										//	
 }
 
-/* 
- * kbd_logic()
- *   DESCRIPTION: This function is responsible for all the keyboard operations.
- *				  Basis the input from the keyboard, this function decides the
- *				  appropriate character to be printed. It also decides the location
- *				  on the screen where this character needs to be printed.
- *   INPUTS: the integer signal received from the keyboard interrupt. 
- *   OUTPUTS: --
- *   RETURN VALUE: none
- *   SIDE EFFECTS: sets up the buffer that is to be printed to the screen.
- */
+/****************************************************************************************/ 
+/* kbd_logic()																			*/	
+/*   DESCRIPTION: This function is responsible for all the keyboard operations.			*/
+/*				  Basis the input from the keyboard, this function decides the			*/
+/*				  appropriate character to be printed. It also decides the location		*/
+/*				  on the screen where this character needs to be printed.				*/
+/*   INPUTS: the integer signal received from the keyboard interrupt. 					*/
+/*   OUTPUTS: --																		*/
+/*   RETURN VALUE: none																	*/
+/*   SIDE EFFECTS: sets up the buffer that is to be printed to the screen.				*/
+/****************************************************************************************/
 void kbd_logic(int to_print, node* buffer)
 {
 	//shift enable - sets flag if shift is currently pressed.
@@ -364,40 +367,39 @@ void kbd_logic(int to_print, node* buffer)
 	//case - if screen line limit is hit
 	if(limit == 80)
 	{
-		new_line(buffer);
-		clear_buf_line(buffer);
+		new_line(buffer);								//
+		clear_buf_line(buffer);							//
 		limit = 0;
 	}
-	asm volatile("done_typing:\n\t");
+	asm volatile("done_typing:\n\t");					//
 	done:
 		return;
 }
 
-/* 
- * pass_count()
- *   DESCRIPTION: Helper function. Used to provide other functions
- * 				  an access to current number of characters in the 
- * 				  current command.
- *   INPUTS: -- 
- *   OUTPUTS: the line count
- *   RETURN VALUE: int
- *   SIDE EFFECTS:
- */
+/********************************************************************/ 
+/* pass_count()														*/
+/*   DESCRIPTION: Helper function. Used to provide other functions	*/
+/* 				  an access to current number of characters in the 	*/
+/* 				  current command.									*/	
+/*   INPUTS: -- 													*/
+/*   OUTPUTS: the line count 										*/
+/*   RETURN VALUE: int 												*/
+/*   SIDE EFFECTS:													*/
+/********************************************************************/
 int pass_count()
 {
-	return line_count;
+	return line_count;									
 }
 
-/* 
- * dummy_int_handler()
- *   DESCRIPTION: for system calls
- *   INPUTS: -- 
- *   OUTPUTS: --
- *   RETURN VALUE: --
- *   SIDE EFFECTS: --
- */
+/****************************************/ 
+/* dummy_int_handler()					*/
+/*   DESCRIPTION: for system calls		*/	
+/*   INPUTS: -- 						*/
+/*   OUTPUTS: --						*/
+/*   RETURN VALUE: --					*/
+/*   SIDE EFFECTS: --					*/
+/****************************************/
 void dummy_int_handler()
 {
-	//prints int #
 	printf("DUMMY INTERRUPT HANDLER");
 }

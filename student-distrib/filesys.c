@@ -3,18 +3,31 @@
 #include "keyboard.h"
 #include "systemcalls.h"
 
+#define MAX_NAME_LENGTH		32
+#define DENTRY_RESERVED		24
+#define RET_SUCCESS			0
+#define RET_FAILURE			-1
+
 bootblock_t* boot_block;
 inode_t* index_nodes;
 data_block_t* data_blocks;
 
+/* init_filesys */
+/********************************************************************/
+/*int32_t															*/
+/*init_filesys														*/
+/*	Inputs:			filename, the dentry to copy to 				*/
+/*	Outputs:		writes dentry of filename to given dentry 		*/
+/*	Return Value:	return 0 if file found & copied properly		*/
+/*					return -1 if file is not in the filesystem		*/
+/*	Function: Should check for file existance and copy to dentry 	*/
+/********************************************************************/
 void init_filesys(const uint8_t *bootblockptr)
 {
-	boot_block = (bootblock_t*)bootblockptr;
-	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);
-	data_blocks = (data_block_t*)(bootblockptr + (BLOCKSIZE * (boot_block->num_inodes + 1))); 
-
+	boot_block = (bootblock_t*)bootblockptr;													//make a new pointer 
+	index_nodes = (inode_t*)(bootblockptr + BLOCKSIZE);											//the inodes 				
+	data_blocks = (data_block_t*)(bootblockptr + (BLOCKSIZE * (boot_block->num_inodes + 1))); 	//the data blocks
 	//test_filesys();
-
 }
 
 /* read_dentry_by_name */
@@ -33,50 +46,47 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry)
 	int i;
 
 	// Check for invalid pointers
-	if(fname == NULL)
-		return -1;
+	if(fname == NULL)																			//if filename does not exist	
+		return RET_FAILURE;
 
-	if(dentry == NULL)
-		return -1;
+	if(dentry == NULL)																			//if there is no dentry as we cannot return info
+		return RET_FAILURE;
 
+	uint32_t typed_len = strlen((int8_t*)fname);												//typecast and get the length of the filename
 
-	uint32_t typed_len = strlen((int8_t*)fname);
+	if(typed_len > (MAX_NAME_LENGTH-1))																			//if our file name length crosses 32
+		typed_len = (MAX_NAME_LENGTH-1);																			//limit file name to 32
 
-	if(typed_len > 31)
-		typed_len = 31;
-
-	for(i = 0; i < boot_block->num_dir_entries; i++)
+	for(i = 0; i < boot_block->num_dir_entries; i++)											//check all the directory entries in the bootblock
 	{
-		dentry_t* cur_entry;
-		cur_entry = &(boot_block->dir_entries[i]);
+		dentry_t* cur_entry;																	//make an empty dentry
+		cur_entry = &(boot_block->dir_entries[i]);													
 
-		uint32_t entry_name_len = strlen((int8_t*)(cur_entry->file_name));
+		uint32_t entry_name_len = strlen((int8_t*)(cur_entry->file_name));						//
 
 		// File name is allocated 32B, all characters after are ignored
-		if(entry_name_len > 31)
-			entry_name_len = 31;
+		if(entry_name_len > (MAX_NAME_LENGTH-1))
+			entry_name_len = (MAX_NAME_LENGTH-1);
 
-		if(entry_name_len != typed_len)
+		if(entry_name_len != typed_len)															//
 			continue;
 
-		if(0 != strncmp((int8_t*)fname, (int8_t*)(cur_entry->file_name), entry_name_len))
+		if(0 != strncmp((int8_t*)fname, (int8_t*)(cur_entry->file_name), entry_name_len))		//
 			continue;
 
 		// Copy directory entry
-		strncpy((int8_t*)dentry->file_name, (int8_t*)cur_entry->file_name, 32);
-		dentry->file_type = cur_entry->file_type;
-		dentry->inode_num = cur_entry->inode_num;
+		strncpy((int8_t*)dentry->file_name, (int8_t*)cur_entry->file_name, MAX_NAME_LENGTH);					//
+		dentry->file_type = cur_entry->file_type;												//
+		dentry->inode_num = cur_entry->inode_num;												//
 
 		// Copy reserved bytes
 		int j;
-		for(j = 0; j < 24; j++)
-			dentry->reserved[j] = cur_entry->reserved[j];
-		return 0;
+		for(j = 0; j < DENTRY_RESERVED; j++)
+			dentry->reserved[j] = cur_entry->reserved[j];										//
+		return RET_SUCCESS;
 	}
-
 	// is not on the file system
-	return -1;		
-
+	return RET_FAILURE;		
 }
 
 
@@ -94,24 +104,24 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry)
 {
 	// Check for invalid pointer
 	if(dentry == NULL)
-		return -1;
+		return RET_FAILURE;
 
 	// Check for invalid index
-	if(index >= boot_block->num_dir_entries)
-		return -1;
+	if(index >= boot_block->num_dir_entries)		
+		return RET_FAILURE;
 
 	dentry_t* cur_entry = &(boot_block->dir_entries[index]);
 
 	// Copy the directory entry
-	strncpy((int8_t*)dentry->file_name, (int8_t*)cur_entry->file_name, 32);
-	dentry->file_type = cur_entry->file_type;
-	dentry->inode_num = cur_entry->inode_num;
+	strncpy((int8_t*)dentry->file_name, (int8_t*)cur_entry->file_name, MAX_NAME_LENGTH);						//
+	dentry->file_type = cur_entry->file_type;													//
+	dentry->inode_num = cur_entry->inode_num;													//
 	// Copy reserved bytes
 	int j;
-	for(j = 0; j < 24; j++)
-		dentry->reserved[j] = cur_entry->reserved[j];
+	for(j = 0; j < DENTRY_RESERVED; j++)
+		dentry->reserved[j] = cur_entry->reserved[j];											//
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 
@@ -130,13 +140,13 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 {
 	// If inode is invalid then return -1
 	if(inode >= boot_block->num_inodes)
-		return -1;
+		return RET_FAILURE;
 
 	inode_t* cur_inode = &(index_nodes[inode]);
 
 	// If offset is past the end of the file, return 0
 	if(offset >= cur_inode->length)
-		return 0;
+		return RET_SUCCESS;
 
 	// If length is invalid, reduce it to the highest valid length
 	if(offset + length > cur_inode->length)
@@ -153,7 +163,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 		// Find the current data block and check that it is valid
 		cur_data_block = cur_inode->data_block_nums[i + (offset / BLOCKSIZE)];
 		if( (cur_data_block >= boot_block->num_data_blocks) || (cur_data_block < 0) )
-			return -1;
+			return RET_FAILURE;
 
 		// Find a pointer to the start of the data block in the file system
 		data_start = (uint8_t*)(data_blocks + cur_data_block);
@@ -191,29 +201,39 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 	return copied;
 }
 
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t file_open(file_t* file, const uint8_t* filename)						*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t file_open(file_t* file, const uint8_t* filename)
 {
 	dentry_t dentry;
 	read_dentry_by_name(filename, &dentry);
 
 	if(dentry.inode_num >= boot_block->num_inodes)
-		return -1;
+		return RET_FAILURE;
 
-	file->file_op = &file_jt;
-	file->inode_ptr = (uint32_t) &(index_nodes[dentry.inode_num]);
-	file->file_pos = 0;
-	file->flags = 1;
-	return 0;
+	file->file_op = &file_jt;																	//
+	file->inode_ptr = (uint32_t) &(index_nodes[dentry.inode_num]);								//
+	file->file_pos = 0;																			//
+	file->flags = 1;																			//
+	return RET_SUCCESS;
 }
 
-// Writes length bytes of file content to buffer
-/* uint32_t file_read(uint8_t* buf, uint32_t length)
- *		Description: Reads up to length bytes of file content into buf
- *		Inputs:	buf - Holds a pointer to the file array entry for this file.
- *				length - The number of bytes to read from the file
- *		Outputs: buf - The file content read
- * 		Return value: Number of bytes read into buf
- */
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t file_read(file_t* file, uint8_t* buf, int32_t nbytes)				*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t file_read(file_t* file, uint8_t* buf, int32_t nbytes)
 {
 /*	
@@ -237,20 +257,38 @@ int32_t file_read(file_t* file, uint8_t* buf, int32_t nbytes)
 	return bytes_read;
 */
 
-	uint32_t inode_num = ((inode_t*) file->inode_ptr) - index_nodes;
+	uint32_t inode_num = ((inode_t*) file->inode_ptr) - index_nodes;							//
 
-	uint32_t bytes_read = read_data(inode_num, file->file_pos, buf, nbytes);
+	uint32_t bytes_read = read_data(inode_num, file->file_pos, buf, nbytes);					//
 
-	file->file_pos += bytes_read;
+	file->file_pos += bytes_read;																//
 
 	return bytes_read;
 }
 
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t file_write(file_t* file, const uint8_t* buf, int32_t nbytes)			*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t file_write(file_t* file, const uint8_t* buf, int32_t nbytes)
 {
-	return -1;
+	return RET_FAILURE;
 }
 
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t file_close(file_t* file)												*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t file_close(file_t* file)
 {
 	file->file_op = NULL;
@@ -258,10 +296,18 @@ int32_t file_close(file_t* file)
 	file->file_pos = 0;
 	file->flags = 0;
 
-	return 0;
+	return RET_SUCCESS;
 }
 
-
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t dir_open(file_t* file, const uint8_t* filename)						*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t dir_open(file_t* file, const uint8_t* filename)
 {
 	file->file_op = &directory_jt;
@@ -269,21 +315,30 @@ int32_t dir_open(file_t* file, const uint8_t* filename)
 	file->file_pos = 0;
 	file->flags = 1;
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 // Writes directory names in order to buffer one at a time
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t dir_read(file_t* file, uint8_t* buf, int32_t nbytes)					*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t dir_read(file_t* file, uint8_t* buf, int32_t nbytes)
 {
 	dentry_t dentry;
 
 	if(file->file_pos >= boot_block->num_dir_entries)
-		return 0;
+		return RET_SUCCESS;
 
 	if(-1 == read_dentry_by_index(file->file_pos, &dentry))
-		return -1;
+		return RET_FAILURE;
 
-	uint32_t name_len = (nbytes > 32) ? 32 : nbytes;
+	uint32_t name_len = (nbytes > MAX_NAME_LENGTH) ? MAX_NAME_LENGTH : nbytes;
 
 	strncpy((int8_t*)buf, (int8_t*)dentry.file_name, name_len);
 
@@ -292,21 +347,48 @@ int32_t dir_read(file_t* file, uint8_t* buf, int32_t nbytes)
 	return strlen((int8_t *)buf);
 }
 
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t dir_write(file_t* file, const uint8_t* buf, int32_t nbytes)			*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t dir_write(file_t* file, const uint8_t* buf, int32_t nbytes)
 {
-	return -1;
+	return RET_FAILURE;
 }
 
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t dir_close(file_t* file)												*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t dir_close(file_t* file)
 {
-	file->file_op = NULL;
-	file->inode_ptr = NULL;
-	file->file_pos = 0;
-	file->flags = 0;
+	file->file_op = NULL;																	//
+	file->inode_ptr = NULL;																	//	
+	file->file_pos = 0;																		//
+	file->flags = 0;																		//
 
-	return 0;
+	return RET_SUCCESS;
 }
 
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* int32_t program_load(const uint8_t* fname, uint32_t addr)					*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 int32_t program_load(const uint8_t* fname, uint32_t addr)
 {
 	uint32_t offset = 0;
@@ -315,27 +397,36 @@ int32_t program_load(const uint8_t* fname, uint32_t addr)
 	uint32_t ret;
 	dentry_t dentry;
 
-	if(-1 == read_dentry_by_name(fname, &dentry))
-		return -1;
+	if(-1 == read_dentry_by_name(fname, &dentry))											//
+		return RET_FAILURE;
 
-	if(dentry.file_type != 2)
-		return -1;
+	if(dentry.file_type != 2)																//	
+		return RET_FAILURE;	
 
-	while(0 != (ret = read_data(dentry.inode_num, offset, buf, len))) 
+	while(0 != (ret = read_data(dentry.inode_num, offset, buf, len))) 						//
 	{
 		if(ret == -1)
-			return -1;
+			return RET_FAILURE;
 
 		offset += ret;
 		buf += ret;
 	}
-	return 0;
+	return RET_SUCCESS;
 }
 
 /*
  *	For the handin, you must have some test/wrapper code that given a filename, a buffer, and a
  *	buffer length, will read data from the given file into the buffer.
  */
+/********************************************************************************/
+// Writes length bytes of file content to buffer								*/
+/* void test_filesys()															*/		
+/*		Description: Reads up to length bytes of file content into buf 			*/
+/*		Inputs:	buf - Holds a pointer to the file array entry for this file.	*/
+/*				length - The number of bytes to read from the file 				*/
+/*		Outputs: buf - The file content read 									*/
+/* 		Return value: Number of bytes read into buf 							*/
+/********************************************************************************/
 void test_filesys()
 {
 	// Test file_read

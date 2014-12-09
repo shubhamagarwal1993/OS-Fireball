@@ -16,9 +16,9 @@ int process_buf = 0;
 
 static char* video_mem = (char *)VIDEO;
 
-node buff_1[NUM_COLS*NUM_ROWS];
-node buff_2[NUM_COLS*NUM_ROWS];
-node buff_3[NUM_COLS*NUM_ROWS];
+node buff_1[NUM_COLS*TERM_ROWS];
+node buff_2[NUM_COLS*TERM_ROWS];
+node buff_3[NUM_COLS*TERM_ROWS];
 buff_attr components[3];
 char* status = " terminal1  terminal2  terminal3                                                ";
 char sys_time[5] = {0x30, 0x30, 0x3A, 0x30, 0x30};
@@ -151,7 +151,7 @@ int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter)
 {
 	//to_print = inb(0x60);
 	//kbd_int_handler();
-	clear();
+	//clear();
 	int i;
 	char* print_this = (char*)buf;
 
@@ -285,7 +285,7 @@ void status_bar()
 	int32_t j = 0;
 	
 	status = embed_time(status);
-    for(i=(NUM_ROWS-1)*NUM_COLS; i<(NUM_ROWS)*NUM_COLS; i++, j++) {
+    for(i=(TERM_ROWS-1)*NUM_COLS; i<(TERM_ROWS)*NUM_COLS; i++, j++) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = 0x90;
         *(uint8_t *)(video_mem + (i << 1)) = status[j];
     }
@@ -302,22 +302,22 @@ void status_bar()
  */
 void switch_status()
 {
-	int j = (NUM_ROWS-1)*NUM_COLS;
+	int j = (TERM_ROWS-1)*NUM_COLS;
 	int i = 0;
 	if(screen_num == 0)
 	{
-		for(i=j; i<(NUM_ROWS-1)*NUM_COLS+11; i++, j++) 
+		for(i=j; i<(TERM_ROWS-1)*NUM_COLS+11; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 
 	else if(screen_num == 1)
 	{
-		for(i=j+11; i<(NUM_ROWS-1)*NUM_COLS+22; i++, j++) 
+		for(i=j+11; i<(TERM_ROWS-1)*NUM_COLS+22; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 	else if(screen_num == 2)
 	{
-		for(i=j+22; i<(NUM_ROWS-1)*NUM_COLS+33; i++, j++) 
+		for(i=j+22; i<(TERM_ROWS-1)*NUM_COLS+33; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 }

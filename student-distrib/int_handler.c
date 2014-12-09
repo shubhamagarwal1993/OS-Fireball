@@ -192,6 +192,7 @@ void stack_segment_fault()
 void general_protection()
 {
 	disable_irq(1);
+	disable_irq(0);
 	//clear_blue();
 	//error_screen();
 	printf("General Protection");
