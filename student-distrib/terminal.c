@@ -91,9 +91,11 @@ int32_t terminal_read(file_t* file, uint8_t* buf, int32_t counter)
 	//wait for enter to get hit
 	while(1)
 	{
+		cli();
 		if((length == 127)||(enter_press == 1))
 			break;
 		else cmd_end = buf_x;
+		sti();
 	}
 	
 	enter_press = 0;
@@ -149,6 +151,7 @@ int32_t terminal_write(file_t* file, const uint8_t* buf, int32_t counter)
 {
 	//to_print = inb(0x60);
 	//kbd_int_handler();
+	clear();
 	int i;
 	char* print_this = (char*)buf;
 
@@ -356,8 +359,6 @@ void get_system_time()
 	int sec1_flag = 0;
 	int sec2_flag = 0;
 	int min1_flag = 0;
-
-	int i;
 
 	sys_time[4] = sys_time[4]+1;
 	if(sys_time[4] > 0x39)

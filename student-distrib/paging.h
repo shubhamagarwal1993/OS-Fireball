@@ -153,6 +153,23 @@ do {                                   			\
 				 );       						\
 } while(0)
 
+
+#define check_CRs(R0, R2, R3, R4)      	\
+do {                                   	\
+	asm ("movl %%cr0, %%eax \n\t"		\
+		 "movl %%eax, %0 \n\t"			\
+		 "movl %%cr2, %%eax \n\t"		\
+		 "movl %%eax, %1 \n\t"			\
+		 "movl %%cr3, %%eax \n\t"		\
+		 "movl %%eax, %2 \n\t"			\
+		 "movl %%cr4, %%eax \n\t"		\
+		 "movl %%eax, %3"				\
+		 : "=r" (R0), "=r" (R2), "=r" (R3), "=r" (R4) \
+		 :								\
+		 : "eax", "memory"				\
+		 );       						\
+} while(0)
+
 #define INVLPG(addr)										\
 do{															\
 	asm volatile("invlpg (%0)" ::"r" (addr) : "memory");	\

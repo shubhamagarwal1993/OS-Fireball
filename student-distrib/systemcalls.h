@@ -46,6 +46,8 @@ void stdout(uint32_t fd);
 extern void scheduling();
 extern void context_switch(int new_pid);
 
+extern uint32_t initial_shell;
+
 /***********************************************************************/
 /*	PROCESS CONTROL BLOCK	*/
 /***********************************************************************/
@@ -62,16 +64,13 @@ typedef struct file{
 //PCB structure 
 typedef struct pcb{
 	file_t file_fds[8];			//array of open files are represented with a file array defined above
-	//uint32_t fd;						//integer index into this array is called a file descriptor and this integer is how user-level programs identify the open file
 	uint32_t k_bp;					//keep track of parent process' base pointer
 	uint32_t k_sp;					//keep track of parent process' stack pointer
 	PDE_t* PD_ptr;
 	uint8_t process_id;
 	uint32_t esp0;
 	uint32_t ss0;
-	//uint32_t parent_process_id;
 	uint32_t child_flag;
-	//uint8_t* arguments;
 	struct pcb* parent_process;
 }pcb_t;
 

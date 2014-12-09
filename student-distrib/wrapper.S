@@ -3,7 +3,9 @@ kernel_ds:
 	.long 0x0018
 #include "wrapper.h"
 .text
-.globl kbd_wrapper, rtc_wrapper, pit_wrapper, jump_to_userspace, context_switch, syscall_handler, jump_table, ret_halt
+
+.globl kbd_wrapper, rtc_wrapper, pit_wrapper, jump_to_userspace, execute_syscall, syscall_handler, jump_table, ret_halt
+
 kbd_wrapper:
 	pushl %eax
 	pushl %ebx
@@ -94,7 +96,7 @@ pit_wrapper:
 
 jump_to_userspace:
 	
- 	
+ 	cli
     movl 4(%esp), %ebx		#have to change to eax since ebx is used in leave and ret 
     mov $0x2B, %ax
     mov %ax, %ds	
@@ -102,34 +104,23 @@ jump_to_userspace:
     movl %esp, %eax
     
 	pushl $0x2B
-    pushl $0x083FFFFC		
+    pushl $0x083ffffc		
     pushfl
     popl %eax
     orl $0x200, %eax
     pushl %eax
     pushl $0x23
     pushl %ebx 	
-    sti
     iret
+                   
+execute_syscall:   
+	PUSHL	%EBX          
+	MOVL	$2,%EAX  
+	MOVL	8(%ESP),%EBX  
+	INT		$0x80         
+	POPL	%EBX          
+	RET
 
-switch_linkage:
-	
- 	cli
-    movl 4(%esp), %eax	# ss0
-    movl 8(%esp), %ebx	# esp0
-    mov $0x2B, %ax
-    mov %ax, %ds	
-                   		
-	pushl $0x2B
-    pushl $0x083FFFFC		
-    pushf
-    popl %eax
-    orl $0xC2, %eax
-    pushl %eax
-    pushl $0x23
-    pushl %ebx 	
-    sti	
-    iret	
 
 syscall_handler:
 	sti

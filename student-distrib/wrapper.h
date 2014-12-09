@@ -15,7 +15,7 @@ void syscall_handler();
 
 void jump_to_userspace(uint32_t entry_addr);
 
-void switch_linkage(uint32_t ss0, uint32_t esp0);
+int32_t execute_syscall(const uint8_t* command);
 
 #endif /* ASM */
 

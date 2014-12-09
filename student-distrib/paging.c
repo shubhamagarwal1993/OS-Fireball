@@ -51,6 +51,9 @@ void init_paging()
 	// Set PGE bit in CR4
 	set_PGE();
 
+	INVLPG(VIDEO_MEM);
+	INVLPG(KERNEL_MEM);
+
 	//test_paging();
 
 }
@@ -82,6 +85,15 @@ void init_PD()
 		PD[0][i] = PDE_default;
 	}
 
+	// int i, j;
+	// for(i = 0; i < NUM_PD; i++)
+	// {
+	// 	for(j = 0; j < NUM_PDE; j++)
+	// 	{
+	// 		PD[i][j] = PDE_default;
+	// 	}
+	// }
+
  	cur_PD = PD[0];
 
 	// Set up video memory PDE
@@ -90,7 +102,8 @@ void init_PD()
 
 	PDE_t PDE_video;
 	PDE_video = PDE_default;
-	//SET_PDE_4KB_PT(PDE_video, VIDEO_PT);
+	PDE_video.global = 1;
+	PDE_video.read_write = 1;
 	SET_PDE_4KB_PT(PDE_video, PT[0]);
 	cur_PD[video_offset] = PDE_video;
 
@@ -101,13 +114,14 @@ void init_PD()
 	PDE_t PDE_kernel;
 	PDE_kernel = PDE_default;
 	PDE_kernel.global = 1;
+	PDE_kernel.read_write = 1;
 	SET_PDE_4MB_PAGE(PDE_kernel, KERNEL_MEM);
 	cur_PD[kernel_offset] = PDE_kernel;
 
 	// Pass the address of the page directory into the PBDR
  	set_PDBR(cur_PD);
 
- 	// Temporarily copy all of PD[0] into all other PDs
+ 	// Copy all of PD[0] into all other PDs
  	int j, k;
  	for(j = 1; j < NUM_PD; j++)
  	{
@@ -155,6 +169,7 @@ void init_VIDEO_PT()
 	PTE_t PTE_video;
 	PTE_video = PTE_default;
 	PTE_video.global = 1;
+	PTE_video.read_write = 1;
 	SET_PTE(PTE_video, VIDEO_MEM);
 	PT[0][offset] = PTE_video;
 }
@@ -193,12 +208,11 @@ uint32_t get_Page_offset(uint32_t addr)
 }
 
 /*
- * uint32_t get_Page_offset(uint32_t addr)
- * 	 Description: Finds the offset of an address within its 4KB page
- *   Inputs: addr - A virtual address
- *   Return Value: The offset of the address
+ * PDE_t* task_mem_init(uint32_t PID)
+ * 	 Description: Initializes the PD for a new process
+ *   Inputs: PID - The process ID of the new process
+ *   Return Value: A pointer to the new page directory
  */
-// Returns parent process PD or -1 on fail
 PDE_t* task_mem_init(uint32_t PID)
 {
 	if(PID < 0 || PID > 6)
@@ -206,11 +220,20 @@ PDE_t* task_mem_init(uint32_t PID)
 
 	cur_PD = PD[PID];
 	map_4MB_page(PGRM_IMG, PGRM_PAGE[PID], 1, 1);
+
+	//test_paging();
+
 	set_PDBR(cur_PD);
 
 	return cur_PD;
 }
 
+/*
+ * uint8_t* user_vidmap()
+ * 	 Description: Maps video memory for a user process
+ *   Inputs: none
+ *   Return Value: A pointer to the newly mapped virtual memory
+ */
 uint8_t* user_vidmap()
 {
 	// Set up PTE if necessary
@@ -276,12 +299,16 @@ void test_paging()
 	// printf("\n%x\n", *a);
 
 	// Access Kernel memory
-	uint8_t* b = (uint8_t*) 0x00400000;
-	printf("\n%x\n", *b);
+	// uint8_t* b = (uint8_t*) 0x00400000;
+	// printf("\n%x\n", *b);
 
 	// Access Video memory
 	// uint8_t* c = (uint8_t*) 0x000B8000;
 	// printf("\n%x\n", *c);
+
+	// Check control register values
+	// uint32_t CR0, CR2, CR3, CR4;
+	// check_CRs(CR0, CR2, CR3, CR4);
 }
 
 PDE_t* get_curr_PD()

@@ -35,7 +35,7 @@ void pit_int_handler()
 	cli();
 	pit_int_num++;
 	status_bar();
-	scheduling();
+	//scheduling();
 	if(pit_int_num%(6000) == 0)
 	{	
 		embed_time(status);

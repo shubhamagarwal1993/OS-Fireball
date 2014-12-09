@@ -17,14 +17,16 @@ int index = 0;
 uint8_t open_processes = 0;
 uint32_t k_bp = 0;
 int process_id = 0;
-pcb_t* curr_process;
+pcb_t* curr_process = NULL;
 uint32_t retval;
-int counter = 0;
 
-process_attr task_attr[7];
-int task_queue[7] = {-1, -1, -1, -1, -1, -1, -1};
-int next_available = 0;
-int next_task = 0;
+int counter = 0;
+uint32_t initial_shell = 1;
+
+//process_attr task_attr[7];
+int32_t task_queue[7] = {-1, -1, -1, -1, -1, -1, -1};
+uint32_t next_available = 0;
+uint32_t next_task = 0;
 
 driver_jt_t file_jt = {file_open, file_read, file_write, file_close};
 driver_jt_t directory_jt = {dir_open, dir_read, dir_write, dir_close};
@@ -34,9 +36,11 @@ driver_jt_t stdout_jt = {NULL, NULL, terminal_write, NULL};
 
 int32_t execute(const uint8_t* command)
 {
+
 	// uint32_t flags;
 	// cli_and_save(flags);
-	pcb_t* parent_pcb = curr_process;
+	pcb_t* previous_pcb = curr_process;
+
 
 	char* cmd = (char*)command;
 	uint8_t* fname = (uint8_t*)parse(cmd);
@@ -126,18 +130,23 @@ int32_t execute(const uint8_t* command)
 
 	k_bp = _8MB - (_8KB)*(process_id) - 4;
 	curr_process = (pcb_t *) (k_bp & 0xFFFFE000);
+	// k_bp = _8MB - (_8KB)*(process_id);
+	// curr_process = (pcb_t *) ((k_bp - 1) & 0xFFFFE000);
 	curr_process->process_id = process_id;
 	curr_process->PD_ptr = PD_ptr;
+	curr_process->k_bp = k_bp;
+	curr_process->k_sp = k_bp;
 	
 	//if(open_processes == MASK)
-	if(process_id == 0 || process_id == 1 || process_id == 2)
+	if(initial_shell)
 	{
 		curr_process->parent_process = curr_process;
 		curr_process->child_flag = 0;
+		initial_shell = 0;
 	}
 	else
 	{
-		curr_process->parent_process = parent_pcb;
+		curr_process->parent_process = previous_pcb;
 		curr_process->parent_process->child_flag = 1;
 	}
 	
@@ -149,27 +158,37 @@ int32_t execute(const uint8_t* command)
 		curr_process->file_fds[i].flags = 0;
 	}	
 
-	uint32_t ksp_temp;
-	uint32_t kbp_temp;
-	asm volatile("movl %%esp, %0":"=g"(ksp_temp));
-	asm volatile("movl %%ebp, %0":"=g"(kbp_temp));
-	curr_process->k_sp = ksp_temp;
-	curr_process->k_bp = kbp_temp;
-
-	curr_process->esp0 = tss.esp0;
-	curr_process->ss0 = tss.ss0;
-	tss.esp0 = _8MB - _8KB*(process_id) - 4;
-	tss.ss0 = KERNEL_DS;
-
 	task_queue[next_available] = process_id;
 	next_available = (next_available + 1) % 7;
 
 	stdin(0);									//kernel should automatically open stdin and stdout
 	stdout(1);									//which correspond to fd 0 and 1 respectively
 
+	// uint32_t ksp_temp;
+	// uint32_t kbp_temp;
+	// asm volatile("movl %%esp, %0":"=g"(ksp_temp));
+	// asm volatile("movl %%ebp, %0":"=g"(kbp_temp));
+	// curr_process->k_sp = ksp_temp;
+	// curr_process->k_bp = kbp_temp;
+
+	//context_switch(curr_process->process_id);
+	// curr_process->esp0 = tss.esp0;
+	// curr_process->ss0 = tss.ss0;
 	
+	task_queue[next_available] = process_id;
+	next_available = (next_available + 1) % 7;
+	
+	tss.esp0 = curr_process->k_sp; 		// This is good code
+	tss.ss0 = KERNEL_DS;
+
+	if(previous_pcb != NULL)
+	{
+		asm volatile("movl %%esp, %0":"=g"(previous_pcb->k_sp));
+		asm volatile("movl %%ebp, %0":"=g"(previous_pcb->k_bp));
+	}
+
+	// Run the scheduled process instead?
 	jump_to_userspace(entry_addr);
-	
 
 	asm volatile("ret_halt:\n\t");				
 	//restore_flags(flags);
@@ -199,6 +218,7 @@ int32_t halt(uint8_t status)
 	
 	else
 	{
+		/*
 		retval = (uint32_t)status;
 
 		//modify open_processes to indicate that current process is not running anymore
@@ -224,66 +244,131 @@ int32_t halt(uint8_t status)
 		
 		curr_process = curr_process->parent_process;
 		//go back to parent's instruction pointer
+		asm volatile("jmp ret_halt");
+*/
+
+		// ------------------------------------------------------------- //
+
+		retval = (uint32_t)status;
+
+		//modify open_processes to indicate that current process is not running anymore
+
+		open_processes ^= (MASK >> curr_process->process_id);
+
+		//clear parent process' child flag
+		parent_process->child_flag = 0;
+
+		tss.esp0 = parent_process->k_sp;
+		//tss.ss0 = curr_process->ss0;
+
+		set_PDBR(parent_process->PD_ptr);
+
+		uint32_t p_sp = parent_process->k_sp;
+		uint32_t p_bp = parent_process->k_bp;
+
+		asm volatile("movl %0, %%esp"::"g"(p_sp):"memory"); 
+		asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
+		
+		uint32_t halting_task = (next_available - 1) % 7;
+		task_queue[halting_task] = -1;
+		next_available = halting_task;
+
+		//context_switch(parent_process->process_id);
+		
+		curr_process = curr_process->parent_process;
+		//go back to parent's instruction pointer
 		asm volatile("jmp ret_halt");	
+		
 	}
 	//restore_flags(flags);
 	return 183;
 }
 //------------------------SCHED & CONTEXT SWITCH-----------------------------------------
 
+
 void scheduling()
 {
 	pcb_t* next_pcb;
-	int temp;
-	if(task_queue[next_task + 1] == -1)
+	uint32_t next_pid;
+	uint32_t process_bp;
+
+	uint32_t num_tasks = 0;
+	uint32_t i; 
+	uint32_t j = 0;
+
+	for(i = 0; i < 7; i++)
 	{
-		return;
+		if(task_queue[i] != -1)
+			num_tasks++;
 	}
-	do
+
+	// if(task_queue[next_task + 1] == -1)
+	// 	return;
+
+	// do
+	// {	
+	while(j < num_tasks)
 	{
-		k_bp = _8MB - (_8KB)*(task_queue[next_task]) - 4;
-		next_pcb = (pcb_t *) (k_bp & 0xFFFFE000);	
-		temp = task_queue[next_task];
+		next_pid = task_queue[next_task];
+		process_bp = _8MB - (_8KB)*(next_pid) - 4;
+		next_pcb = (pcb_t *) (process_bp & 0xFFFFE000);
 		task_queue[next_task] = -1;
 		next_task = (next_task + 1) % 7;
-		task_queue[next_available] = temp;
+		task_queue[next_available] = next_pid;
 		next_available = (next_available + 1) % 7;
-	
-	}while(next_pcb->child_flag);
-	context_switch(temp);
+		if(next_pcb->child_flag == 0 && next_pid != curr_process->process_id)
+			break;
+		j++;
+	} //while(j < num_tasks && (next_pcb->child_flag || next_pid == curr_process->process_id));
+
+	if(j < num_tasks)
+		context_switch(next_pid);
 }
 
 void context_switch(int new_pid)
 {
 	if(new_pid == -1)
 	{
+		send_eoi(0);
 		return;
 	}
-	k_bp = _8MB - (_8KB)*(new_pid) - 4;
-	pcb_t* new_process = (pcb_t *) (k_bp & 0xFFFFE000);
+
+	uint32_t process_bp = _8MB - (_8KB)*(new_pid) - 4;
+	pcb_t* new_process = (pcb_t *) (process_bp & 0xFFFFE000);
+
+	set_PDBR(new_process->PD_ptr);
+
+	tss.esp0 = new_process->k_sp;
+	uint32_t p_sp = new_process->k_sp;
+	uint32_t p_bp = new_process->k_bp;
 
 	process_buf = new_process->file_fds[1].file_pos;
 
 	process_id = new_pid;
+	asm volatile("movl %%esp, %0":"=g"(curr_process->k_sp));
+	asm volatile("movl %%ebp, %0":"=g"(curr_process->k_bp));
 	curr_process = new_process;
-
-	set_PDBR(curr_process->PD_ptr);
-
-	tss.esp0 = new_process->esp0;
-	tss.ss0 = new_process->ss0;
-
-	uint32_t p_sp = new_process->k_sp;
-	uint32_t p_bp = new_process->k_bp;
 
 	asm volatile("movl %0, %%esp"::"g"(p_sp):"memory");
 	asm volatile("movl %0, %%ebp"::"g"(p_bp):"memory");
+	// uint32_t process_bp = _8MB - (_8KB)*(new_pid) - 4;
+	// pcb_t* new_process = (pcb_t *) (process_bp & 0xFFFFE000);
+
+
+	// set_PDBR(curr_process->PD_ptr);
+
+	// tss.esp0 = new_process->esp0;
+	// tss.ss0 = new_process->ss0;
+
+
 	send_eoi(0);
-	sti();
-	return;
+	// sti();
+	// return;
 
 }
 
 //---------------------------------------------------------------------------------------
+
 /* int32_t open(const uint8_t* filename)
  *	
  *

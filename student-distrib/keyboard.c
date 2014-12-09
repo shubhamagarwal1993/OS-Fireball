@@ -2,6 +2,8 @@
 #include "i8259.h"
 #include "buffer.h"
 #include "terminal.h"
+#include "systemcalls.h"
+#include "wrapper.h"
 
 /* 
  * KBDUS means US Keyboard Layout. This is the basic scancode table
@@ -204,7 +206,11 @@ void kbd_logic(int to_print, node* buffer)
 	}
 
 	if(alt && to_print == 0x3E)
+		context_switch(0);
+
+	if(alt && to_print == 0x3F)
 		context_switch(1);
+
 	
 	if(alt && (to_print == 0x3B || to_print == 0x3C || to_print == 0x3D))
 	{
@@ -217,20 +223,23 @@ void kbd_logic(int to_print, node* buffer)
 			if(term2)
 			{
 				term2 = 0;
+				initial_shell = 1;
 				uint8_t fname[33] = "shell";
-				execute(fname);
+				execute_syscall(fname);
 			}
 		}
 		else if(to_print == 0x3D)
 		{
 			screen_num = 2;
+
 			send_eoi(1);
 			terminal_switch(screen_num, prev_screen_num);
 			if(term3)
 			{
 				term3 = 0;
+				initial_shell = 1;
 				uint8_t fname[33] = "shell";
-				execute(fname);
+				execute_syscall(fname);
 			}
 		}
 		else
