@@ -3,6 +3,8 @@
 #include "lib.h"
 #include "buffer.h"
 #include "i8259.h"
+#include "mouse.h"
+#include "music.h"
 
 #define VIDEO 0xB8000
 #define ATTRIB  0xE4
@@ -283,14 +285,25 @@ void status_bar()
 {
 	int32_t i;
 	int32_t j = 0;
-	
-	status = embed_time(status);
-    for(i=(TERM_ROWS-1)*NUM_COLS; i<(TERM_ROWS)*NUM_COLS; i++, j++) {
+	status = " terminal1 terminal2 terminal3                                                  ";
+
+	//int p;
+	//for(p = 0; p < 10; p++)
+	//status = embed_time(status);
+
+	int32_t x = mouse_coords.x;
+	int32_t y = mouse_coords.y;
+
+	//status = embed_time(status);
+    for(i=(NUM_ROWS-1)*NUM_COLS; i<(NUM_ROWS)*NUM_COLS; i++, j++) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = 0x90;
         *(uint8_t *)(video_mem + (i << 1)) = status[j];
     }
 	switch_status();
-}
+	if((x > -1 && x < 80)&&(y == 24))
+		set_colour(x, y, 0x64);
+}	
+
 
 /* 
  * switch_status()
@@ -312,12 +325,12 @@ void switch_status()
 
 	else if(screen_num == 1)
 	{
-		for(i=j+11; i<(TERM_ROWS-1)*NUM_COLS+22; i++, j++) 
+		for(i=j+11; i<(TERM_ROWS-1)*NUM_COLS+20; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 	else if(screen_num == 2)
 	{
-		for(i=j+22; i<(TERM_ROWS-1)*NUM_COLS+33; i++, j++) 
+		for(i=j+21; i<(TERM_ROWS-1)*NUM_COLS+30; i++, j++) 
         	*(uint8_t *)(video_mem + (i << 1) + 1) = 0x4E;
 	}
 }

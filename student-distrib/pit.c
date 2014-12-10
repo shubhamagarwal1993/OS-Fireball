@@ -20,6 +20,7 @@
 #define RET_FAILURE				-1
 
 int32_t pit_int_num;
+//status = " terminal1  terminal2  terminal3                                                ";
 
 void init_pit(int32_t channel, int32_t freq)
 {
@@ -47,11 +48,11 @@ void pit_int_handler()
 {
 	cli();
 	pit_int_num++;										//increase PIT number whenever we get a PIT interrupt->this will help with clock frequency
-	status_bar();										//display the status bar with the time displayed
 	//scheduling();									
-	if(pit_int_num%(6000) == 0)							//This decides when the time on the clock will increase by 1 sec
+	status_bar();										//display the status bar with the time displayed
+	if(pit_int_num%(100) == 0)							//This decides when the time on the clock will increase by 1 sec
 	{	
-		embed_time(status);								//put this time on the status bar
+		status = embed_time(status);								//put this time on the status bar
 	}	
 	sti();													
 	send_eoi(PIT_CHANNEL_ZERO);										

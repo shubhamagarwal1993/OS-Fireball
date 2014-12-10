@@ -4,7 +4,7 @@ kernel_ds:
 #include "wrapper.h"
 .text
 
-.globl kbd_wrapper, rtc_wrapper, pit_wrapper, jump_to_userspace, execute_syscall, syscall_handler, jump_table, ret_halt
+.globl kbd_wrapper, rtc_wrapper, pit_wrapper, mouse_wrapper, jump_to_userspace, execute_syscall, syscall_handler, jump_table, ret_halt
 
 kbd_wrapper:
 	pushl %eax
@@ -80,6 +80,34 @@ pit_wrapper:
 	pushw %fs
 	pushw %gs
 	call pit_int_handler
+	popw %gs
+	popw %fs
+	popw %es
+	popw %ds
+	popl %edi
+	popl %esi
+	popl %ebp
+	popl %esp
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
+	iret
+
+mouse_wrapper:
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+	pushl %esp
+	pushl %ebp
+	pushl %esi
+	pushl %edi
+	pushw %ds
+	pushw %es
+	pushw %fs
+	pushw %gs
+	call mouse_int_handler
 	popw %gs
 	popw %fs
 	popw %es

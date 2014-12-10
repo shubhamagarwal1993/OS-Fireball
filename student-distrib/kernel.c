@@ -15,15 +15,18 @@
 #include "terminal.h"
 #include "filesys.h"
 #include "systemcalls.h"
+#include "pit.h"
+#include "music.h"
+#include "mouse.h"
 #include "bootscreen.h" 
  
-#define PIC1			0x20		/*IO base address for master PIC*/
-#define PIC2			0xA0		/*IO base address for slave PIC */
+#define PIC1			0x20			/*IO base address for master PIC*/
+#define PIC2			0xA0			/*IO base address for slave PIC */
 #define PIC1_COMMAND	PIC1 		
-#define PIC1_DATA		(PIC1+1) 	/*This is basically port 0x21	*/
+#define PIC1_DATA		(PIC1+1) 		/*This is basically port 0x21	*/
 #define PIC2_COMMAND	PIC2
-#define PIC2_DATA		(PIC2+1) 	/*This is basically port 0xA1	*/
-#define PIC_EOI			0x20 		/*End-of-interrupt command code	*/
+#define PIC2_DATA		(PIC2+1) 		/*This is basically port 0xA1	*/
+#define PIC_EOI			0x20 			/*End-of-interrupt command code	*/
 
 
 /* Macros. */
@@ -164,14 +167,9 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 	
-	//bootscreen - Fireball OS----------------
-	reset_scr();
-	//boot_screen();
-	//error_screen();
+
 	int z = 0;
-	//while(z < 1000000000)
-	//	z++;
-	//----------------------------------------
+	reset_scr();
 
 	//set the IDT	
 	set_idt();
@@ -195,30 +193,98 @@ entry (unsigned long magic, unsigned long addr)
 	//init the rtc
 	init_rtc();
 
-	//init the pit
+
+	//init PIT for sound, timer
 	init_pit(0, 100);
+
+	//init the mouse
+	init_mouse();
+
 	//clear the screen
-	//reset_scr();
 	reset_scr();
+	
+	// boot_screen();
 	for(z = 0; z < 3; z++)
 	{
 		terminal_init();
 	}
 	node* buffer = screens[0];
-	//node* buffer = terminal_open(NULL, NULL);
 	reset_buf(buffer);
+	//display the status bar
 	status_bar();
+
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
+
 	sti();
+
+	boot_screen();
+	//sample mario sound
+	for(z = 0; z < 500000; z++)
+		play_sound(1000);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(100);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(900);
+
+	for(z = 0; z < 50000; z++)
+		play_sound(200);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(800);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(300);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(700);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(400);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(600);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(500);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(500);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(1000);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(400);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(300);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(300);
+
+	for(z = 0; z < 500000; z++)
+		play_sound(200);
+
+	boot_screen();
+	nosound();
+	reset_scr();
+
+
+	/////////////////////////////////////////////////////////////
+
+//	void imperial();
+
 	/* Execute the first program (`shell') ... */
 	uint8_t fname[33] = "shell";
 	execute(fname);
 
 	/* We should never get to this point */
-	printf("Initial shell halted.");
+	//printf("Initial shell halted.");
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

@@ -6,6 +6,7 @@
 #include "int_handler.h"
 #include "wrapper.h"
 #include "keyboard.h"
+#include "mouse.h"
 
 void set_idt()
 {
@@ -69,9 +70,11 @@ void set_interrupt()
 		idt[33] = idt_entry; 
 		idt[40] = idt_entry; 
 		idt[32] = idt_entry;
+		idt[44] = idt_entry;
 		SET_IDT_ENTRY(idt[40], &rtc_wrapper);
 		SET_IDT_ENTRY(idt[33], &kbd_wrapper);		
 		SET_IDT_ENTRY(idt[32], &pit_wrapper);		
+		SET_IDT_ENTRY(idt[44], &mouse_wrapper);
 }
 
 

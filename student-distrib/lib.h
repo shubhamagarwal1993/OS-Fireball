@@ -1,10 +1,3 @@
-/************************************************/
-/*Created by Siddharth Murali, Aabhas Sharma,	*/	
-/*			 James Lang, Shubham Agarwal		*/
-/*	9th Dec, 2014								*/
-/*												*/
-/************************************************/
-
 /* lib.h - Defines for useful library functions
  * vim:ts=4 noexpandtab
  */
@@ -37,7 +30,7 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void clear_blue(void);
-void set_colour();
+extern void set_colour(int32_t x, int32_t y, int8_t colour);
 void clear_line();
 void reset_scr();
 void print_helper(char input, int x, int y);
@@ -56,6 +49,9 @@ extern void test_interrupts(void);
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
+
+extern int8_t colour_palette[5];
+extern int color_pick;
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

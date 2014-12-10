@@ -6,15 +6,15 @@
 #include "buffer.h"
 #include "keyboard.h"
 #include "terminal.h"
-#define VIDEO 			0xB8000
-#define NUM_COLS 		80
-#define LIB_ROWS 		24
-#define ATTRIB 			0x7
-#define ATTRIB_BLUE 	0x17
-#define ATTRIB_COLOUR 	0x33
-#define RET_SUCCESS		0
-#define RET_FAILURE		-1
+#define VIDEO 0xB8000
+#define NUM_COLS 80
+#define NUM_ROWS 24
+#define ATTRIB 0x7
+#define ATTRIB_BLUE 0x17
+#define ATTRIB_COLOUR 0xE4
 
+int8_t colour_palette[5] = {0x07, 0xF0, 0xA0, 0x4F, 0xE0};
+int color_pick = 0;
 int screen_x;
 int screen_y;
 static char* video_mem = (char *)VIDEO;
@@ -30,7 +30,7 @@ void
 clear(void)
 {
     int32_t i;
-    for(i=0; i<(LIB_ROWS+1)*NUM_COLS; i++) {
+    for(i=0; i<(NUM_ROWS+1)*NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
@@ -41,7 +41,7 @@ clear_line()
 {
 	int i = 0;
 	int index = 0;
-	if(screen_y != LIB_ROWS)
+	if(screen_y != NUM_ROWS)
 		index = (NUM_COLS)*(screen_y);
 	else{screen_x = 0;}
 	for(i = index; i < index + NUM_COLS; i++)
@@ -61,9 +61,19 @@ void
 clear_blue(void)
 {
     int32_t i;
-    for(i=0; i<LIB_ROWS*NUM_COLS; i++) {
+    for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_BLUE;
+    }
+}
+
+void
+set_palette(void)
+{
+    int32_t i;
+    for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = colour_palette[color_pick];
     }
 }
 
@@ -74,13 +84,10 @@ clear_blue(void)
 *	Function: Clears video memory to blue screen
 */
 void
-set_colour(void)
+set_colour(int32_t x, int32_t y, int8_t colour)
 {
-    int32_t i;
-    for(i=0; i<LIB_ROWS*NUM_COLS; i++) {
-        *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB_COLOUR;
-    }
+  int32_t offset = y*NUM_COLS + x;
+  *(uint8_t *)(video_mem + (offset<<1) + 1) = colour;
 }
 
 
@@ -264,10 +271,10 @@ putc(uint8_t c)
         screen_x=0;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = colour_palette[color_pick];
         screen_x++;
         screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % LIB_ROWS;
+        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
 }
 
@@ -573,7 +580,7 @@ strncmp(const int8_t* s1, const int8_t* s2, uint32_t n)
 			return s1[i] - s2[i];
 		}
 	}
-	return RET_SUCCESS;
+	return 0;
 }
 
 /*
@@ -634,7 +641,7 @@ void
 test_interrupts(void)
 {
 	int32_t i;
-	for (i=0; i < LIB_ROWS*NUM_COLS; i++) {
+	for (i=0; i < NUM_ROWS*NUM_COLS; i++) {
 		video_mem[i<<1]++;
 	}
 }
@@ -793,7 +800,7 @@ put_cout(uint8_t c, node* buffer)
     if(c == '\n' || c == '\r') {
         buffer[NUM_COLS*buf_y + buf_x].mo = '\n';
         buf_x = 0;
-		if(buf_y != (LIB_ROWS-1) )
+		if(buf_y != (NUM_ROWS-1) )
 			buf_y++;
 		else scroll_buf(buffer);
         screen_y++;
@@ -810,6 +817,6 @@ put_cout(uint8_t c, node* buffer)
         line_count++;
         buf_x %= NUM_COLS;
 
-        buf_y = (buf_y + (buf_x / NUM_COLS)) % LIB_ROWS;
+        buf_y = (buf_y + (buf_x / NUM_COLS)) % NUM_ROWS;
     }
 }

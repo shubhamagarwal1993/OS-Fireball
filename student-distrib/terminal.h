@@ -54,5 +54,6 @@ void get_system_time();
 
 extern driver_jt_t stdin_jt;
 extern driver_jt_t stdout_jt;
+extern char* status;
 
 #endif /* TERMINAL */
