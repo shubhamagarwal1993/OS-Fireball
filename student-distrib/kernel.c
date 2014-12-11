@@ -194,8 +194,6 @@ entry (unsigned long magic, unsigned long addr)
 	init_rtc();
 
 
-	//init PIT for sound, timer
-	init_pit(0, 100);
 
 	//init the mouse
 	init_mouse();
@@ -211,16 +209,18 @@ entry (unsigned long magic, unsigned long addr)
 	node* buffer = screens[0];
 	reset_buf(buffer);
 	//display the status bar
-	status_bar();
 
 	/* Enable interrupts */
+	
+	sti();
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
 
-	sti();
 
 	boot_screen();
+	//init PIT for sound, timer
+	init_pit(0, 100);
 	//sample mario sound
 	for(z = 0; z < 500000; z++)
 		play_sound(1000);
@@ -279,6 +279,7 @@ entry (unsigned long magic, unsigned long addr)
 
 //	void imperial();
 
+	status_bar();
 	/* Execute the first program (`shell') ... */
 	uint8_t fname[33] = "shell";
 	execute(fname);

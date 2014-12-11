@@ -101,16 +101,19 @@ void mouse_int_handler()
       {
         screen_num = 1;
         terminal_switch(0, screen_num);
+        send_eoi(12);
       }
       if((mouse_coords.x > 10 && mouse_coords.x <= 20)&&(mouse_coords.y == 24))
       {
         screen_num = 2;
         terminal_switch(1, screen_num);
+        send_eoi(12);
       }
       if((mouse_coords.x > 20 && mouse_coords.x <= 31)&&(mouse_coords.y == 24))
       {
         screen_num = 3;
         terminal_switch(2, screen_num);
+        send_eoi(12);
       }                                           
     }
 
@@ -123,7 +126,7 @@ void mouse_int_handler()
     }
 
     // Middle button press
-    if(((input_packet & 0x04) >> 2) == 1)
+    if(((input_packet & 0x04) >> 2) == 1);
       //printf("%d, %d",mouse_coords.x, mouse_coords.y);                                      //this calls a function 
     }
    } 

@@ -17,6 +17,8 @@
 #define _8KB	0x2000
 #define MASK	0x80
 
+extern int process_id;
+
 typedef struct process_attr
 {
  	//functioning attributes
@@ -79,6 +81,7 @@ typedef struct pcb{
 	uint32_t ss0;
 	uint32_t child_flag;
 	struct pcb* parent_process;
+ 	int child;
 }pcb_t;
 
 // Device driver jump table

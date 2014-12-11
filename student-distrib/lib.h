@@ -30,6 +30,7 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void clear_blue(void);
+extern void set_palette();
 extern void set_colour(int32_t x, int32_t y, int8_t colour);
 void clear_line();
 void reset_scr();

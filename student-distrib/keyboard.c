@@ -230,7 +230,19 @@ void kbd_logic(int to_print, node* buffer)
 				uint8_t fname[33] = "shell";
 				execute_syscall(fname);
 			}
+			if(screen_num != prev_screen_num)
+			{
+				int temp = screen_num;
+				uint32_t process_bp = _8MB - (_8KB)*(screen_num) - 4;
+				pcb_t* curr_process = (pcb_t *) (process_bp & 0xFFFFE000);
+				if(curr_process->child_flag != 0)	
+				{	
+					temp = curr_process->child;	
+				}
+					context_switch(temp);
+			}
 		}
+
 		else if(to_print == 0x3D)
 		{
 			screen_num = 2;
@@ -244,12 +256,34 @@ void kbd_logic(int to_print, node* buffer)
 				uint8_t fname[33] = "shell";
 				execute_syscall(fname);
 			}
+			if(screen_num != prev_screen_num)
+			{
+				int temp = screen_num;
+				uint32_t process_bp = _8MB - (_8KB)*(screen_num) - 4;
+				pcb_t* curr_process = (pcb_t *) (process_bp & 0xFFFFE000);
+				if(curr_process->child_flag != 0)	
+				{
+					temp = curr_process->child;
+				}
+					context_switch(temp);			
+			}
 		}
 		else
 		{
 			screen_num = 0;
 			send_eoi(1);
 			terminal_switch(screen_num, prev_screen_num);
+			if(screen_num != prev_screen_num)
+			{
+				int temp = screen_num;
+				uint32_t process_bp = _8MB - (_8KB)*(screen_num) - 4;
+				pcb_t* curr_process = (pcb_t *) (process_bp & 0xFFFFE000);
+				if(curr_process->child_flag != 0)	
+				{
+					temp = curr_process->child;	
+				}
+					context_switch(temp);
+			}
 		}
 		//terminal_switch(screen_num, prev_screen_num);
 		buffer = pass_buff();

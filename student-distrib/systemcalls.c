@@ -144,12 +144,14 @@ int32_t execute(const uint8_t* command)
 	{
 		curr_process->parent_process = curr_process;
 		curr_process->child_flag = 0;
+		curr_process->parent_process->child = -1;
 		initial_shell = 0;
 	}
 	else
 	{
 		curr_process->parent_process = previous_pcb;
 		curr_process->parent_process->child_flag = 1;
+		curr_process->parent_process->child = process_id;
 	}
 	
 	// Initialize file descriptors
