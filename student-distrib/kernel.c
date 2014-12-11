@@ -193,8 +193,6 @@ entry (unsigned long magic, unsigned long addr)
 	//init the rtc
 	init_rtc();
 
-
-
 	//init the mouse
 	init_mouse();
 
@@ -219,8 +217,6 @@ entry (unsigned long magic, unsigned long addr)
 
 
 	boot_screen();
-	//init PIT for sound, timer
-	init_pit(0, 100);
 	//sample mario sound
 	for(z = 0; z < 500000; z++)
 		play_sound(1000);
@@ -270,10 +266,12 @@ entry (unsigned long magic, unsigned long addr)
 	for(z = 0; z < 500000; z++)
 		play_sound(200);
 
-	boot_screen();
+	//boot_screen();
 	nosound();
 	reset_scr();
 
+	//init PIT for sound, timer
+	init_pit(0, 100);
 
 	/////////////////////////////////////////////////////////////
 

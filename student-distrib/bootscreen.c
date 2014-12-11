@@ -6,7 +6,7 @@
 #define VIDEO 			 	0xB8000  												//this is the start of video memory
 static char* video_mem = (char *)VIDEO;
 #define ATTRIB_COLOUR_2  	0xE4													//color scheme
-#define ATTRIB_COLOUR  		0x4E													//color scheme
+#define ATTRIB_COLOUR  		0x44													//color scheme
 #define MAX_TERMINAL_WIDTH	80	
 
 void boot_screen(){
